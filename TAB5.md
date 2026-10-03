@@ -4,7 +4,8 @@ The Tab5 is a third board target next to the Guition 4.3″ handheld and the HDM
 It is selected with **`CONFIG_BOARD_M5STACK_TAB5=y`** (see `launcher/sdkconfig.tab5.defaults`) and is
 mutually exclusive with `CONFIG_HDMI_OUTPUT`.
 
-> **Status:** the launcher and all 12 emulator apps compile and link for the Tab5 with ESP-IDF 5.5.2.
+> **Status:** the launcher and all 12 emulator apps compile, link and fit their flash slots for the Tab5
+> with ESP-IDF 5.5.2; the handheld build still builds too.
 > The port has **not been run on hardware yet** — expect to iterate on the first boot. Items that most
 > need a look on a real device are listed under [First-boot checklist](#first-boot-checklist).
 
@@ -86,6 +87,10 @@ idf.py -B build_tab5 -DSDKCONFIG=build_tab5/sdkconfig \
 `sdkconfig` gives a black screen, same as the HDMI note in `ARCHITECTURE.md`.)
 
 The SD card layout, ROM folders and Neo Geo cache generation are identical to the other targets.
+
+**Slot sizes:** all 12 apps and the launcher fit their OTA slots in the Tab5 build. NES is the tightest
+(`ota_0`, 576 KB): the Tab5 board code made it ~5 KB too big, so `apps/nes/sdkconfig.tab5.defaults` compiles
+INFO log strings out of that one app (580 KB, 9 KB spare). Launcher: 725 KB of 768 KB.
 
 ## First-boot checklist
 

@@ -49,8 +49,10 @@ build() { # dir
   local dir="$1" bdir="$ROOT/$1/build_tab5"
   ( cd "$ROOT/$dir"
     rm -rf "$bdir"; mkdir -p "$bdir"
-    idf.py -B "$bdir" -DSDKCONFIG="$bdir/sdkconfig" \
-           -DSDKCONFIG_DEFAULTS="sdkconfig.defaults;$TAB5_DEFAULTS" build )
+    local defaults="sdkconfig.defaults;$TAB5_DEFAULTS"
+    # optional per-project Tab5 overrides (e.g. apps/nes: log strings out to fit its 576 KB slot)
+    [ -f sdkconfig.tab5.defaults ] && defaults="$defaults;sdkconfig.tab5.defaults"
+    idf.py -B "$bdir" -DSDKCONFIG="$bdir/sdkconfig" -DSDKCONFIG_DEFAULTS="$defaults" build )
 }
 
 if want launcher; then
