@@ -247,16 +247,21 @@ Launcher writes, emulator reads; namespace `"Odroid"`, API in `odroid_settings.h
 
 ## HDMI Target
 
-Two board targets, built/flashed separately:
+Three board targets, built/flashed separately:
 
 | Target | Display | Build | Output |
 |--------|---------|-------|--------|
 | LCD | 480×800 ST7701S + GT911 | `build_all.ps1` | `RetroESP32_P4_v1.bin` |
 | HDMI | LT8912 DSI→HDMI @ 640×480 | `build_all_hdmi.bat` | `RetroESP32_P4_HDMI_v1.bin` |
+| Tab5 | M5Stack Tab5 720×1280 DSI (ILI9881C / ST7123 / ST7121) + GT911 / ST712x | `build_all_tab5.sh` | `RetroESP32_P4_Tab5_v1.bin` |
 
 HDMI enables `CONFIG_HDMI_OUTPUT=y`, links `lt8912` + `hdmi_display`, and shares I2C between the touch
 controller and LT8912 (Phase 46.23). A stale `CONFIG_HDMI_OUTPUT=y` in an LCD app's `sdkconfig` →
 black screen + broken audio; `build_all.ps1` deletes each app's `sdkconfig` before building. See `HDMIport.md`.
+
+The Tab5 target (`CONFIG_BOARD_M5STACK_TAB5`, details in `TAB5.md`) keeps the landscape UI/emulator image and
+adds one 1.5× PPA scale, rotating and scaling straight into the DSI frame buffer; `components/tab5_board`
+owns the I2C bus, IO-expander power rails, panel/touch auto-detection and the frame buffer.
 
 ---
 

@@ -2,6 +2,8 @@
 build/
 **/build/
 build_papp/
+**/build_tab5/
+firmware_tab5/
 **/managed_components/
 
 # === Firmware binaries (all generated) ===
@@ -37,6 +39,7 @@ tmp_factory.bin
 !README.md
 !ARCHITECTURE.md
 !PAPP_GUIDE.md
+!TAB5.md
 
 # === Backup directories ===
 backup_pre_superfx/

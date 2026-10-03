@@ -10,6 +10,41 @@
 #include "esp_lcd_touch_gt911.h"
 #include "gt911_touch.h"
 
+#ifdef CONFIG_BOARD_M5STACK_TAB5
+/*
+ * M5Stack Tab5: the touch controller is GT911 or ST712x depending on the
+ * hardware revision and reports in the native 720x1280 portrait space.  All
+ * callers (launcher, safe-boot check, virtual buttons, PAPP loader) work in
+ * the original 480x800 portrait space, so coordinates are mapped back:
+ *   legacy_x = x / 1.5,   legacy_y = (y - 40) / 1.5   (40 px letterbox)
+ * The args of gt911_touch_init() are ignored - the board owns the pins.
+ */
+#include "tab5_board.h"
+
+esp_err_t gt911_touch_init(int8_t sda_pin, int8_t scl_pin, int8_t rst_pin, int8_t int_pin)
+{
+    (void)sda_pin; (void)scl_pin; (void)rst_pin; (void)int_pin;
+    return tab5_touch_init();   /* idempotent */
+}
+
+bool gt911_touch_get_xy(uint16_t *x, uint16_t *y)
+{
+    tab5_touch_point_t p;
+    if (tab5_touch_read(&p, 1) < 1) return false;
+
+    int lx = (int)p.x * 2 / 3;
+    int ly = ((int)p.y - 40) * 2 / 3;
+    if (lx < 0) lx = 0;
+    if (lx > 479) lx = 479;
+    if (ly < 0) ly = 0;
+    if (ly > 799) ly = 799;
+    if (x) *x = (uint16_t)lx;
+    if (y) *y = (uint16_t)ly;
+    return true;
+}
+
+#else  /* original RetroESP32-P4 board: GT911 on I2C1 */
+
 #define CONFIG_LCD_HRES 480
 #define CONFIG_LCD_VRES 800
 
@@ -63,3 +98,5 @@ bool gt911_touch_get_xy(uint16_t *x, uint16_t *y)
 
     return touched;
 }
+
+#endif /* CONFIG_BOARD_M5STACK_TAB5 */

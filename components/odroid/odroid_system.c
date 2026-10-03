@@ -9,6 +9,9 @@
 
 #include "odroid_system.h"
 #include "pins_config.h"
+#ifdef CONFIG_BOARD_M5STACK_TAB5
+#include "tab5_board.h"
+#endif
 #ifndef CONFIG_HDMI_OUTPUT
 #include "st7701_lcd.h"
 #include "gt911_touch.h"
@@ -32,6 +35,13 @@ static i2c_master_bus_handle_t s_i2c_handle = NULL;
 /* ─── I2C master bus (shared by touch + audio codec) ─────────── */
 static void init_i2c(void)
 {
+#ifdef CONFIG_BOARD_M5STACK_TAB5
+    /* Tab5: tab5_board owns the system I2C bus (also used by the IO expanders). */
+    ESP_ERROR_CHECK(tab5_board_init());
+    s_i2c_handle = tab5_board_i2c_bus();
+    ESP_LOGI(TAG, "I2C master bus initialized (Tab5 system bus)");
+    return;
+#endif
     i2c_master_bus_config_t i2c_bus_conf = {
         .i2c_port = I2C_NUM_1,
         .sda_io_num = (gpio_num_t)TP_I2C_SDA,
@@ -62,11 +72,24 @@ void odroid_system_init(void)
 
     /* 3. USB HID Gamepad */
     ESP_LOGI(TAG, "Initializing USB HID gamepad host...");
+#ifdef CONFIG_BOARD_M5STACK_TAB5
+    /* USB-A port 5V is switched by an IO expander */
+    if (tab5_board_usb_power_enable(true) != ESP_OK) {
+        ESP_LOGW(TAG, "Failed to enable USB-A power rail");
+    }
+#endif
     gamepad_config_t gp_cfg = GAMEPAD_CONFIG_DEFAULT();
     ESP_ERROR_CHECK(gamepad_init(&gp_cfg));
 
     /* 4. Audio (ES8311 codec) */
+#ifdef CONFIG_BOARD_M5STACK_TAB5
+    ESP_LOGI(TAG, "Initializing audio (ES8388 codec)...");
+    if (tab5_board_speaker_enable(true) != ESP_OK) {
+        ESP_LOGW(TAG, "Failed to enable speaker amplifier");
+    }
+#else
     ESP_LOGI(TAG, "Initializing audio (ES8311 codec)...");
+#endif
     audio_config_t audio_cfg = AUDIO_CONFIG_DEFAULT();
     audio_cfg.mclk_io    = I2S_MCLK_IO;
     audio_cfg.bclk_io    = I2S_BCLK_IO;
@@ -84,11 +107,15 @@ void odroid_system_init(void)
 
     /* 5. LCD / HDMI display */
 #ifndef CONFIG_HDMI_OUTPUT
+#ifdef CONFIG_BOARD_M5STACK_TAB5
+    ESP_LOGI(TAG, "Initializing LCD (Tab5 MIPI DSI, auto-detected panel)...");
+#else
     ESP_LOGI(TAG, "Initializing LCD (ST7701 MIPI DSI)...");
+#endif
     ESP_ERROR_CHECK(st7701_lcd_init());
 
-    /* 6. Touch (GT911) */
-    ESP_LOGI(TAG, "Initializing touch (GT911)...");
+    /* 6. Touch (GT911 / ST712x on the Tab5) */
+    ESP_LOGI(TAG, "Initializing touch...");
     ESP_ERROR_CHECK(gt911_touch_init(TP_I2C_SDA, TP_I2C_SCL, TP_RST, TP_INT));
 
     /* 7. Clear physical LCD to black */

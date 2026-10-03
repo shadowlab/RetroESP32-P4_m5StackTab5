@@ -130,6 +130,12 @@ static uint16_t s_usb_map_pid = 0;  /* PID of the currently loaded map */
 #ifndef CONFIG_HDMI_OUTPUT
 static void gpio_pad_detect_and_init(void)
 {
+#ifdef CONFIG_BOARD_M5STACK_TAB5
+    /* Tab5 has no GPIO pad, and GPIO 28/29/30 (the pad's Start/L1/L2 lines)
+     * are the I2S DIN/WS/MCLK pins of the audio codec - never touch them. */
+    ESP_LOGI(TAG, "Tab5: GPIO gamepad disabled (USB gamepad + touch only)");
+    return;
+#endif
     /* Detection: pull-up GPIO 29 (L1), read. If 0 → custom pad connected
        (the physical pull-down on the gamepad board wins). */
     gpio_config_t detect_cfg = {
@@ -383,6 +389,10 @@ void odroid_paddle_adc_init(void)
 #ifdef CONFIG_HDMI_OUTPUT
     /* HDMI: no paddle ADC */
 #else
+#ifdef CONFIG_BOARD_M5STACK_TAB5
+    /* Tab5: no paddle wheel; GPIO 51 is not wired for it */
+    return;
+#endif
     if (s_paddle_adc_handle) return;  /* already initialised */
 
     /* Reuse existing ADC2 handle if GPIO gamepad or battery already created it */
@@ -412,6 +422,11 @@ void odroid_input_battery_level_init(void)
 #ifdef CONFIG_HDMI_OUTPUT
     /* HDMI: no battery — skip */
 #else
+#ifdef CONFIG_BOARD_M5STACK_TAB5
+    /* Tab5: battery is on a fuel-gauge/INA226 over I2C, not an ADC divider.
+     * Leaving the ADC handle NULL makes _read() report a full battery. */
+    return;
+#endif
     if (s_battery_adc_handle) return;  /* already initialised */
 
     /* Reuse existing ADC2 handle if GPIO pad or paddle already created it */

@@ -1,0 +1,6 @@
+# M5Stack Tab5 variant - layer on top of sdkconfig.defaults (launcher) or
+# apps/sdkconfig_common.defaults (emulator apps), e.g.
+#   idf.py -DSDKCONFIG_DEFAULTS="sdkconfig.defaults;../../launcher/sdkconfig.tab5.defaults" build
+# build_all_tab5.sh does this for every project.
+
+CONFIG_BOARD_M5STACK_TAB5=y
