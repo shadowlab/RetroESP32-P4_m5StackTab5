@@ -4,3 +4,11 @@
 # build_all_tab5.sh does this for every project.
 
 CONFIG_BOARD_M5STACK_TAB5=y
+
+# Flash + execution, as in M5Stack's own Tab5 firmware:
+#  - the Tab5's flash is wired for quad I/O
+#  - copy code (.text) and constants (.rodata) into the 200 MHz HEX PSRAM at boot and run from
+#    there, so instruction/rodata cache misses no longer go to 80 MHz flash. Costs ~app-size of
+#    PSRAM (<= 1.5 MB of 32 MB) and a short copy at boot.
+CONFIG_ESPTOOLPY_FLASHMODE_QIO=y
+CONFIG_SPIRAM_XIP_FROM_PSRAM=y

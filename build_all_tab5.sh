@@ -9,7 +9,7 @@
 #
 # Everything is built with launcher/sdkconfig.tab5.defaults layered on top of the
 # project's own defaults, and with a private build dir + sdkconfig per project so a
-# Tab5 build never reuses (or clobbers) a handheld/HDMI build.
+# Tab5 build never reuses (or clobbers) a handheld build.
 
 set -euo pipefail
 
@@ -80,7 +80,7 @@ fi
 
 echo "=== Merging $OUT ==="
 # Flash map: must match partitions_ota.csv (same offsets as generate_merged_bin.ps1)
-python -m esptool --chip esp32p4 merge_bin -o "$OUT" --flash_mode dio --flash_size 16MB --flash_freq 80m \
+python -m esptool --chip esp32p4 merge_bin -o "$OUT" --flash_mode qio --flash_size 16MB --flash_freq 80m \
   0x2000   "$BINS/bootloader.bin" \
   0x8000   "$BINS/partition-table.bin" \
   0xD000   "$BINS/ota_data_initial.bin" \

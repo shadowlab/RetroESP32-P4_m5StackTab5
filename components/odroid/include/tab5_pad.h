@@ -20,10 +20,10 @@ extern "C" {
 
 #ifdef CONFIG_BOARD_M5STACK_TAB5
 
-/** Register the redraw hook (idempotent). Call once the display is up. */
+/** Register the redraw hook and start the touch poll task (idempotent). Call once the display is up. */
 void tab5_pad_init(void);
 
-/** OR the currently-touched pad buttons into `state` (multi-touch, rate-limited to ~125 Hz). */
+/** OR the currently-touched pad buttons into `state` (cached by a ~125 Hz background poll task; no I2C here). */
 void tab5_pad_read(odroid_gamepad_state *state);
 
 #endif

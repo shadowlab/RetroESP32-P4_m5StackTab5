@@ -181,6 +181,20 @@ static esp_err_t tab5_present(const uint16_t *src, uint32_t in_w, uint32_t in_h,
         fb, tab5_display_fb_size(), TAB5_PANEL_W, TAB5_PANEL_H,
         x_off, y_off, NULL, NULL, byte_swap);
 }
+
+/* Present a native-resolution emulator frame in ONE PPA pass (no 320×240
+ * intermediate).  h_scale / v_scale are landscape factors and must be
+ * multiples of 1/16; the call sites keep the same 4:3 picture as the
+ * two-pass path. */
+static void tab5_present_direct(const uint16_t *src, uint32_t w, uint32_t h,
+                                float h_scale, float v_scale)
+{
+    /* tab5_present's factors are post-rotation: x = panel width = landscape vertical */
+    esp_err_t ret = tab5_present(src, w, h, v_scale, h_scale, 1.0f, false);
+    if (ret != ESP_OK) {
+        ESP_LOGE(TAG, "Tab5 direct present %ux%u failed (0x%x)", (unsigned)w, (unsigned)h, ret);
+    }
+}
 #endif /* CONFIG_BOARD_M5STACK_TAB5 */
 
 /* ─── Timing instrumentation ──────────────────────────────────── */
@@ -550,6 +564,13 @@ void ili9341_write_frame_gb(uint16_t *buffer, int scale)
         /* Copy input into DMA-aligned temp buffer */
         memcpy(s_gb_temp, buffer, GB_PIXELS * sizeof(uint16_t));
 
+#ifdef CONFIG_BOARD_M5STACK_TAB5
+        /* Tab5: one PPA pass 160×144 → 960×720 (6× / 5×, same 4:3 picture) */
+        tab5_present_direct(s_gb_temp, GAMEBOY_WIDTH, GAMEBOY_HEIGHT, 6.0f, 5.0f);
+        odroid_display_unlock_gb_display();
+        return;
+#endif
+
         /* Lazy-allocate shared 320×240 intermediate buffer (prefer internal SRAM) */
         if (!s_emu_scaled) {
             s_emu_scaled = heap_caps_aligned_calloc(
@@ -631,6 +652,14 @@ void ili9341_write_frame_nes(uint8_t *buffer, uint16_t *myPalette, uint8_t scale
             s_nes_temp[i] = (pixel >> 8) | (pixel << 8);
         }
 
+#ifdef CONFIG_BOARD_M5STACK_TAB5
+        /* Tab5: one PPA pass 256×224 → 960×714 (3.75× / 3.1875×; 720/224 is not
+         * a 1/16 multiple, so 6 rows short of the 4:3 frame, centred) */
+        tab5_present_direct(s_nes_temp, NES_GAME_WIDTH, NES_GAME_HEIGHT, 3.75f, 3.1875f);
+        odroid_display_unlock_nes_display();
+        return;
+#endif
+
         /* Lazy-allocate shared 320×240 intermediate buffer (prefer internal SRAM) */
         if (!s_emu_scaled) {
             s_emu_scaled = heap_caps_aligned_calloc(
@@ -708,6 +737,14 @@ void ili9341_write_frame_sms(uint8_t *buffer, uint16_t color[], uint8_t isGameGe
                 dst_row[x] = color[src_row[x] & PIXEL_MASK];
             }
         }
+
+#ifdef CONFIG_BOARD_M5STACK_TAB5
+        /* Tab5: one PPA pass → 960×720 (SMS 256×192 at 3.75×, GG 160×144 at 6× / 5×) */
+        if (isGameGear) tab5_present_direct(s_sms_temp, src_w, src_h, 6.0f, 5.0f);
+        else            tab5_present_direct(s_sms_temp, src_w, src_h, 3.75f, 3.75f);
+        odroid_display_unlock_sms_display();
+        return;
+#endif
 
         /* Lazy-allocate shared 320×240 intermediate buffer (prefer internal SRAM) */
         if (!s_emu_scaled) {
@@ -896,6 +933,10 @@ void ili9341_write_frame_lynx(const uint16_t *buffer)
             return;
         }
         esp_cache_msync(s_hdmi_disp.fb, s_hdmi_disp.fb_size, ESP_CACHE_MSYNC_FLAG_DIR_C2M);
+#elif defined(CONFIG_BOARD_M5STACK_TAB5)
+        /* Tab5: one PPA pass 160×102 → 960×612 (6×, true Lynx aspect) straight to the
+         * panel, instead of stretching into the 800×480 UI buffer and scaling again */
+        tab5_present_direct(s_lynx_temp, LYNX_GAME_WIDTH, LYNX_GAME_HEIGHT, 6.0f, 6.0f);
 #else
         /* LCD: single PPA scale 160×102 → 800×480 into framebuffer, then flush */
         float sx = (float)FB_W / LYNX_GAME_WIDTH;

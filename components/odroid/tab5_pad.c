@@ -13,8 +13,9 @@
 #include <string.h>
 #include "freertos/FreeRTOS.h"
 #include "freertos/semphr.h"
+#include "freertos/task.h"
+#include "esp_log.h"
 #include "esp_cache.h"
-#include "esp_timer.h"
 #include "tab5_board.h"
 #include "tab5_pad.h"
 
@@ -76,9 +77,14 @@ static const int s_input_idx[B_COUNT] = {
     [B_MENU] = ODROID_INPUT_MENU, [B_VOL] = ODROID_INPUT_VOLUME,
 };
 
-static SemaphoreHandle_t s_lock = NULL;
-static uint32_t s_mask = 0;          /* currently pressed buttons (bit = B_xxx) */
-static int64_t  s_last_poll_us = 0;
+/* Touch is polled by a small background task so the I2C transfers never run on
+ * an emulator's thread; tab5_pad_read() only reads the cached mask. */
+#define POLL_PERIOD_MS   8          /* ~125 Hz */
+#define POLL_TASK_PRIO   5          /* same as the video tasks; it sleeps between polls */
+#define POLL_TASK_CORE   0          /* video tasks are pinned to core 1 */
+
+static SemaphoreHandle_t s_lock = NULL;          /* serialises pad drawing (poll task vs fill hook) */
+static volatile uint32_t s_mask = 0;             /* currently pressed buttons (bit = B_xxx) */
 
 /* ─── Drawing primitives (landscape coordinates -> portrait panel) ─ */
 
@@ -216,51 +222,65 @@ static uint32_t hit_test(int lx, int ly)
 
 static void pad_fill_hook(uint16_t *fb)
 {
+    /* Runs inside tab5_display_fill() on whichever task cleared the frame buffer. */
+    xSemaphoreTake(s_lock, portMAX_DELAY);
     draw_all(fb, s_mask);
+    xSemaphoreGive(s_lock);
+}
+
+/* One poll: read touch, hit-test, redraw buttons whose state changed. */
+static void pad_poll_once(void)
+{
+    tab5_touch_point_t pts[TAB5_MAX_TOUCH_POINTS];
+    int n = tab5_touch_read(pts, TAB5_MAX_TOUCH_POINTS);
+    uint32_t mask = 0;
+    for (int i = 0; i < n; i++) {
+        /* panel (portrait) -> landscape */
+        int lx = pts[i].y;
+        int ly = (LAND_H - 1) - (int)pts[i].x;
+        mask |= hit_test(lx, ly);
+    }
+
+    uint32_t changed = mask ^ s_mask;
+    if (!changed) return;
+    xSemaphoreTake(s_lock, portMAX_DELAY);
+    uint16_t *fb = (uint16_t *)tab5_display_fb();
+    if (fb) {
+        for (int i = 0; i < B_COUNT; i++) {
+            if (!((changed >> i) & 1)) continue;
+            draw_button(fb, i, (mask >> i) & 1);
+            sync_button(i);
+        }
+    }
+    s_mask = mask;
+    xSemaphoreGive(s_lock);
+}
+
+static void pad_poll_task(void *arg)
+{
+    (void)arg;
+    TickType_t last = xTaskGetTickCount();
+    for (;;) {
+        pad_poll_once();
+        vTaskDelayUntil(&last, pdMS_TO_TICKS(POLL_PERIOD_MS));
+    }
 }
 
 void tab5_pad_init(void)
 {
     if (s_lock) return;
     s_lock = xSemaphoreCreateMutex();
+    if (!s_lock) return;
     tab5_display_set_fill_hook(pad_fill_hook);
+    if (xTaskCreatePinnedToCore(pad_poll_task, "tab5_pad", 3072, NULL,
+                                POLL_TASK_PRIO, NULL, POLL_TASK_CORE) != pdPASS) {
+        ESP_LOGE("tab5_pad", "touch pad poll task could not be created");
+    }
 }
 
 void tab5_pad_read(odroid_gamepad_state *state)
 {
-    if (!s_lock) return;
-
-    xSemaphoreTake(s_lock, portMAX_DELAY);
-    int64_t now = esp_timer_get_time();
-    if (now - s_last_poll_us >= 8000) {
-        s_last_poll_us = now;
-
-        tab5_touch_point_t pts[TAB5_MAX_TOUCH_POINTS];
-        int n = tab5_touch_read(pts, TAB5_MAX_TOUCH_POINTS);
-        uint32_t mask = 0;
-        for (int i = 0; i < n; i++) {
-            /* panel (portrait) -> landscape */
-            int lx = pts[i].y;
-            int ly = (LAND_H - 1) - (int)pts[i].x;
-            mask |= hit_test(lx, ly);
-        }
-
-        uint32_t changed = mask ^ s_mask;
-        if (changed) {
-            uint16_t *fb = (uint16_t *)tab5_display_fb();
-            if (fb) {
-                for (int i = 0; i < B_COUNT; i++) {
-                    if (!((changed >> i) & 1)) continue;
-                    draw_button(fb, i, (mask >> i) & 1);
-                    sync_button(i);
-                }
-            }
-            s_mask = mask;
-        }
-    }
-    uint32_t mask = s_mask;
-    xSemaphoreGive(s_lock);
-
+    uint32_t mask = s_mask;     /* single aligned word: no lock needed */
     for (int i = 0; i < B_COUNT; i++) {
         if ((mask >> i) & 1) state->values[s_input_idx[i]] = 1;
     }

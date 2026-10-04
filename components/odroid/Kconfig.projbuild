@@ -12,12 +12,13 @@ menu "RetroESP32 Platform"
     config BOARD_M5STACK_TAB5
         bool "Target the M5Stack Tab5 (5\" 720x1280 DSI tablet)"
         default n
+        depends on !HDMI_OUTPUT
         help
             Builds for the M5Stack Tab5 instead of the original RetroESP32-P4
             handheld: ILI9881C/ST7123 MIPI-DSI panel (auto-detected), GT911 or
             ST712x touch, ES8388 audio codec, IO-expander power rails and USB-A
             host for gamepads.  The GPIO gamepad is disabled (its pins are used by
-            the audio codec).  Mutually exclusive with HDMI_OUTPUT.
+            the audio codec).
 
     config LT8912_I2C_SDA
         int "LT8912 I2C SDA GPIO"

@@ -16,11 +16,12 @@
 9. [Neo Geo Cache](#neo-geo-cache)
 10. [NVS Protocol](#nvs-protocol)
 11. [HDMI Target](#hdmi-target)
-12. [SDK Configuration](#sdk-configuration)
-13. [Build & Flash](#build--flash)
-14. [Adding an Emulator](#adding-an-emulator)
-15. [Binary Sizes](#binary-sizes)
-16. [Troubleshooting](#troubleshooting)
+12. [M5Stack Tab5 Target](#m5stack-tab5-target)
+13. [SDK Configuration](#sdk-configuration)
+14. [Build & Flash](#build--flash)
+15. [Adding an Emulator](#adding-an-emulator)
+16. [Binary Sizes](#binary-sizes)
+17. [Troubleshooting](#troubleshooting)
 
 ---
 
@@ -247,22 +248,35 @@ Launcher writes, emulator reads; namespace `"Odroid"`, API in `odroid_settings.h
 
 ## HDMI Target
 
-Three board targets, built/flashed separately:
+Two board targets, built/flashed separately:
 
 | Target | Display | Build | Output |
 |--------|---------|-------|--------|
 | LCD | 480×800 ST7701S + GT911 | `build_all.ps1` | `RetroESP32_P4_v1.bin` |
 | HDMI | LT8912 DSI→HDMI @ 640×480 | `build_all_hdmi.bat` | `RetroESP32_P4_HDMI_v1.bin` |
-| Tab5 | M5Stack Tab5 720×1280 DSI (ILI9881C / ST7123 / ST7121) + GT911 / ST712x | `build_all_tab5.sh` | `RetroESP32_P4_Tab5_v1.bin` |
 
 HDMI enables `CONFIG_HDMI_OUTPUT=y`, links `lt8912` + `hdmi_display`, and shares I2C between the touch
 controller and LT8912 (Phase 46.23). A stale `CONFIG_HDMI_OUTPUT=y` in an LCD app's `sdkconfig` →
 black screen + broken audio; `build_all.ps1` deletes each app's `sdkconfig` before building. See `HDMIport.md`.
 
-The Tab5 target (`CONFIG_BOARD_M5STACK_TAB5`, details in `TAB5.md`) keeps the landscape UI/emulator image and
-adds one 1.5× PPA scale, rotating and scaling straight into the DSI frame buffer; `components/tab5_board`
-owns the I2C bus, IO-expander power rails, panel/touch auto-detection and the frame buffer.
 
+## M5Stack Tab5 Target
+
+A port of the handheld build to the M5Stack Tab5 tablet (5″ 720×1280 MIPI-DSI, no physical buttons),
+selected with `CONFIG_BOARD_M5STACK_TAB5=y` and built with `build_all_tab5.sh` → `RetroESP32_P4_Tab5_v1.bin`.
+Compared with the Guition handheld:
+
+| | Guition handheld | Tab5 |
+|---|---|---|
+| Panel | 480×800 ST7701S | 720×1280 ILI9881C / ST7123 / ST7121 (auto-detected) |
+| Touch | GT911 | GT911 or ST712x, multi-touch |
+| Audio | ES8311 | ES8388 |
+| Buttons | GPIO pad + USB | on-screen touch pad + USB |
+| Battery | ADC divider | INA226 power monitor |
+
+The UI and emulator images keep their landscape geometry and get one extra PPA scale (1.25× UI, 3× emulators)
+straight into the DSI frame buffer; the side bars hold the touch pad. `components/tab5_board` owns the I2C bus,
+IO-expander power rails, panel/touch detection, battery monitor and frame buffer. Details: `TAB5.md`.
 ---
 
 ## SDK Configuration

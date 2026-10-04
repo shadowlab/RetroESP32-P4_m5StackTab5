@@ -1,8 +1,7 @@
 # M5Stack Tab5 port
 
-The Tab5 is a third board target next to the Guition 4.3″ handheld and the HDMI console.
-It is selected with **`CONFIG_BOARD_M5STACK_TAB5=y`** (see `launcher/sdkconfig.tab5.defaults`) and is
-mutually exclusive with `CONFIG_HDMI_OUTPUT`.
+The Tab5 is a board target alongside the Guition 4.3″ handheld this firmware was written for.
+It is selected with **`CONFIG_BOARD_M5STACK_TAB5=y`** (see `launcher/sdkconfig.tab5.defaults`).
 
 > **Status:** the launcher and all 12 emulator apps compile, link and fit their flash slots for the Tab5
 > with ESP-IDF 5.5.2; the handheld build still builds too.
@@ -114,8 +113,8 @@ idf.py -B build_tab5 -DSDKCONFIG=build_tab5/sdkconfig \
        -DSDKCONFIG_DEFAULTS="sdkconfig.defaults;sdkconfig.tab5.defaults" build
 ```
 
-(Use a separate build dir + sdkconfig: a stale `CONFIG_BOARD_M5STACK_TAB5` / `CONFIG_HDMI_OUTPUT` in a reused
-`sdkconfig` gives a black screen, same as the HDMI note in `ARCHITECTURE.md`.)
+(Use a separate build dir + sdkconfig: a Tab5 `sdkconfig` reused for a handheld build, or the other way
+round, drives the wrong display and pins.)
 
 The SD card layout, ROM folders and Neo Geo cache generation are identical to the other targets.
 
