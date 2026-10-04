@@ -123,7 +123,10 @@ jobs:
             echo "| \`$main\` | ESP-IDF 5.5.2 (reference toolchain, use this one) |"
             echo "| \`$alt\` | ESP-IDF 6.1 |"
             echo
-            echo "Each is a complete image (bootloader, partition table, launcher and all 12 emulators). Flash it at 0x0:"
+            echo "> **First update the ESP32-C6 firmware** with the separate [tab5-p4-c6-sdio-ota](https://github.com/shadowlab/tab5-p4-c6-sdio-ota) updater"
+            echo "> (flash it on its own, wait for \`[PASS]\` in its log). It is not part of this release."
+            echo
+            echo "Then flash one of these. Each is a complete image (bootloader, partition table, launcher and all 12 emulators), written at 0x0:"
             echo
             echo '```'
             echo "python -m esptool --chip esp32p4 -b 460800 write_flash 0x0 $main"

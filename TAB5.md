@@ -8,6 +8,20 @@ It is selected with **`CONFIG_BOARD_M5STACK_TAB5=y`** (see `launcher/sdkconfig.t
 > The port has **not been run on hardware yet** — expect to iterate on the first boot. Items that most
 > need a look on a real device are listed under [First-boot checklist](#first-boot-checklist).
 
+## Before flashing: update the ESP32-C6 firmware first
+
+The ESP32-C6 co-processor needs its firmware updated **before** RetroESP is flashed. That is done by a
+separate application, **[tab5-p4-c6-sdio-ota](https://github.com/shadowlab/tab5-p4-c6-sdio-ota)**, which sends a matching ESP-Hosted 3.x firmware
+into the C6 over the SDIO link. It is **not part of this build** and is flashed on its own:
+
+1. Flash the updater to the Tab5 by itself (its releases have a prebuilt `tab5_c6_ota_merged.bin`, written at 0x0).
+2. Let it run until its serial log prints `[PASS]` (the C6 then reports the new version). The C6 keeps that
+   firmware in its own flash.
+3. Flash RetroESP over it (below). The updater is then gone from the P4; it is only needed again if the C6
+   firmware has to change.
+
+Its README covers what can go wrong and how to recover the C6 through its download pads.
+
 ## Hardware map
 
 | Function | Tab5 | Where it lives |
@@ -161,6 +175,8 @@ otherwise the board is probed as before.
 python -m esptool --chip esp32p4 -b 460800 write_flash 0x0 RetroESP32_P4_Tab5_v1.bin
 ```
 
+Flash this only after the [C6 update](#before-flashing-update-the-esp32-c6-firmware-first).
+
 A single project by hand:
 
 ```bash
@@ -206,12 +222,15 @@ longer pins IDF 5.x; explicit `esp_driver_ledc` / `esp_driver_usb_serial_jtag` r
 removed IDF fields (`rgb_ele_order`, `dma_burst_size`, no `use_dma2d`, `EXT_RAM_BSS_ATTR`, no
 `i2s_port_t` cast); and because 6.x ships GCC 15, which defaults to C23 / C++26, the older cores are pinned
 to the standard they were written for (nofrendo, smsplus, spectrum: `gnu17`; handy, stella: `gnu++20`).
-`sdkconfig.tab5.defaults` sets `CONFIG_COMPILER_DISABLE_DEFAULT_ERRORS=y` so warnings in the third-party
+It also pins the P4 chip revision: 6.x defaults to v3.1+ chips, and a bootloader built for v3 does not
+boot on the Tab5's pre-v3 P4, so `sdkconfig.tab5.defaults` sets `CONFIG_ESP32P4_SELECTS_REV_LESS_V3=y` and
+`CONFIG_ESP32P4_REV_MIN_1=y` (5.5's defaults). It also sets `CONFIG_COMPILER_DISABLE_DEFAULT_ERRORS=y` so warnings in the third-party
 cores stay warnings. Image sizes are within a few KB of the 5.5 builds. Only build-tested on 6.1 — the
 runtime has only been reasoned about against 5.5's drivers.
 
 ## First-boot checklist
 
+0. **C6 firmware** — updated first with [tab5-p4-c6-sdio-ota](https://github.com/shadowlab/tab5-p4-c6-sdio-ota) (its log showed `[PASS]`).
 1. **Serial log** — look for `Detected Tab5 hardware v1/v2/v3` from `tab5_board`. If it prints
    *"No known touch controller found"* the revision probing needs a look (it follows the BSP: ST7123 touch
    answers at 0x55, GT911 at 0x14).

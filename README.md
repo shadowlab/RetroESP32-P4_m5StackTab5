@@ -96,6 +96,11 @@ launcher and emulators render straight into the panel's DSI frame buffer (UI 1.2
 work too. Not yet verified on real hardware — see **[TAB5.md](TAB5.md)** for the
 hardware map, build steps (`./build_all_tab5.sh`) and a first-boot checklist.
 
+> **Update the ESP32-C6 first.** Before flashing RetroESP on a Tab5, run the separate
+> [tab5-p4-c6-sdio-ota](https://github.com/shadowlab/tab5-p4-c6-sdio-ota) updater, which flashes a matching ESP-Hosted 3.x firmware into the C6
+> over SDIO. It is its own application, not part of this build: flash it on its own, wait for `[PASS]`, then
+> flash RetroESP.
+
 ---
 
 ## 🧩 Native Apps from PSRAM
