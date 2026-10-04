@@ -38,7 +38,11 @@ presentation gets an extra scale factor chosen so that **≥ 140 px side bars** 
 | Content | Source | Result on the 1280×720 landscape view |
 |---|---|---|
 | Launcher UI / PAPP apps | 800×480 | 1000×600 (**1.25×**), 140 px bars left/right |
-| Emulators (NES, GB, SMS, Atari, PCE, …) | 320×240 | 960×720 (**3×**, integer, 4:3), 160 px bars |
+| Emulators (Atari, PCE, Spectrum, …) | 320×240 | 960×720 (**3×**, integer, 4:3), 160 px bars |
+| Game Boy / Game Gear | 160×144 | 960×720 (6× / 5×), one PPA pass |
+| Master System | 256×192 | 960×720 (3.75×), one PPA pass |
+| NES | 256×224 | 960×714 (3.75× / 3.1875×), one PPA pass |
+| Lynx | 160×102 | 960×612 (6×, true aspect), one PPA pass |
 | SNES / Genesis / Neo Geo | native size × 2 (legacy) | native size × 3 |
 
 **Optimization — one PPA pass, no staging buffer.** The handheld path ran PPA into a staging buffer and
@@ -48,6 +52,16 @@ rotate + scale writes **straight into the DSI scan-out buffer** at the right off
 dominant cost at 60 FPS. Scale factors are rounded to the PPA's 1/16 resolution so output sizes are
 deterministic. When the presented geometry changes (launcher ↔ emulator ↔ PAPP app) the frame buffer is
 cleared once so no stale pixels remain in the bars.
+
+**Optimization — native frames in one pass.** On the handheld, NES, Game Boy, Master System / Game Gear
+scale to a 320×240 buffer first, then again onto the panel, and Lynx goes through the whole 800×480 UI
+buffer. On the Tab5 these go straight from their native resolution to the panel in a single PPA pass,
+with factors the PPA represents exactly (multiples of 1/16), keeping the same 4:3 picture.
+
+**Optimization — code runs from PSRAM.** `sdkconfig.tab5.defaults` sets QIO flash and
+`SPIRAM_XIP_FROM_PSRAM`, as M5Stack's own Tab5 firmware does: code and constants are copied into the
+200 MHz HEX PSRAM at boot, so cache misses no longer go to 80 MHz flash. This costs about the app's size in
+PSRAM (≤ 1.3 MB of 32 MB); Neo Geo sizes its caches from the remaining free PSRAM at runtime.
 
 Code that still talks to the old `st7701_lcd` API (the launcher's full-screen draws) goes through
 `st7701_lcd_tab5.c`, which keeps the 480×800 coordinate space and maps it onto the same 1.25× UI rect.
@@ -91,7 +105,9 @@ pad and are not reported there, so pressing a pad button never clicks a UI eleme
   (`tab5_display_set_fill_hook`). The emulator/UI picture never covers the bars, so it costs nothing per
   frame; pressed buttons are re-drawn highlighted (only that button, cache-synced).
 * **Multi-touch** (up to 5 points): hold the D-pad and A/B together; the D-pad is hit-tested by direction
-  from its centre, so diagonals work. Polled at ≤ 125 Hz; touch I2C runs at 400 kHz.
+  from its centre, so diagonals work. Touch I2C runs at 400 kHz.
+* **Polled off the emulator threads:** a background task on core 0 reads the touch controller every 8 ms
+  and redraws changed buttons; `odroid_input_gamepad_read()` only reads the cached button mask.
 * The same pad is shown in the launcher, in-game menus and PAPP apps, so touch alone can drive everything.
   X/Y keep their existing "X → MENU, Y → VOLUME" behaviour on cores without native X/Y.
 * The layout is one table (`s_btn[]`) in landscape pixels — resize or move buttons there.
@@ -120,7 +136,8 @@ The SD card layout, ROM folders and Neo Geo cache generation are identical to th
 
 **Slot sizes:** all 12 apps and the launcher fit their OTA slots in the Tab5 build. NES is the tightest
 (`ota_0`, 576 KB): the Tab5 board code and touch pad made it ~13 KB too big, so `apps/nes/sdkconfig.tab5.defaults` compiles
-INFO log strings out of that one app (570 KB, ~6 KB spare). Launcher: 728 KB of 768 KB.
+INFO log strings out of that one app (572 KB, ~4 KB spare). Launcher: 732 KB of 768 KB. Running from PSRAM
+does not change the flash image size.
 
 ## First-boot checklist
 
@@ -144,6 +161,8 @@ INFO log strings out of that one app (570 KB, ~6 KB spare). Launcher: 728 KB of 
 
 * Touch pad polish: per-system layouts (hide X/Y on NES, show C/D on Neo Geo), haptic-free "dead zone"
   tuning, a transparency/size setting.
-* NES / GB / SMS: scale the source straight to the panel in one PPA pass instead of going through the
-  320×240 intermediate.
+* Panel refresh: the v1 (ILI9881C) timings give ~48 Hz, v2/v3 ~58 Hz, below the emulators' 60 FPS. A
+  faster v1 pixel clock (opt-in) and double buffering synced to vertical blanking would remove judder and
+  tearing.
+* Launch speed: cache the detected panel revision across the emulator reboot to skip the 500 ms touch wait.
 * Tab5 extras: IMU (BMI270) tilt controls, RTC, the ESP32-C6 (Wi-Fi) co-processor.
