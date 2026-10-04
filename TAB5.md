@@ -182,6 +182,13 @@ from that file, so a partition change only needs editing there (and in the Windo
 summary lists every image's size against its slot; the merged `RetroESP32_P4_Tab5_v1.bin` and the
 individual binaries are uploaded as the `RetroESP32_P4_Tab5-idf<version>` artifact.
 
+Pushing a tag `tab5-v<version>` builds the same way and publishes a GitHub release with both merged
+images and their SHA-256 sums; a suffix (`tab5-v0.2.0-beta.1`) marks it as a pre-release:
+
+```bash
+git tag tab5-v0.2.0 && git push origin tab5-v0.2.0
+```
+
 The SD card layout, ROM folders and Neo Geo cache generation are identical to the other targets.
 
 **Slot sizes:** all 12 apps and the launcher fit their OTA slots in the Tab5 build. The NES slot (`ota_0`)
