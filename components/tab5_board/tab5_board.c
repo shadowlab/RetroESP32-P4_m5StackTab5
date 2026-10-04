@@ -14,6 +14,8 @@
 #include "freertos/task.h"
 #include "freertos/semphr.h"
 #include "esp_log.h"
+#include "esp_system.h"
+#include "esp_attr.h"
 #include "esp_check.h"
 #include "esp_cache.h"
 #include "esp_ldo_regulator.h"
@@ -159,6 +161,35 @@ static esp_err_t touch_io_new(uint8_t addr, esp_lcd_panel_io_handle_t *io)
     return esp_lcd_new_panel_io_i2c(s_i2c, &cfg, io);
 }
 
+/*
+ * Every emulator launch and every return to the launcher is an esp_restart().  Probing the
+ * touch controller to find the hardware revision needs a 500 ms wait after its rail comes up
+ * (the IO-expander driver resets the chip, so the rail is cycled on every boot).  The result
+ * is cached in RTC no-init memory, which survives a software reset, so only the first boot
+ * after power-on pays for the probe.  The cache is trusted only after ESP_RST_SW and only if
+ * its magic and check word match.
+ */
+#define REV_CACHE_MAGIC  0x54414235u   /* "TAB5" */
+typedef struct { uint32_t magic, rev, check; } rev_cache_t;
+static RTC_NOINIT_ATTR rev_cache_t s_rev_cache;
+
+static tab5_revision_t cached_revision(void)
+{
+    if (esp_reset_reason() != ESP_RST_SW) return TAB5_REV_UNKNOWN;
+    if (s_rev_cache.magic != REV_CACHE_MAGIC || s_rev_cache.check != (s_rev_cache.rev ^ ~REV_CACHE_MAGIC))
+        return TAB5_REV_UNKNOWN;
+    if (s_rev_cache.rev < TAB5_REV_ILI9881C_GT911 || s_rev_cache.rev > TAB5_REV_ST7121)
+        return TAB5_REV_UNKNOWN;
+    return (tab5_revision_t)s_rev_cache.rev;
+}
+
+static void cache_revision(tab5_revision_t rev)
+{
+    s_rev_cache.rev = (uint32_t)rev;
+    s_rev_cache.check = (uint32_t)rev ^ ~REV_CACHE_MAGIC;
+    s_rev_cache.magic = REV_CACHE_MAGIC;
+}
+
 static tab5_revision_t detect_revision(void)
 {
     if (s_rev != TAB5_REV_UNKNOWN) return s_rev;
@@ -167,6 +198,18 @@ static tab5_revision_t detect_revision(void)
     if (exp_push_pull(s_exp0, EXP_TOUCH_EN, true) != ESP_OK) {
         ESP_LOGE(TAG, "Failed to enable touch rail");
         return TAB5_REV_UNKNOWN;
+    }
+
+    static const char *names[] = { "?", "v1 (ILI9881C + GT911)", "v2 (ST7123)", "v3 (ST7121)" };
+    tab5_revision_t cached = cached_revision();
+    if (cached != TAB5_REV_UNKNOWN) {
+        /* Warm reboot: skip the probe.  Touch is first read much later (it tolerates a
+         * not-yet-ready controller); keep a short guard so the panel's freshly enabled
+         * rail settles before its init sequence. */
+        vTaskDelay(pdMS_TO_TICKS(50));
+        s_rev = cached;
+        ESP_LOGI(TAG, "Tab5 hardware %s (cached across reboot, probe skipped)", names[s_rev]);
+        return s_rev;
     }
     vTaskDelay(pdMS_TO_TICKS(500));
 
@@ -193,7 +236,7 @@ static tab5_revision_t detect_revision(void)
         return TAB5_REV_UNKNOWN;
     }
 
-    static const char *names[] = { "?", "v1 (ILI9881C + GT911)", "v2 (ST7123)", "v3 (ST7121)" };
+    cache_revision(s_rev);
     ESP_LOGI(TAG, "Detected Tab5 hardware %s", names[s_rev]);
     return s_rev;
 }
@@ -462,8 +505,13 @@ esp_err_t tab5_touch_init(void)
         ESP_LOGI(TAG, "GT911 touch ready");
     } else {
         ESP_RETURN_ON_ERROR(touch_io_new(ST7123_TOUCH_ADDR, &s_touch_io), TAG, "ST712x IO");
+        /* After a warm reboot the controller may still be starting up (its rail was just
+         * re-enabled and the revision probe was skipped): fall back to the maximum. */
         uint8_t max = 0;
-        ESP_RETURN_ON_ERROR(esp_lcd_panel_io_rx_param(s_touch_io, 0x0009, &max, 1), TAG, "ST712x info");
+        if (esp_lcd_panel_io_rx_param(s_touch_io, 0x0009, &max, 1) != ESP_OK) {
+            ESP_LOGW(TAG, "ST712x not answering yet - assuming %d touch points", TAB5_MAX_TOUCH_POINTS);
+            max = 0;
+        }
         s_st_max_touches = (max == 0 || max > TAB5_MAX_TOUCH_POINTS) ? TAB5_MAX_TOUCH_POINTS : max;
         ESP_LOGI(TAG, "ST712x touch ready (%u points)", s_st_max_touches);
     }

@@ -87,6 +87,13 @@ Touch input is mapped back to the same legacy 480×800 space in `gt911_touch.c` 
 the launcher's touch keyboard and the PAPP loader work unchanged. Touches in the side bars belong to the
 pad and are not reported there, so pressing a pad button never clicks a UI element.
 
+**Faster emulator launch / return.** Starting an emulator and going back to the launcher are both
+reboots, and detecting the hardware revision costs a 500 ms wait for the touch controller. The detected
+revision is kept in RTC no-init memory (it survives a software reset; same address in every image), so only
+the first boot after power-on probes; warm boots log `cached across reboot, probe skipped` and save
+~450 ms each way. The cache is used only after a software reset and only if its magic and check word match;
+otherwise the board is probed as before.
+
 ## Input
 
 * **USB gamepads work as on the other boards** (the 5 V rail of the USB-A port is switched on at boot).
@@ -180,5 +187,4 @@ does not change the flash image size.
 
 * Touch pad polish: per-system layouts (hide X/Y on NES, show C/D on Neo Geo), haptic-free "dead zone"
   tuning, a transparency/size setting.
-* Launch speed: cache the detected panel revision across the emulator reboot to skip the 500 ms touch wait.
 * Tab5 extras: IMU (BMI270) tilt controls, RTC, the ESP32-C6 (Wi-Fi) co-processor.
