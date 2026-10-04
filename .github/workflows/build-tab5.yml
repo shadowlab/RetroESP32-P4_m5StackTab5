@@ -6,6 +6,7 @@ name: Build Tab5 firmware
 
 on:
   push:
+    branches: [main]   # other branches build through their pull request
     paths-ignore: ['**.md', 'images/**', 'promo/**', 'SDcard/**']
   pull_request:
     paths-ignore: ['**.md', 'images/**', 'promo/**', 'SDcard/**']
