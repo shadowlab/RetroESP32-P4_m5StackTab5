@@ -224,7 +224,11 @@ removed IDF fields (`rgb_ele_order`, `dma_burst_size`, no `use_dma2d`, `EXT_RAM_
 to the standard they were written for (nofrendo, smsplus, spectrum: `gnu17`; handy, stella: `gnu++20`).
 It also pins the P4 chip revision: 6.x defaults to v3.1+ chips, and a bootloader built for v3 does not
 boot on the Tab5's pre-v3 P4, so `sdkconfig.tab5.defaults` sets `CONFIG_ESP32P4_SELECTS_REV_LESS_V3=y` and
-`CONFIG_ESP32P4_REV_MIN_1=y` (5.5's defaults). It also sets `CONFIG_COMPILER_DISABLE_DEFAULT_ERRORS=y` so warnings in the third-party
+`CONFIG_ESP32P4_REV_MIN_1=y` (5.5's defaults). That memory map has less IRAM than v3's, and 6.x keeps more of
+itself in IRAM, which left SNES (whose core keeps ~100 KB of hot code in IRAM) short: the Tab5 defaults
+move the unused SPI/PARLIO driver ISRs out of IRAM, and on this target the rarely used mosaic
+(`DrawLargePixel*`) renderers in `snes9x/tile.c` run from PSRAM instead (~13 KB IRAM headroom left).
+It also sets `CONFIG_COMPILER_DISABLE_DEFAULT_ERRORS=y` so warnings in the third-party
 cores stay warnings. Image sizes are within a few KB of the 5.5 builds. Only build-tested on 6.1 — the
 runtime has only been reasoned about against 5.5's drivers.
 

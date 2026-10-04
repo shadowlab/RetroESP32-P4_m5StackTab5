@@ -9,6 +9,16 @@
 #include "tile.h"
 
 #include "esp_attr.h"
+#include "esp_idf_version.h"
+#include "sdkconfig.h"
+
+/* Mosaic ("large pixel") drawing is rare. On the Tab5 with ESP-IDF 6 the pre-v3 ESP32-P4 memory map
+ * leaves too little IRAM for the rest of the core's hot code, so there these run from PSRAM (XIP). */
+#if defined(CONFIG_BOARD_M5STACK_TAB5) && ESP_IDF_VERSION_MAJOR >= 6
+#define MOSAIC_IRAM_ATTR
+#else
+#define MOSAIC_IRAM_ATTR IRAM_ATTR
+#endif
 
 static uint32_t HeadMask [4] =
 {
@@ -591,7 +601,7 @@ IRAM_ATTR void DrawClippedTile16x2x2(uint32_t Tile, int32_t Offset, uint32_t Sta
    RENDER_CLIPPED_TILE_CODE(WRITE_4PIXELS16x2x2, WRITE_4PIXELS16_FLIPPEDx2x2, 8);
 }
 
-IRAM_ATTR void DrawLargePixel16(uint32_t Tile, int32_t Offset, uint32_t StartPixel, uint32_t Pixels, uint32_t StartLine, uint32_t LineCount)
+MOSAIC_IRAM_ATTR void DrawLargePixel16(uint32_t Tile, int32_t Offset, uint32_t StartPixel, uint32_t Pixels, uint32_t StartLine, uint32_t LineCount)
 {
    uint16_t pixel;
    uint16_t *sp;
@@ -603,7 +613,7 @@ IRAM_ATTR void DrawLargePixel16(uint32_t Tile, int32_t Offset, uint32_t StartPix
    RENDER_TILE_LARGE(ScreenColors [pixel], PLOT_PIXEL);
 }
 
-IRAM_ATTR void DrawLargePixel16HalfWidth(uint32_t Tile, int32_t Offset, uint32_t StartPixel, uint32_t Pixels, uint32_t StartLine, uint32_t LineCount)
+MOSAIC_IRAM_ATTR void DrawLargePixel16HalfWidth(uint32_t Tile, int32_t Offset, uint32_t StartPixel, uint32_t Pixels, uint32_t StartLine, uint32_t LineCount)
 {
    uint16_t pixel;
    uint16_t *sp;
@@ -1147,7 +1157,7 @@ IRAM_ATTR void DrawClippedTile16FixedSub1_2(uint32_t Tile, int32_t Offset, uint3
    RENDER_CLIPPED_TILE_CODE(WRITE_4PIXELS16_SUBF1_2, WRITE_4PIXELS16_FLIPPED_SUBF1_2, 4);
 }
 
-IRAM_ATTR void DrawLargePixel16Add(uint32_t Tile, int32_t Offset, uint32_t StartPixel, uint32_t Pixels, uint32_t StartLine, uint32_t LineCount)
+MOSAIC_IRAM_ATTR void DrawLargePixel16Add(uint32_t Tile, int32_t Offset, uint32_t StartPixel, uint32_t Pixels, uint32_t StartLine, uint32_t LineCount)
 {
    uint16_t* sp = (uint16_t*) GFX.S + Offset;
    uint8_t*  Depth = GFX.ZBuffer + Offset;
@@ -1163,7 +1173,7 @@ IRAM_ATTR void DrawLargePixel16Add(uint32_t Tile, int32_t Offset, uint32_t Start
    RENDER_TILE_LARGE(ScreenColors [pixel], LARGE_ADD_PIXEL);
 }
 
-IRAM_ATTR void DrawLargePixel16Add1_2(uint32_t Tile, int32_t Offset, uint32_t StartPixel, uint32_t Pixels, uint32_t StartLine, uint32_t LineCount)
+MOSAIC_IRAM_ATTR void DrawLargePixel16Add1_2(uint32_t Tile, int32_t Offset, uint32_t StartPixel, uint32_t Pixels, uint32_t StartLine, uint32_t LineCount)
 {
    uint16_t* sp = (uint16_t*) GFX.S + Offset;
    uint8_t*  Depth = GFX.ZBuffer + Offset;
@@ -1179,7 +1189,7 @@ IRAM_ATTR void DrawLargePixel16Add1_2(uint32_t Tile, int32_t Offset, uint32_t St
    RENDER_TILE_LARGE(ScreenColors [pixel], LARGE_ADD_PIXEL1_2);
 }
 
-IRAM_ATTR void DrawLargePixel16Sub(uint32_t Tile, int32_t Offset, uint32_t StartPixel, uint32_t Pixels, uint32_t StartLine, uint32_t LineCount)
+MOSAIC_IRAM_ATTR void DrawLargePixel16Sub(uint32_t Tile, int32_t Offset, uint32_t StartPixel, uint32_t Pixels, uint32_t StartLine, uint32_t LineCount)
 {
    uint16_t* sp = (uint16_t*) GFX.S + Offset;
    uint8_t*  Depth = GFX.ZBuffer + Offset;
@@ -1195,7 +1205,7 @@ IRAM_ATTR void DrawLargePixel16Sub(uint32_t Tile, int32_t Offset, uint32_t Start
    RENDER_TILE_LARGE(ScreenColors [pixel], LARGE_SUB_PIXEL);
 }
 
-IRAM_ATTR void DrawLargePixel16Sub1_2(uint32_t Tile, int32_t Offset, uint32_t StartPixel, uint32_t Pixels, uint32_t StartLine, uint32_t LineCount)
+MOSAIC_IRAM_ATTR void DrawLargePixel16Sub1_2(uint32_t Tile, int32_t Offset, uint32_t StartPixel, uint32_t Pixels, uint32_t StartLine, uint32_t LineCount)
 {
    uint16_t* sp = (uint16_t*) GFX.S + Offset;
    uint8_t*  Depth = GFX.ZBuffer + Offset;

@@ -11,6 +11,15 @@ CONFIG_BOARD_M5STACK_TAB5=y
 CONFIG_ESP32P4_SELECTS_REV_LESS_V3=y
 CONFIG_ESP32P4_REV_MIN_1=y
 
+# That pre-v3 memory map leaves less IRAM than v3's, and ESP-IDF 6 puts more of itself in IRAM, which
+# left the SNES app (the core keeps ~100 KB of hot code in IRAM) ~2 KB short. Nothing in this firmware
+# uses the SPI master/slave or PARLIO drivers, so their ISRs (and the GDMA control functions they pull
+# into IRAM) don't need to be there.
+CONFIG_SPI_MASTER_ISR_IN_IRAM=n
+CONFIG_SPI_SLAVE_ISR_IN_IRAM=n
+CONFIG_PARLIO_TX_ISR_HANDLER_IN_IRAM=n
+CONFIG_PARLIO_RX_ISR_HANDLER_IN_IRAM=n
+
 # Flash + execution, as in M5Stack's own Tab5 firmware:
 #  - the Tab5's flash is wired for quad I/O
 #  - copy code (.text) and constants (.rodata) into the 200 MHz HEX PSRAM at boot and run from
