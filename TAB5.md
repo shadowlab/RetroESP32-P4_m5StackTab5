@@ -189,6 +189,9 @@ images and their SHA-256 sums; a suffix (`tab5-v0.2.0-beta.1`) marks it as a pre
 git tag tab5-v0.2.0 && git push origin tab5-v0.2.0
 ```
 
+Creating the release on GitHub instead (new tag `tab5-v...` in the release form) works too: the
+build attaches the images to it and fills in the notes.
+
 The SD card layout, ROM folders and Neo Geo cache generation are identical to the other targets.
 
 **Slot sizes:** all 12 apps and the launcher fit their OTA slots in the Tab5 build. The NES slot (`ota_0`)

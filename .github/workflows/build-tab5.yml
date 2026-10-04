@@ -146,6 +146,12 @@ jobs:
             echo '```'
           } > notes.md
 
-          gh release create "$TAG" --repo "$GITHUB_REPOSITORY" --verify-tag \
-            --title "M5Stack Tab5 ${TAG#tab5-}" --notes-file notes.md "${prerelease[@]}" \
-            "$main" "$alt" SHA256SUMS
+          if gh release view "$TAG" --repo "$GITHUB_REPOSITORY" > /dev/null 2>&1; then
+            # release already drafted/published on GitHub (which also creates the tag): attach the images
+            gh release upload "$TAG" --repo "$GITHUB_REPOSITORY" --clobber "$main" "$alt" SHA256SUMS
+            gh release edit "$TAG" --repo "$GITHUB_REPOSITORY" --notes-file notes.md
+          else
+            gh release create "$TAG" --repo "$GITHUB_REPOSITORY" --verify-tag \
+              --title "M5Stack Tab5 ${TAG#tab5-}" --notes-file notes.md "${prerelease[@]}" \
+              "$main" "$alt" SHA256SUMS
+          fi
