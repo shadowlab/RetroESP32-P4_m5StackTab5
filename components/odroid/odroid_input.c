@@ -22,6 +22,9 @@
 
 #include "odroid_input.h"
 #include "gamepad.h"   /* gamepad_is_connected() */
+#ifdef CONFIG_BOARD_M5STACK_TAB5
+#include "tab5_board.h"
+#endif
 #ifndef CONFIG_HDMI_OUTPUT
 #include "gt911_touch.h"
 #endif
@@ -423,8 +426,9 @@ void odroid_input_battery_level_init(void)
     /* HDMI: no battery — skip */
 #else
 #ifdef CONFIG_BOARD_M5STACK_TAB5
-    /* Tab5: battery is on a fuel-gauge/INA226 over I2C, not an ADC divider.
-     * Leaving the ADC handle NULL makes _read() report a full battery. */
+    /* Tab5: battery is monitored by an INA226 over I2C, not an ADC divider.
+     * If it does not answer, _read() keeps reporting a full battery. */
+    tab5_battery_init();
     return;
 #endif
     if (s_battery_adc_handle) return;  /* already initialised */
@@ -456,6 +460,49 @@ void odroid_input_battery_level_init(void)
 #endif
 }
 
+#ifdef CONFIG_BOARD_M5STACK_TAB5
+/* 2S Li-ion (NP-F550) open-circuit-voltage curve, per cell in mV -> percent */
+static int tab5_cell_mv_to_percent(int cell_mv)
+{
+    static const struct { int mv, pct; } curve[] = {
+        {3000, 0}, {3300, 5}, {3600, 20}, {3700, 40}, {3800, 55},
+        {3900, 68}, {4000, 80}, {4100, 92}, {4200, 100},
+    };
+    const int n = sizeof(curve) / sizeof(curve[0]);
+    if (cell_mv <= curve[0].mv)   return 0;
+    if (cell_mv >= curve[n-1].mv) return 100;
+    for (int i = 1; i < n; i++) {
+        if (cell_mv <= curve[i].mv) {
+            return curve[i-1].pct + (cell_mv - curve[i-1].mv) *
+                   (curve[i].pct - curve[i-1].pct) / (curve[i].mv - curve[i-1].mv);
+        }
+    }
+    return 100;
+}
+
+static void tab5_battery_level_read(odroid_battery_state *state)
+{
+    int mv = 0, ma = 0;
+    /* Defaults when the monitor is absent: behave like the old "no battery" case. */
+    state->millivolts = 8400;
+    state->percentage = 100;
+    state->charging = false;
+    if (tab5_battery_read(&mv, &ma) != ESP_OK) return;
+
+    /* Standard Tab5 ships without a pack and runs from external power; the bus then
+     * sits near the 5 V rail, well below an empty 2S pack (6 V). */
+    if (mv < 5500) return;
+
+    bool charging = TAB5_BATT_CHARGE_CURRENT_POSITIVE ? (ma > 50) : (ma < -50);
+    /* Voltage reads high while charging, so don't trust it for the percentage then. */
+    int pct = tab5_cell_mv_to_percent(mv / 2);
+    if (charging && pct > 95) pct = 100;
+    state->millivolts = mv;
+    state->percentage = pct;
+    state->charging = charging;
+}
+#endif
+
 void odroid_input_battery_level_read(odroid_battery_state *state)
 {
     if (!state) return;
@@ -466,6 +513,10 @@ void odroid_input_battery_level_read(odroid_battery_state *state)
     state->percentage = 100;
     state->charging = false;
 #else
+#ifdef CONFIG_BOARD_M5STACK_TAB5
+    tab5_battery_level_read(state);
+    return;
+#endif
     if (!s_battery_adc_handle) {
         /* Not initialised — report full */
         state->millivolts = 4200;

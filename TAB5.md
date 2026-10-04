@@ -61,7 +61,13 @@ touch keyboard, the PAPP loader and the MENU/VOL zones all work unchanged.
 
 * **USB gamepads work as on the other boards** (the 5 V rail of the USB-A port is switched on at boot).
 * The handheld's **GPIO pad is disabled** on the Tab5 — its pins (28/29/30) are the codec's I2S lines.
-  The paddle / battery ADC code is disabled for the same reason; the battery reads as full for now.
+  The paddle / battery ADC code is disabled for the same reason.
+* **Battery:** read from the Tab5's **INA226** power monitor (I2C 0x41, 5 mΩ shunt) in
+  `tab5_battery_read()`. The pack is a 2S NP-F550, so the voltage is converted to a percentage per cell
+  (3.0–4.2 V) and fed through the existing `odroid_input_battery_level_read()`, i.e. the launcher's
+  battery icon works unchanged. The standard Tab5 has no pack and runs from 5 V: a bus voltage under
+  5.5 V is treated as "no battery" and reported as 100 %. "Charging" means current above ±50 mA in the
+  direction set by `TAB5_BATT_CHARGE_CURRENT_POSITIVE`.
 * Touch still provides the **MENU** (touch the first ~170 legacy px, i.e. the left end of the landscape
   view) and **VOLUME** (the right end) buttons plus the launcher UI. There is **no on-screen D-pad / buttons
   yet** — play with a USB controller.
@@ -103,13 +109,15 @@ INFO log strings out of that one app (580 KB, 9 KB spare). Launcher: 725 KB of 7
 3. **Audio** — ES8388 init happens in `components/audio/audio.c`; the speaker amp is enabled through the
    expander (`tab5_board_speaker_enable`).
 4. **USB gamepad** — needs the expander's USB rail (`tab5_board_usb_power_enable`).
-5. **Frame rate** — `DISP TIMING` lines print the PPA time per frame every 60 frames.
+5. **Battery** — the serial log shows `INA226 battery monitor ready`. With a pack fitted the icon should
+   track charge; if "charging" looks inverted, flip `TAB5_BATT_CHARGE_CURRENT_POSITIVE` (the shunt's
+   current sign is not verified on hardware).
+6. **Frame rate** — `DISP TIMING` lines print the PPA time per frame every 60 frames.
 
 ## Ideas not done yet
 
 * On-screen touch controller (multi-touch is already available from `tab5_touch_read()`; the 160 px
   bars next to a 3× emulator image are the natural place for it).
-* Battery level from the Tab5's power monitor (I2C) instead of the handheld's ADC divider.
 * NES / GB / SMS: scale the source straight to the panel in one PPA pass instead of going through the
   320×240 intermediate.
 * Tab5 extras: IMU (BMI270) tilt controls, RTC, the ESP32-C6 (Wi-Fi) co-processor.

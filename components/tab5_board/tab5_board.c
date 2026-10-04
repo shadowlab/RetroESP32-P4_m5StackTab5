@@ -440,4 +440,59 @@ int tab5_touch_read(tab5_touch_point_t *pts, int max_points)
     return out;
 }
 
+/* ─── Battery (INA226) ─────────────────────────────────────────── */
+
+#define INA226_ADDR        0x41
+#define INA226_REG_CONFIG  0x00
+#define INA226_REG_SHUNT   0x01
+#define INA226_REG_BUS     0x02
+/* 16 averages, 1.1 ms bus + shunt conversion, shunt+bus continuous (matches M5's demo) */
+#define INA226_CONFIG      0x4527
+
+static i2c_master_dev_handle_t s_ina = NULL;
+
+static esp_err_t ina_read16(uint8_t reg, uint16_t *out)
+{
+    uint8_t b[2];
+    ESP_RETURN_ON_ERROR(i2c_master_transmit_receive(s_ina, &reg, 1, b, 2, 50), TAG, "INA226 read");
+    *out = (uint16_t)((b[0] << 8) | b[1]);
+    return ESP_OK;
+}
+
+esp_err_t tab5_battery_init(void)
+{
+    if (s_ina) return ESP_OK;
+    ESP_RETURN_ON_ERROR(tab5_board_init(), TAG, "board init");
+
+    const i2c_device_config_t cfg = {
+        .dev_addr_length = I2C_ADDR_BIT_LEN_7,
+        .device_address = INA226_ADDR,
+        .scl_speed_hz = 400000,
+    };
+    i2c_master_dev_handle_t dev = NULL;
+    ESP_RETURN_ON_ERROR(i2c_master_bus_add_device(s_i2c, &cfg, &dev), TAG, "INA226 add device");
+
+    const uint8_t conf[3] = { INA226_REG_CONFIG, INA226_CONFIG >> 8, INA226_CONFIG & 0xFF };
+    esp_err_t ret = i2c_master_transmit(dev, conf, sizeof(conf), 50);
+    if (ret != ESP_OK) {
+        ESP_LOGW(TAG, "INA226 not responding (%s) - battery will read as full", esp_err_to_name(ret));
+        i2c_master_bus_rm_device(dev);
+        return ret;
+    }
+    s_ina = dev;
+    ESP_LOGI(TAG, "INA226 battery monitor ready");
+    return ESP_OK;
+}
+
+esp_err_t tab5_battery_read(int *mv, int *ma)
+{
+    ESP_RETURN_ON_FALSE(s_ina, ESP_ERR_INVALID_STATE, TAG, "battery monitor not initialised");
+    uint16_t bus = 0, shunt = 0;
+    ESP_RETURN_ON_ERROR(ina_read16(INA226_REG_BUS, &bus), TAG, "bus");
+    ESP_RETURN_ON_ERROR(ina_read16(INA226_REG_SHUNT, &shunt), TAG, "shunt");
+    if (mv) *mv = (int)bus * 5 / 4;                 /* 1.25 mV / LSB */
+    if (ma) *ma = (int)(int16_t)shunt / 2;          /* 2.5 uV / LSB over 5 mOhm = 0.5 mA / LSB */
+    return ESP_OK;
+}
+
 #endif /* CONFIG_BOARD_M5STACK_TAB5 */
