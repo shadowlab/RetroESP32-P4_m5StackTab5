@@ -157,6 +157,7 @@ otherwise the board is probed as before.
 . $IDF_PATH/export.sh            # ESP-IDF 5.5.x or 6.1
 ./build_all_tab5.sh              # launcher + 12 emulators -> firmware_tab5/ and RetroESP32_P4_Tab5_v1.bin
 ./build_all_tab5.sh launcher snes   # or just some projects
+./build_all_tab5.sh --merge-only    # merge what is already in firmware_tab5/
 python -m esptool --chip esp32p4 -b 460800 write_flash 0x0 RetroESP32_P4_Tab5_v1.bin
 ```
 
@@ -170,6 +171,16 @@ idf.py -B build_tab5 -DSDKCONFIG=build_tab5/sdkconfig \
 
 (Use a separate build dir + sdkconfig: a Tab5 `sdkconfig` reused for a handheld build, or the other way
 round, drives the wrong display and pins.)
+
+Every image is checked against its own slot in `partitions_ota.csv`, and the merge offsets are read
+from that file, so a partition change only needs editing there (and in the Windows `.ps1` scripts).
+
+### CI
+
+`.github/workflows/build-tab5.yml` builds the launcher and each emulator in its own job with ESP-IDF
+5.5.2 and 6.1 (`espressif/idf` containers), then merges one image per IDF version.  The run's
+summary lists every image's size against its slot; the merged `RetroESP32_P4_Tab5_v1.bin` and the
+individual binaries are uploaded as the `RetroESP32_P4_Tab5-idf<version>` artifact.
 
 The SD card layout, ROM folders and Neo Geo cache generation are identical to the other targets.
 

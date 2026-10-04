@@ -1,0 +1,83 @@
+# Build the M5Stack Tab5 firmware: the launcher and every emulator app, each in its own job,
+# then merge them into one flashable image (RetroESP32_P4_Tab5_v1.bin, flash at 0x0).
+# Built with ESP-IDF 5.5.2 (the reference toolchain) and 6.1.  build_all_tab5.sh fails a job when
+# an image does not fit its partition in partitions_ota.csv.
+name: Build Tab5 firmware
+
+on:
+  push:
+    paths-ignore: ['**.md', 'images/**', 'promo/**', 'SDcard/**']
+  pull_request:
+    paths-ignore: ['**.md', 'images/**', 'promo/**', 'SDcard/**']
+  workflow_dispatch:
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+permissions:
+  contents: read
+
+jobs:
+  build:
+    name: ${{ matrix.project }} (IDF ${{ matrix.idf }})
+    runs-on: ubuntu-latest
+    container: espressif/idf:v${{ matrix.idf }}
+    strategy:
+      fail-fast: false
+      matrix:
+        idf: ['5.5.2', '6.1']
+        project: [launcher, nes, gb, sms, spectrum, stella, prosystem, handy, pce, atari800, snes, genesis, neogeo]
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Build
+        shell: bash
+        run: |
+          . "$IDF_PATH/export.sh" > /dev/null
+          ./build_all_tab5.sh ${{ matrix.project }}
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: tab5-idf${{ matrix.idf }}-${{ matrix.project }}
+          path: firmware_tab5/*.bin
+          if-no-files-found: error
+          retention-days: 7
+
+  merge:
+    name: Merge image (IDF ${{ matrix.idf }})
+    needs: build
+    runs-on: ubuntu-latest
+    container: espressif/idf:v${{ matrix.idf }}
+    strategy:
+      fail-fast: false
+      matrix:
+        idf: ['5.5.2', '6.1']
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/download-artifact@v4
+        with:
+          pattern: tab5-idf${{ matrix.idf }}-*
+          path: firmware_tab5
+          merge-multiple: true
+
+      - name: Merge
+        shell: bash
+        run: |
+          . "$IDF_PATH/export.sh" > /dev/null
+          ./build_all_tab5.sh --merge-only | tee merge.log
+          {
+            echo "### Tab5 image sizes (ESP-IDF ${{ matrix.idf }})"
+            echo '```'
+            grep ' KB / ' merge.log
+            echo '```'
+          } >> "$GITHUB_STEP_SUMMARY"
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: RetroESP32_P4_Tab5-idf${{ matrix.idf }}
+          path: |
+            RetroESP32_P4_Tab5_v1.bin
+            firmware_tab5/*.bin
+          if-no-files-found: error

@@ -11,7 +11,7 @@
 # by 0x10000 with their sizes unchanged.  ota_8 (Atari 800) was then grown from
 # 768 KB to 832 KB with another 64 KB of ota_9 (now 640 KB, at 0x820000; it stays
 # unused).  Offsets must match flash_all.ps1,
-# generate_merged_bin*.ps1 and build_all_tab5.sh.
+# generate_merged_bin*.ps1 (build_all_tab5.sh reads them from here).
 #
 # Name,     Type, SubType, Offset,    Size,    Flags
 nvs,        data, nvs,     0x9000,    0x4000,
