@@ -21,6 +21,7 @@ sdkconfig
 
 # === Text files (logs, captures, temp notes) ===
 *.txt
+!CMakeLists.txt
 
 # === Temporary/check binaries ===
 *.check.bin
