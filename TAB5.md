@@ -58,6 +58,21 @@ scale to a 320×240 buffer first, then again onto the panel, and Lynx goes throu
 buffer. On the Tab5 these go straight from their native resolution to the panel in a single PPA pass,
 with factors the PPA represents exactly (multiples of 1/16), keeping the same 4:3 picture.
 
+**Tear-free double buffering** (`CONFIG_TAB5_DOUBLE_BUFFER`, default on). The panel driver gets two
+720×1280 frame buffers (+1.8 MB PSRAM). Each frame is drawn into the hidden one and swapped in at the
+panel's frame boundary, so a picture is never shown half-drawn. The swap needs no copy: handing the driver
+a pointer inside its own buffer just switches the scan-out buffer. Before redrawing the old buffer the
+next frame waits for VSYNC. **Emulator frames never wait**: if the previous frame is not on screen yet the
+new one is dropped, so emulation speed (and audio) never depends on the panel's refresh rate. UI frames
+(launcher, menus, PAPP apps) do wait, so the last state is always shown. The touch pad, frame-buffer
+clears and the launcher's one-off draws are written into both buffers.
+
+**Panel refresh rate.** With the esp-bsp timings the panels refresh at about **48 Hz (v1, ILI9881C, 60 MHz
+pixel clock)** and **58 Hz (v2/v3, ST712x, 70 MHz)**, below the emulators' 60 FPS, so some frames are
+dropped (judder). Both clocks are Kconfig options; `sdkconfig.tab5.defaults` has the lines to uncomment for
+~60 Hz (75 MHz / 73 MHz). They are opt-in because they are outside the tested timings; the boot log prints
+the resulting refresh rate (`Display ready: … MHz pixel clock -> ~NN.N Hz`).
+
 **Optimization — code runs from PSRAM.** `sdkconfig.tab5.defaults` sets QIO flash and
 `SPIRAM_XIP_FROM_PSRAM`, as M5Stack's own Tab5 firmware does: code and constants are copied into the
 200 MHz HEX PSRAM at boot, so cache misses no longer go to 80 MHz flash. This costs about the app's size in
@@ -156,13 +171,14 @@ does not change the flash image size.
    track charge; if "charging" looks inverted, flip `TAB5_BATT_CHARGE_CURRENT_POSITIVE` (the shunt's
    current sign is not verified on hardware).
 6. **Frame rate** — `DISP TIMING` lines print the PPA time per frame every 60 frames.
+7. **Refresh / tearing** — the boot log prints the panel refresh rate. For ~60 Hz uncomment the clock lines
+   in `sdkconfig.tab5.defaults` and rebuild; if the panel then shows noise, a black screen or rolls, go back
+   to the defaults. If double buffering misbehaves (frozen or flickering picture), build with
+   `CONFIG_TAB5_DOUBLE_BUFFER=n` to compare.
 
 ## Ideas not done yet
 
 * Touch pad polish: per-system layouts (hide X/Y on NES, show C/D on Neo Geo), haptic-free "dead zone"
   tuning, a transparency/size setting.
-* Panel refresh: the v1 (ILI9881C) timings give ~48 Hz, v2/v3 ~58 Hz, below the emulators' 60 FPS. A
-  faster v1 pixel clock (opt-in) and double buffering synced to vertical blanking would remove judder and
-  tearing.
 * Launch speed: cache the detected panel revision across the emulator reboot to skip the 500 ms touch wait.
 * Tab5 extras: IMU (BMI270) tilt controls, RTC, the ESP32-C6 (Wi-Fi) co-processor.

@@ -40,17 +40,21 @@ esp_err_t st7701_lcd_draw_rgb_bitmap(uint16_t x, uint16_t y,
                                       uint16_t w, uint16_t h,
                                       const uint16_t *data)
 {
-    void *fb = tab5_display_fb();
-    if (!fb) return ESP_ERR_INVALID_STATE;
+    if (!tab5_display_fb_count()) return ESP_ERR_INVALID_STATE;
     if (!data || w == 0 || h == 0) return ESP_ERR_INVALID_ARG;
     if (x + w > LEGACY_W || y + h > LEGACY_H) return ESP_ERR_INVALID_SIZE;
 
     uint32_t dx = (uint32_t)(x * SCALE + 0.5f) + TAB5_UI_X_OFF;
     uint32_t dy = (uint32_t)(y * SCALE + 0.5f) + TAB5_UI_Y_OFF;
-    esp_err_t ret = ppa_rotate_scale_rgb565_to_rect(
-        data, w, h, 0, SCALE, SCALE,
-        fb, tab5_display_fb_size(), TAB5_PANEL_W, TAB5_PANEL_H,
-        dx, dy, NULL, NULL, false);
+    /* These are one-off or partial draws (launcher splash, full-screen clears), not frames:
+     * write them into every frame buffer so a double-buffered display stays consistent. */
+    esp_err_t ret = ESP_OK;
+    for (int f = 0; f < tab5_display_fb_count() && ret == ESP_OK; f++) {
+        ret = ppa_rotate_scale_rgb565_to_rect(
+            data, w, h, 0, SCALE, SCALE,
+            tab5_display_fb_at(f), tab5_display_fb_size(), TAB5_PANEL_W, TAB5_PANEL_H,
+            dx, dy, NULL, NULL, false);
+    }
     if (ret != ESP_OK) {
         ESP_LOGE(TAG, "draw %ux%u @(%u,%u) failed: %s", w, h, x, y, esp_err_to_name(ret));
     }
@@ -76,7 +80,7 @@ esp_err_t st7701_lcd_draw_to_fb(uint16_t x, uint16_t y,
 
 esp_err_t st7701_lcd_fill_screen(uint16_t color)
 {
-    if (!tab5_display_fb()) return ESP_ERR_INVALID_STATE;
+    if (!tab5_display_fb_count()) return ESP_ERR_INVALID_STATE;
     tab5_display_fill(color);
     return ESP_OK;
 }

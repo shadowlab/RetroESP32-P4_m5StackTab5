@@ -20,6 +20,35 @@ menu "RetroESP32 Platform"
             host for gamepads.  The GPIO gamepad is disabled (its pins are used by
             the audio codec).
 
+    config TAB5_DOUBLE_BUFFER
+        bool "Tab5: double-buffered, tear-free display"
+        default y
+        depends on BOARD_M5STACK_TAB5
+        help
+            Two 720x1280 frame buffers (+1.8 MB PSRAM) swapped at the panel's frame
+            boundary, so a picture is never shown half-drawn.  Emulator frames that
+            arrive before the previous one reached the screen are dropped rather than
+            waited for, so emulation speed never depends on the panel refresh rate.
+
+    config TAB5_ILI9881C_DPI_CLOCK_MHZ
+        int "Tab5 v1 (ILI9881C) pixel clock (MHz)"
+        default 60
+        range 50 80
+        depends on BOARD_M5STACK_TAB5
+        help
+            60 MHz is the M5Stack/esp-bsp setting and refreshes at ~48 Hz, below the
+            emulators' 60 FPS.  75 MHz gives ~60 Hz but is outside the tested timing;
+            try it if the v1 panel shows judder.
+
+    config TAB5_ST712X_DPI_CLOCK_MHZ
+        int "Tab5 v2/v3 (ST7123/ST7121) pixel clock (MHz)"
+        default 70
+        range 60 80
+        depends on BOARD_M5STACK_TAB5
+        help
+            70 MHz is the esp-bsp setting (~58 Hz).  73 MHz gives ~60 Hz but is
+            outside the tested timing.
+
     config LT8912_I2C_SDA
         int "LT8912 I2C SDA GPIO"
         default 7

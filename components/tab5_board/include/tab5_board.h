@@ -84,8 +84,9 @@ esp_err_t tab5_board_usb_power_enable(bool enable);
 
 /**
  * Detect the hardware revision, power the DSI PHY and bring up the panel.
- * One DPI frame buffer (RGB565, 720x1280) is allocated in PSRAM and cleared to
- * black.  The backlight is NOT turned on (odroid_display owns the LEDC channel).
+ * The DPI frame buffer(s) (RGB565, 720x1280, PSRAM) are cleared to black.  With
+ * CONFIG_TAB5_DOUBLE_BUFFER there are two, swapped at the frame boundary (tear-free).
+ * The backlight is NOT turned on (odroid_display owns the LEDC channel).
  */
 esp_err_t tab5_display_init(void);
 
@@ -93,14 +94,27 @@ esp_err_t tab5_display_init(void);
 tab5_revision_t tab5_board_revision(void);
 
 /**
- * Pointer to the DPI frame buffer scanned out by the panel (RGB565, 720x1280,
- * row stride 1440 bytes).  PPA can render straight into it - no copy needed.
+ * Frame presentation.  begin returns the buffer to draw the next full picture into (RGB565,
+ * 720x1280, row stride 1440 bytes; PPA can render straight into it).  end queues it for
+ * scan-out at the next frame boundary.
+ * With double buffering, begin waits for the previous frame to reach the screen; if
+ * `may_drop` is set it does not wait and returns NULL instead (drop this frame), so an
+ * emulator is never slowed down to the panel's refresh rate.  Single-buffered: begin always
+ * returns the one buffer and end does nothing.
  */
-void *tab5_display_fb(void);
+void *tab5_display_begin_frame(bool may_drop);
+void  tab5_display_end_frame(void);
+
+/**
+ * All frame buffers, for content that must be identical in every buffer (the touch pad,
+ * one-off full-screen draws): write it into each of them.
+ */
+int    tab5_display_fb_count(void);
+void  *tab5_display_fb_at(int index);
 size_t tab5_display_fb_size(void);
 
 /**
- * Fill the whole frame buffer with an RGB565 colour (CPU, cache-synced).
+ * Fill every frame buffer with an RGB565 colour (CPU, cache-synced).
  * If a fill hook is registered it runs after the fill, before the cache sync, so persistent
  * decorations (the touch pad) survive every clear.
  */

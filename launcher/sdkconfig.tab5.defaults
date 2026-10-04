@@ -12,3 +12,9 @@ CONFIG_BOARD_M5STACK_TAB5=y
 #    PSRAM (<= 1.5 MB of 32 MB) and a short copy at boot.
 CONFIG_ESPTOOLPY_FLASHMODE_QIO=y
 CONFIG_SPIRAM_XIP_FROM_PSRAM=y
+
+# Display: double buffering is on by default (CONFIG_TAB5_DOUBLE_BUFFER).  The panel pixel clocks
+# default to the esp-bsp values (~48 Hz on v1, ~58 Hz on v2/v3).  For ~60 Hz (outside the tested
+# timings - try on the device) uncomment:
+# CONFIG_TAB5_ILI9881C_DPI_CLOCK_MHZ=75
+# CONFIG_TAB5_ST712X_DPI_CLOCK_MHZ=73

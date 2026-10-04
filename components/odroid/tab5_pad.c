@@ -183,10 +183,8 @@ static void draw_all(uint16_t *fb, uint32_t mask)
     for (int i = 0; i < B_COUNT; i++) draw_button(fb, i, (mask >> i) & 1);
 }
 
-static void sync_button(int i)
+static void sync_button(uint16_t *fb, int i)
 {
-    uint16_t *fb = (uint16_t *)tab5_display_fb();
-    if (!fb) return;
     const pad_btn_t *b = &s_btn[i];
     int py0 = bar_x0(b) + b->x;
     int rows = b->w;
@@ -244,12 +242,13 @@ static void pad_poll_once(void)
     uint32_t changed = mask ^ s_mask;
     if (!changed) return;
     xSemaphoreTake(s_lock, portMAX_DELAY);
-    uint16_t *fb = (uint16_t *)tab5_display_fb();
-    if (fb) {
+    /* every frame buffer: with double buffering the pad must look the same in both */
+    for (int f = 0; f < tab5_display_fb_count(); f++) {
+        uint16_t *fb = (uint16_t *)tab5_display_fb_at(f);
         for (int i = 0; i < B_COUNT; i++) {
             if (!((changed >> i) & 1)) continue;
             draw_button(fb, i, (mask >> i) & 1);
-            sync_button(i);
+            sync_button(fb, i);
         }
     }
     s_mask = mask;

@@ -9,6 +9,7 @@
 #ifdef CONFIG_BOARD_M5STACK_TAB5
 
 #include <string.h>
+#include <inttypes.h>
 #include "freertos/FreeRTOS.h"
 #include "freertos/task.h"
 #include "freertos/semphr.h"
@@ -57,7 +58,22 @@ static tab5_revision_t           s_rev = TAB5_REV_UNKNOWN;
 static esp_lcd_dsi_bus_handle_t  s_dsi_bus = NULL;
 static esp_lcd_panel_io_handle_t s_dbi_io = NULL;
 static esp_lcd_panel_handle_t    s_panel = NULL;
-static void                     *s_fb = NULL;
+#ifdef CONFIG_TAB5_DOUBLE_BUFFER
+#define TAB5_NUM_FBS 2
+#else
+#define TAB5_NUM_FBS 1
+#endif
+#ifndef CONFIG_TAB5_ILI9881C_DPI_CLOCK_MHZ
+#define CONFIG_TAB5_ILI9881C_DPI_CLOCK_MHZ 60
+#endif
+#ifndef CONFIG_TAB5_ST712X_DPI_CLOCK_MHZ
+#define CONFIG_TAB5_ST712X_DPI_CLOCK_MHZ 70
+#endif
+
+static void                     *s_fbs[TAB5_NUM_FBS];
+static int                       s_front = 0;          /* buffer being scanned out (or queued to be) */
+static volatile bool             s_flip_pending = false;
+static SemaphoreHandle_t         s_vsync_sem = NULL;
 
 /* ─── I2C + IO expanders ───────────────────────────────────────── */
 
@@ -189,6 +205,15 @@ tab5_revision_t tab5_board_revision(void)
 
 /* ─── Display ──────────────────────────────────────────────────── */
 
+#if TAB5_NUM_FBS == 2
+static bool IRAM_ATTR on_vsync(esp_lcd_panel_handle_t panel, esp_lcd_dpi_panel_event_data_t *edata, void *ctx)
+{
+    BaseType_t woken = pdFALSE;
+    xSemaphoreGiveFromISR(s_vsync_sem, &woken);
+    return woken == pdTRUE;
+}
+#endif
+
 esp_err_t tab5_display_init(void)
 {
     if (s_panel) return ESP_OK;
@@ -221,15 +246,16 @@ esp_err_t tab5_display_init(void)
     };
     ESP_RETURN_ON_ERROR(esp_lcd_new_panel_io_dbi(s_dsi_bus, &dbi_cfg, &s_dbi_io), TAG, "DBI IO failed");
 
-    /* Video timings per panel (from the BSP).  One frame buffer only: PPA renders
-     * straight into it and several callers update sub-rectangles of it, which a
-     * ping-pong scheme would break. */
+    /* Video timings per panel (from the BSP).  The pixel clocks are Kconfig options: the BSP
+     * defaults give ~48 Hz (ILI9881C, 60 MHz) and ~58 Hz (ST712x, 70 MHz); 75 / 73 MHz reach
+     * ~60 Hz but are outside the BSP's tested timings.  With CONFIG_TAB5_DOUBLE_BUFFER the
+     * driver allocates two frame buffers and swaps them at the frame boundary (tear-free). */
     const esp_lcd_dpi_panel_config_t dpi_ili9881c = {
         .virtual_channel = 0,
         .dpi_clk_src = MIPI_DSI_DPI_CLK_SRC_DEFAULT,
-        .dpi_clock_freq_mhz = 60,
+        .dpi_clock_freq_mhz = CONFIG_TAB5_ILI9881C_DPI_CLOCK_MHZ,
         .in_color_format = LCD_COLOR_FMT_RGB565,
-        .num_fbs = 1,
+        .num_fbs = TAB5_NUM_FBS,
         .video_timing = {
             .h_size = TAB5_PANEL_W, .v_size = TAB5_PANEL_H,
             .hsync_back_porch = 140, .hsync_pulse_width = 40, .hsync_front_porch = 40,
@@ -240,9 +266,9 @@ esp_err_t tab5_display_init(void)
     const esp_lcd_dpi_panel_config_t dpi_st7123 = {
         .virtual_channel = 0,
         .dpi_clk_src = MIPI_DSI_DPI_CLK_SRC_DEFAULT,
-        .dpi_clock_freq_mhz = 70,
+        .dpi_clock_freq_mhz = CONFIG_TAB5_ST712X_DPI_CLOCK_MHZ,
         .in_color_format = LCD_COLOR_FMT_RGB565,
-        .num_fbs = 1,
+        .num_fbs = TAB5_NUM_FBS,
         .video_timing = {
             .h_size = TAB5_PANEL_W, .v_size = TAB5_PANEL_H,
             .hsync_back_porch = 40, .hsync_pulse_width = 2, .hsync_front_porch = 40,
@@ -253,9 +279,9 @@ esp_err_t tab5_display_init(void)
     const esp_lcd_dpi_panel_config_t dpi_st7121 = {
         .virtual_channel = 0,
         .dpi_clk_src = MIPI_DSI_DPI_CLK_SRC_DEFAULT,
-        .dpi_clock_freq_mhz = 70,
+        .dpi_clock_freq_mhz = CONFIG_TAB5_ST712X_DPI_CLOCK_MHZ,
         .in_color_format = LCD_COLOR_FMT_RGB565,
-        .num_fbs = 1,
+        .num_fbs = TAB5_NUM_FBS,
         .video_timing = {
             .h_size = TAB5_PANEL_W, .v_size = TAB5_PANEL_H,
             .hsync_back_porch = 40, .hsync_pulse_width = 2,  .hsync_front_porch = 40,
@@ -300,20 +326,75 @@ esp_err_t tab5_display_init(void)
     esp_lcd_panel_invert_color(s_panel, false);
     esp_lcd_panel_mirror(s_panel, false, false);
 
-    ESP_RETURN_ON_ERROR(esp_lcd_dpi_panel_get_frame_buffer(s_panel, 1, &s_fb), TAG, "get frame buffer");
-    ESP_RETURN_ON_FALSE(s_fb, ESP_ERR_INVALID_STATE, TAG, "no frame buffer");
+#if TAB5_NUM_FBS == 2
+    ESP_RETURN_ON_ERROR(esp_lcd_dpi_panel_get_frame_buffer(s_panel, 2, &s_fbs[0], &s_fbs[1]), TAG, "get frame buffers");
+    s_vsync_sem = xSemaphoreCreateBinary();
+    ESP_RETURN_ON_FALSE(s_vsync_sem, ESP_ERR_NO_MEM, TAG, "vsync semaphore");
+    const esp_lcd_dpi_panel_event_callbacks_t cbs = { .on_refresh_done = on_vsync };
+    ESP_RETURN_ON_ERROR(esp_lcd_dpi_panel_register_event_callbacks(s_panel, &cbs, NULL), TAG, "vsync callback");
+#else
+    ESP_RETURN_ON_ERROR(esp_lcd_dpi_panel_get_frame_buffer(s_panel, 1, &s_fbs[0]), TAG, "get frame buffer");
+#endif
+    for (int i = 0; i < TAB5_NUM_FBS; i++) {
+        ESP_RETURN_ON_FALSE(s_fbs[i], ESP_ERR_INVALID_STATE, TAG, "no frame buffer");
+    }
+    s_front = 0;   /* the driver starts scanning out buffer 0 */
 
     /* Black before the caller turns the backlight on (avoids a white flash). */
     tab5_display_fill(0x0000);
     esp_lcd_panel_disp_on_off(s_panel, true);
 
-    ESP_LOGI(TAG, "Display ready: %dx%d RGB565, fb=%p", TAB5_PANEL_W, TAB5_PANEL_H, s_fb);
+    const esp_lcd_dpi_panel_config_t *dpi = (rev == TAB5_REV_ILI9881C_GT911) ? &dpi_ili9881c
+                                          : (rev == TAB5_REV_ST7123)         ? &dpi_st7123 : &dpi_st7121;
+    const esp_lcd_video_timing_t *vt = &dpi->video_timing;
+    uint32_t htot = vt->h_size + vt->hsync_back_porch + vt->hsync_pulse_width + vt->hsync_front_porch;
+    uint32_t vtot = vt->v_size + vt->vsync_back_porch + vt->vsync_pulse_width + vt->vsync_front_porch;
+    uint32_t mhz10 = (uint32_t)((uint64_t)dpi->dpi_clock_freq_mhz * 10000000ULL / (htot * vtot));
+    ESP_LOGI(TAG, "Display ready: %dx%d RGB565, %d frame buffer(s), %"PRIu32" MHz pixel clock -> ~%"PRIu32".%"PRIu32" Hz",
+             TAB5_PANEL_W, TAB5_PANEL_H, TAB5_NUM_FBS, dpi->dpi_clock_freq_mhz, mhz10 / 10, mhz10 % 10);
     return ESP_OK;
 }
 
-void *tab5_display_fb(void)
+int tab5_display_fb_count(void)
 {
-    return s_fb;
+    return s_fbs[0] ? TAB5_NUM_FBS : 0;
+}
+
+void *tab5_display_fb_at(int index)
+{
+    return (index >= 0 && index < TAB5_NUM_FBS) ? s_fbs[index] : NULL;
+}
+
+void *tab5_display_begin_frame(bool may_drop)
+{
+    if (!s_fbs[0]) return NULL;
+#if TAB5_NUM_FBS == 2
+    if (s_flip_pending) {
+        /* The previous frame must be on screen before its old buffer can be redrawn. */
+        if (xSemaphoreTake(s_vsync_sem, may_drop ? 0 : pdMS_TO_TICKS(50)) != pdTRUE && may_drop) {
+            return NULL;            /* emulator frame: drop it rather than stall the core */
+        }
+        s_flip_pending = false;
+    }
+    return s_fbs[s_front ^ 1];
+#else
+    (void)may_drop;
+    return s_fbs[0];
+#endif
+}
+
+void tab5_display_end_frame(void)
+{
+#if TAB5_NUM_FBS == 2
+    int back = s_front ^ 1;
+    xSemaphoreTake(s_vsync_sem, 0);     /* forget a VSYNC that happened before this flip */
+    /* A pointer inside one of the driver's own frame buffers makes draw_bitmap() switch the
+     * scan-out buffer at the next frame boundary instead of copying.  One row keeps the
+     * driver's cache write-back trivial; PPA output is already in memory. */
+    esp_lcd_panel_draw_bitmap(s_panel, 0, 0, TAB5_PANEL_W, 1, s_fbs[back]);
+    s_front = back;
+    s_flip_pending = true;
+#endif
 }
 
 size_t tab5_display_fb_size(void)
@@ -330,14 +411,18 @@ void tab5_display_set_fill_hook(tab5_fill_hook_t hook)
 
 void tab5_display_fill(uint16_t color)
 {
-    if (!s_fb) return;
+    /* All buffers, so both halves of a double-buffered display stay identical outside the
+     * presented picture (side bars / touch pad). */
     uint32_t v = ((uint32_t)color << 16) | color;
-    uint32_t *p = (uint32_t *)s_fb;
     size_t n = tab5_display_fb_size() / sizeof(uint32_t);
-    for (size_t i = 0; i < n; i++) p[i] = v;
-    if (s_fill_hook) s_fill_hook((uint16_t *)s_fb);
-    esp_cache_msync(s_fb, tab5_display_fb_size(),
-                    ESP_CACHE_MSYNC_FLAG_DIR_C2M | ESP_CACHE_MSYNC_FLAG_UNALIGNED);
+    for (int b = 0; b < TAB5_NUM_FBS; b++) {
+        if (!s_fbs[b]) continue;
+        uint32_t *p = (uint32_t *)s_fbs[b];
+        for (size_t i = 0; i < n; i++) p[i] = v;
+        if (s_fill_hook) s_fill_hook((uint16_t *)s_fbs[b]);
+        esp_cache_msync(s_fbs[b], tab5_display_fb_size(),
+                        ESP_CACHE_MSYNC_FLAG_DIR_C2M | ESP_CACHE_MSYNC_FLAG_UNALIGNED);
+    }
 }
 
 /* ─── Touch ────────────────────────────────────────────────────── */
