@@ -132,7 +132,24 @@ otherwise the board is probed as before.
   and redraws changed buttons; `odroid_input_gamepad_read()` only reads the cached button mask.
 * The same pad is shown in the launcher, in-game menus and PAPP apps, so touch alone can drive everything.
   X/Y keep their existing "X → MENU, Y → VOLUME" behaviour on cores without native X/Y.
-* The layout is one table (`s_btn[]`) in landscape pixels — resize or move buttons there.
+* The layout is one table (`s_btn_base[]`) in landscape pixels — resize or move buttons there.
+* **Per-system layouts** (`s_layouts[]`, picked from the app's project name): buttons a core ignores are
+  hidden (not drawn, not touchable) and the rest carry the console's names, following each core's mapping:
+
+  | System | Buttons shown |
+  |---|---|
+  | NES, Game Boy / Color, ZX Spectrum | A, B, Start, Select |
+  | Master System / Game Gear | 2, 1, Start, Pause |
+  | Atari 2600 | Fire, Select, Reset |
+  | Atari 7800 | A, B, Select, Pause |
+  | Atari Lynx | A, B, Opt1, Pause |
+  | PC Engine | I, II, Select, Run |
+  | Atari 800 / 5200 | Fire, KBD (on-screen keyboard), Select, Start |
+  | Genesis | A (full width), B, C, Start |
+  | Neo Geo | A, B, C, D, Coin, Start |
+  | SNES, launcher, PAPP apps | full pad |
+
+  The D-pad, MENU and VOL are always there.
 
 ## Building
 
@@ -158,7 +175,8 @@ The SD card layout, ROM folders and Neo Geo cache generation are identical to th
 
 **Slot sizes:** all 12 apps and the launcher fit their OTA slots in the Tab5 build. NES is the tightest
 (`ota_0`, 576 KB): the Tab5 board code and touch pad made it ~13 KB too big, so `apps/nes/sdkconfig.tab5.defaults` compiles
-INFO log strings out of that one app (573 KB, ~3 KB spare). Launcher: 733 KB of 768 KB. Running from PSRAM
+INFO log strings out of that one app (575 KB, ~1 KB spare — anything more for NES needs the partition table
+changed or more trimming). Launcher: 735 KB of 768 KB. Running from PSRAM
 does not change the flash image size.
 
 ## First-boot checklist
@@ -185,6 +203,5 @@ does not change the flash image size.
 
 ## Ideas not done yet
 
-* Touch pad polish: per-system layouts (hide X/Y on NES, show C/D on Neo Geo), haptic-free "dead zone"
-  tuning, a transparency/size setting.
+* Touch pad polish: "dead zone" tuning and a size setting once it has been tried on the device.
 * Tab5 extras: IMU (BMI270) tilt controls, RTC, the ESP32-C6 (Wi-Fi) co-processor.

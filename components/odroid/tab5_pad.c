@@ -15,6 +15,7 @@
 #include "freertos/semphr.h"
 #include "freertos/task.h"
 #include "esp_log.h"
+#include "esp_app_desc.h"
 #include "esp_cache.h"
 #include "tab5_board.h"
 #include "tab5_pad.h"
@@ -44,7 +45,7 @@ typedef struct {
 } pad_btn_t;
 
 /* Layout (design width = BAR_W = 140).  The D-pad is hit-tested by vector, not by these rects. */
-static const pad_btn_t s_btn[B_COUNT] = {
+static const pad_btn_t s_btn_base[B_COUNT] = {
     [B_UP]     = {0,  49, 288, 42, 41, NULL, 0},
     [B_DOWN]   = {0,  49, 371, 42, 41, NULL, 1},
     [B_LEFT]   = {0,   8, 329, 41, 42, NULL, 2},
@@ -82,6 +83,85 @@ static const int s_input_idx[B_COUNT] = {
 #define POLL_PERIOD_MS   8          /* ~125 Hz */
 #define POLL_TASK_PRIO   5          /* same as the video tasks; it sleeps between polls */
 #define POLL_TASK_CORE   0          /* video tasks are pinned to core 1 */
+
+/*
+ * Per-system layouts.  Every emulator is its own firmware image, so the layout is picked once
+ * from the app's project name (esp_app_get_description()).  A layout hides buttons the core
+ * ignores (not drawn, not hit-tested), relabels buttons to the console's names, and can move
+ * or resize a button.  Labels follow the cores' actual mappings (see each *_run.c).
+ * Unlisted apps (launcher, PAPP apps, OpenTyrian) get the full pad.
+ */
+#define HIDE(b) (1u << (b))
+typedef struct { int8_t btn; int16_t x, y, w, h; } pad_rect_override_t;
+typedef struct {
+    const char *project;                 /* esp_app_desc_t::project_name */
+    uint32_t    hidden;                  /* HIDE(B_xxx) bits */
+    const char *label[B_COUNT];          /* NULL = keep the default label */
+    pad_rect_override_t rect[2];         /* btn = -1: unused */
+} pad_layout_t;
+
+#define NO_RECTS { { -1, 0, 0, 0, 0 }, { -1, 0, 0, 0, 0 } }
+
+static const pad_layout_t s_layouts[] = {
+    /* NES / Game Boy: A, B, Start, Select (X/Y would only duplicate MENU/VOL) */
+    { "nes_app", HIDE(B_X) | HIDE(B_Y) | HIDE(B_L) | HIDE(B_R), { 0 }, NO_RECTS },
+    { "gb_app",  HIDE(B_X) | HIDE(B_Y) | HIDE(B_L) | HIDE(B_R), { 0 }, NO_RECTS },
+    /* Master System / Game Gear: A = button 2, B = button 1, Select = SMS Pause */
+    { "sms_app", HIDE(B_X) | HIDE(B_Y) | HIDE(B_L) | HIDE(B_R),
+      { [B_A] = "2", [B_B] = "1", [B_SELECT] = "PAUSE" }, NO_RECTS },
+    /* Atari 2600: A = fire, Select / Start = console Select / Reset */
+    { "stella_app", HIDE(B_B) | HIDE(B_X) | HIDE(B_Y) | HIDE(B_L) | HIDE(B_R),
+      { [B_A] = "FIRE", [B_START] = "RESET" }, NO_RECTS },
+    /* Atari 7800: two fire buttons, Start = Pause */
+    { "prosystem_app", HIDE(B_X) | HIDE(B_Y) | HIDE(B_L) | HIDE(B_R),
+      { [B_START] = "PAUSE" }, NO_RECTS },
+    /* Atari Lynx: A, B, Start = Pause, Select = Option 1 */
+    { "handy_app", HIDE(B_X) | HIDE(B_Y) | HIDE(B_L) | HIDE(B_R),
+      { [B_START] = "PAUSE", [B_SELECT] = "OPT1" }, NO_RECTS },
+    /* PC Engine: A = I, B = II, Start = Run */
+    { "pce_app", HIDE(B_X) | HIDE(B_Y) | HIDE(B_L) | HIDE(B_R),
+      { [B_A] = "I", [B_B] = "II", [B_START] = "RUN" }, NO_RECTS },
+    /* Atari 800 / 5200: A and B are both the trigger; L toggles the on-screen keyboard */
+    { "atari800_app", HIDE(B_B) | HIDE(B_X) | HIDE(B_Y) | HIDE(B_R),
+      { [B_A] = "FIRE", [B_L] = "KBD" }, NO_RECTS },
+    /* ZX Spectrum: A, B, Start, Select are mapped to keys / Kempston fire */
+    { "spectrum_app", HIDE(B_X) | HIDE(B_Y) | HIDE(B_L) | HIDE(B_R), { 0 }, NO_RECTS },
+    /* Genesis: pad A -> Genesis B, pad B -> C, pad X -> A (Y duplicates A; Select / L / R unused).
+     * Genesis A gets the full-width slot above B / C. */
+    { "genesis_app", HIDE(B_Y) | HIDE(B_SELECT) | HIDE(B_L) | HIDE(B_R),
+      { [B_X] = "A", [B_A] = "B", [B_B] = "C" },
+      { { B_X, 10, 120, 120, 110 }, { -1, 0, 0, 0, 0 } } },
+    /* Neo Geo: A, B, X -> C, Y -> D, Select = Coin */
+    { "neogeo_app", HIDE(B_L) | HIDE(B_R),
+      { [B_X] = "C", [B_Y] = "D", [B_SELECT] = "COIN" }, NO_RECTS },
+    /* SNES uses every button: full pad, default labels */
+};
+
+static pad_btn_t s_btn[B_COUNT];        /* effective layout (base + per-system overrides) */
+static uint32_t  s_hidden = 0;
+
+static void apply_layout(void)
+{
+    memcpy(s_btn, s_btn_base, sizeof(s_btn));
+    s_hidden = 0;
+    const esp_app_desc_t *app = esp_app_get_description();
+    for (size_t l = 0; app && l < sizeof(s_layouts) / sizeof(s_layouts[0]); l++) {
+        const pad_layout_t *lay = &s_layouts[l];
+        if (strcmp(app->project_name, lay->project) != 0) continue;
+        s_hidden = lay->hidden;
+        for (int i = 0; i < B_COUNT; i++) {
+            if (lay->label[i]) s_btn[i].label = lay->label[i];
+        }
+        for (int r = 0; r < 2; r++) {
+            const pad_rect_override_t *o = &lay->rect[r];
+            if (o->btn < 0) continue;
+            s_btn[o->btn].x = o->x; s_btn[o->btn].y = o->y;
+            s_btn[o->btn].w = o->w; s_btn[o->btn].h = o->h;
+        }
+        ESP_LOGI("tab5_pad", "touch pad layout: %s", lay->project);
+        return;
+    }
+}
 
 static SemaphoreHandle_t s_lock = NULL;          /* serialises pad drawing (poll task vs fill hook) */
 static volatile uint32_t s_mask = 0;             /* currently pressed buttons (bit = B_xxx) */
@@ -121,11 +201,20 @@ static const uint8_t *glyph(char c)
     static const uint8_t g_V[7] = {0x11,0x11,0x11,0x11,0x11,0x0A,0x04};
     static const uint8_t g_X[7] = {0x11,0x11,0x0A,0x04,0x0A,0x11,0x11};
     static const uint8_t g_Y[7] = {0x11,0x11,0x0A,0x04,0x04,0x04,0x04};
+    static const uint8_t g_D[7] = {0x1E,0x11,0x11,0x11,0x11,0x11,0x1E};
+    static const uint8_t g_F[7] = {0x1F,0x10,0x10,0x1E,0x10,0x10,0x10};
+    static const uint8_t g_I[7] = {0x0E,0x04,0x04,0x04,0x04,0x04,0x0E};
+    static const uint8_t g_K[7] = {0x11,0x12,0x14,0x18,0x14,0x12,0x11};
+    static const uint8_t g_P[7] = {0x1E,0x11,0x11,0x1E,0x10,0x10,0x10};
+    static const uint8_t g_1[7] = {0x04,0x0C,0x04,0x04,0x04,0x04,0x0E};
+    static const uint8_t g_2[7] = {0x0E,0x11,0x01,0x02,0x04,0x08,0x1F};
     switch (c) {
     case 'A': return g_A; case 'B': return g_B; case 'C': return g_C; case 'E': return g_E;
     case 'L': return g_L; case 'M': return g_M; case 'N': return g_N; case 'O': return g_O;
     case 'R': return g_R; case 'S': return g_S; case 'T': return g_T; case 'U': return g_U;
     case 'V': return g_V; case 'X': return g_X; case 'Y': return g_Y;
+    case 'D': return g_D; case 'F': return g_F; case 'I': return g_I; case 'K': return g_K;
+    case 'P': return g_P; case '1': return g_1; case '2': return g_2;
     default:  return NULL;
     }
 }
@@ -162,6 +251,7 @@ static inline int bar_x0(const pad_btn_t *b) { return b->right_bar ? (LAND_W - B
 
 static void draw_button(uint16_t *fb, int i, bool pressed)
 {
+    if (s_hidden & (1u << i)) return;      /* not used by this system: leave the bar black */
     const pad_btn_t *b = &s_btn[i];
     int lx = bar_x0(b) + b->x, ly = b->y;
     fill_rect_land(fb, lx, ly, b->w, b->h, COL_BORDER);
@@ -169,6 +259,8 @@ static void draw_button(uint16_t *fb, int i, bool pressed)
     int cx = lx + b->w / 2, cy = ly + b->h / 2;
     if (b->label) {
         int scale = (b->h >= 100) ? 6 : (b->w < 80 ? 4 : 3);
+        int n = (int)strlen(b->label);
+        while (scale > 2 && n * 6 * scale - scale > b->w - 10) scale--;   /* fit long labels */
         draw_text_centered(fb, cx, cy, b->label, scale, COL_TEXT);
     } else if (b->arrow >= 0) {
         draw_arrow(fb, cx, cy, b->arrow, COL_ARROW);
@@ -208,6 +300,7 @@ static uint32_t hit_test(int lx, int ly)
     }
 
     for (int i = B_A; i < B_COUNT; i++) {
+        if (s_hidden & (1u << i)) continue;
         const pad_btn_t *b = &s_btn[i];
         int x0 = bar_x0(b) + b->x - HIT_SLOP, y0 = b->y - HIT_SLOP;
         if (lx >= x0 && lx < x0 + b->w + 2 * HIT_SLOP && ly >= y0 && ly < y0 + b->h + 2 * HIT_SLOP)
@@ -268,6 +361,7 @@ static void pad_poll_task(void *arg)
 void tab5_pad_init(void)
 {
     if (s_lock) return;
+    apply_layout();
     s_lock = xSemaphoreCreateMutex();
     if (!s_lock) return;
     tab5_display_set_fill_hook(pad_fill_hook);
