@@ -32,13 +32,13 @@ the component registry (first build needs network access).
 ## Display pipeline
 
 All the firmware renders for a landscape 800×480 / 320×240 image that is rotated 270° onto a 480×800
-portrait panel. The Tab5 panel is exactly **1.5×** that in both axes (720×1280 vs 480×800 — with 40 spare
-rows top and bottom for the 800 → 1200 stretch), so the original "legacy" geometry is kept and every
-presentation gets one extra 1.5× factor:
+portrait panel. The Tab5 panel is 720×1280, so the original "legacy" geometry is kept and every
+presentation gets an extra scale factor chosen so that **≥ 140 px side bars** stay free for the
+[touch pad](#on-screen-touch-pad):
 
 | Content | Source | Result on the 1280×720 landscape view |
 |---|---|---|
-| Launcher UI / PAPP apps | 800×480 | 1200×720 (1.5×), 40 px bars left/right |
+| Launcher UI / PAPP apps | 800×480 | 1000×600 (**1.25×**), 140 px bars left/right |
 | Emulators (NES, GB, SMS, Atari, PCE, …) | 320×240 | 960×720 (**3×**, integer, 4:3), 160 px bars |
 | SNES / Genesis / Neo Geo | native size × 2 (legacy) | native size × 3 |
 
@@ -50,12 +50,14 @@ dominant cost at 60 FPS. Scale factors are rounded to the PPA's 1/16 resolution 
 deterministic. When the presented geometry changes (launcher ↔ emulator ↔ PAPP app) the frame buffer is
 cleared once so no stale pixels remain in the bars.
 
-Code that still talks to the old `st7701_lcd` API (launcher full-screen draws, the MENU/VOL sidebar
-buttons in SNES / Genesis / Neo Geo) goes through `st7701_lcd_tab5.c`, which keeps the 480×800 coordinate
-space and maps it onto the panel with a 1.5× PPA scale — those cores did not need any changes.
+Code that still talks to the old `st7701_lcd` API (the launcher's full-screen draws) goes through
+`st7701_lcd_tab5.c`, which keeps the 480×800 coordinate space and maps it onto the same 1.25× UI rect.
+The MENU/VOL sidebar buttons that SNES / Genesis / Neo Geo draw through that API are ignored — the touch
+pad provides them — so those cores did not need any changes.
 
-Touch input is mapped back to the same legacy 480×800 space in `gt911_touch.c`, so the launcher, the
-touch keyboard, the PAPP loader and the MENU/VOL zones all work unchanged.
+Touch input is mapped back to the same legacy 480×800 space in `gt911_touch.c` (through the UI rect), so
+the launcher's touch keyboard and the PAPP loader work unchanged. Touches in the side bars belong to the
+pad and are not reported there, so pressing a pad button never clicks a UI element.
 
 ## Input
 
@@ -68,9 +70,32 @@ touch keyboard, the PAPP loader and the MENU/VOL zones all work unchanged.
   battery icon works unchanged. The standard Tab5 has no pack and runs from 5 V: a bus voltage under
   5.5 V is treated as "no battery" and reported as 100 %. "Charging" means current above ±50 mA in the
   direction set by `TAB5_BATT_CHARGE_CURRENT_POSITIVE`.
-* Touch still provides the **MENU** (touch the first ~170 legacy px, i.e. the left end of the landscape
-  view) and **VOLUME** (the right end) buttons plus the launcher UI. There is **no on-screen D-pad / buttons
-  yet** — play with a USB controller.
+* **No USB pad needed:** an on-screen touch pad is built in, see below. USB pads and the touch pad can be
+  used together (their buttons are OR-ed).
+
+### On-screen touch pad
+
+`components/odroid/tab5_pad.c`. It lives in the two black side bars next to the picture (landscape view):
+
+```
+ left bar                          right bar
+ [   L   ]                         [   R   ]
+ [ MENU  ]                         [  VOL  ]
+                                   [Y]  [X]
+     ▲                             [   A   ]
+   ◀ ■ ▶                           [   B   ]
+     ▼
+ [SELECT ]                         [ START ]
+```
+
+* Drawn **into the DSI frame buffer** and redrawn from a hook after every frame-buffer clear
+  (`tab5_display_set_fill_hook`). The emulator/UI picture never covers the bars, so it costs nothing per
+  frame; pressed buttons are re-drawn highlighted (only that button, cache-synced).
+* **Multi-touch** (up to 5 points): hold the D-pad and A/B together; the D-pad is hit-tested by direction
+  from its centre, so diagonals work. Polled at ≤ 125 Hz; touch I2C runs at 400 kHz.
+* The same pad is shown in the launcher, in-game menus and PAPP apps, so touch alone can drive everything.
+  X/Y keep their existing "X → MENU, Y → VOLUME" behaviour on cores without native X/Y.
+* The layout is one table (`s_btn[]`) in landscape pixels — resize or move buttons there.
 
 ## Building
 
@@ -105,7 +130,9 @@ INFO log strings out of that one app (580 KB, 9 KB spare). Launcher: 725 KB of 7
    answers at 0x55, GT911 at 0x14).
 2. **Orientation** — the UI is rotated 270° like the handheld. If the picture and touch are upside down,
    the fix is the rotation angle in `tab5_present()` / `st7701_lcd_tab5.c` plus the mirrored mapping in
-   `gt911_touch.c`.
+   `gt911_touch.c` and `tab5_pad.c`. The pad's drawing and hit-testing were checked on the host
+   (rendered upright, every button hits itself); whether touch coordinates line up with the panel's
+   orientation is **not** verified on hardware: tap each pad button once and watch it highlight.
 3. **Audio** — ES8388 init happens in `components/audio/audio.c`; the speaker amp is enabled through the
    expander (`tab5_board_speaker_enable`).
 4. **USB gamepad** — needs the expander's USB rail (`tab5_board_usb_power_enable`).
@@ -116,8 +143,8 @@ INFO log strings out of that one app (580 KB, 9 KB spare). Launcher: 725 KB of 7
 
 ## Ideas not done yet
 
-* On-screen touch controller (multi-touch is already available from `tab5_touch_read()`; the 160 px
-  bars next to a 3× emulator image are the natural place for it).
+* Touch pad polish: per-system layouts (hide X/Y on NES, show C/D on Neo Geo), haptic-free "dead zone"
+  tuning, a transparency/size setting.
 * NES / GB / SMS: scale the source straight to the panel in one PPA pass instead of going through the
   320×240 intermediate.
 * Tab5 extras: IMU (BMI270) tilt controls, RTC, the ESP32-C6 (Wi-Fi) co-processor.

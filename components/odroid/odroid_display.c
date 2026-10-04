@@ -13,6 +13,7 @@
 
 #ifdef CONFIG_BOARD_M5STACK_TAB5
 #include "tab5_board.h"
+#include "tab5_pad.h"
 #include <math.h>
 #endif
 
@@ -135,23 +136,22 @@ static float s_scale_y = 1.0f;
 /* ─── Tab5 presentation ───────────────────────────────────────────
  *
  * The whole firmware draws for the original handheld: a landscape UI/emulator
- * image that is rotated 270° onto a 480×800 portrait panel.  The Tab5 panel is
- * 720×1280 (= 1.5× that, with 40 px spare rows top and bottom), so the same
- * "legacy" geometry is kept and every presentation is scaled by an extra 1.5×:
- *   launcher UI   800×480  → 1200×720  (1.5×)
- *   emulators     320×240  →  960×720  (3×, integer, 4:3)
+ * image that is rotated 270° onto a 480×800 portrait panel.  On the Tab5
+ * (720×1280) the same "legacy" geometry is kept and scaled by an extra factor:
+ *   launcher UI / PAPP  800×480  → 1000×600  (TAB5_UI_SCALE  1.25×)
+ *   emulators           320×240  →  960×720  (TAB5_EMU_SCALE 1.5× on the legacy 2× = 3×, 4:3)
+ * Both leave side bars of >= 140 px that carry the touch pad (tab5_pad.c).
  * PPA does rotate + scale in ONE pass, writing directly into the DSI frame
  * buffer - the legacy path rendered into a staging buffer and then copied it
  * to the panel, which cost a full extra pass over ~1 MB per frame.
  */
-#define TAB5_UI_SCALE 1.5f
 
 /* Remembered geometry of the last frame: when it changes, stale pixels from the
  * previous mode (launcher UI vs. emulator vs. PAPP) are cleared once. */
 static uint32_t s_tab5_geom = 0;
 
 static esp_err_t tab5_present(const uint16_t *src, uint32_t in_w, uint32_t in_h,
-                              float legacy_sx, float legacy_sy, bool byte_swap)
+                              float legacy_sx, float legacy_sy, float factor, bool byte_swap)
 {
     void *fb = tab5_display_fb();
     if (!fb) return ESP_ERR_INVALID_STATE;
@@ -159,8 +159,8 @@ static esp_err_t tab5_present(const uint16_t *src, uint32_t in_w, uint32_t in_h,
     /* Post-rotation factors (same convention as ppa_rotate_scale_rgb565_to):
      * px scales the output width, py the output height.  PPA scale has 1/16
      * resolution, so round to keep the output size deterministic. */
-    float px = roundf(legacy_sx * TAB5_UI_SCALE * 16.0f) / 16.0f;
-    float py = roundf(legacy_sy * TAB5_UI_SCALE * 16.0f) / 16.0f;
+    float px = roundf(legacy_sx * factor * 16.0f) / 16.0f;
+    float py = roundf(legacy_sy * factor * 16.0f) / 16.0f;
 
     /* rotate 270°: output width comes from the input height and vice versa */
     uint32_t out_w = (uint32_t)(in_h * px + 0.5f);
@@ -213,9 +213,9 @@ void display_flush(void)
     esp_cache_msync(s_hdmi_disp.fb, s_hdmi_disp.fb_size, ESP_CACHE_MSYNC_FLAG_DIR_C2M);
     int64_t t2 = esp_timer_get_time();
 #elif defined(CONFIG_BOARD_M5STACK_TAB5)
-    /* Tab5: one PPA pass (rotate 270° + 1.5×) straight into the DSI frame buffer */
+    /* Tab5: one PPA pass (rotate 270° + 1.25×) straight into the DSI frame buffer */
     int64_t t0 = esp_timer_get_time();
-    esp_err_t ret = tab5_present(s_framebuffer, FB_W, FB_H, s_scale_x, s_scale_y, false);
+    esp_err_t ret = tab5_present(s_framebuffer, FB_W, FB_H, s_scale_x, s_scale_y, TAB5_UI_SCALE, false);
     int64_t t1 = esp_timer_get_time();
     if (ret != ESP_OK) {
         ESP_LOGE(TAG, "Tab5 present failed (0x%x)", ret);
@@ -318,7 +318,7 @@ static void display_emu_flush_320x240(const uint16_t *buf, bool byte_swap)
 #elif defined(CONFIG_BOARD_M5STACK_TAB5)
     /* Tab5: 320×240 → 3× + 270° → 720×960 directly into the DSI frame buffer */
     int64_t t0 = esp_timer_get_time();
-    esp_err_t ret = tab5_present(buf, EMU_W, EMU_H, 2.0f, 2.0f, byte_swap);
+    esp_err_t ret = tab5_present(buf, EMU_W, EMU_H, 2.0f, 2.0f, TAB5_EMU_SCALE, byte_swap);
     int64_t t1 = esp_timer_get_time();
     if (ret != ESP_OK) {
         ESP_LOGE(TAG, "Tab5 emu present failed (0x%x)", ret);
@@ -420,6 +420,9 @@ void ili9341_init(void)
     if (!s_backlight_init) {
         backlight_init();
     }
+#ifdef CONFIG_BOARD_M5STACK_TAB5
+    tab5_pad_init();   /* touch pad is redrawn after every frame-buffer clear */
+#endif
 #endif
 }
 
@@ -952,7 +955,7 @@ void ili9341_write_frame_rgb565_ex(const uint16_t *buffer, bool byte_swap_input)
     /* Tab5: 2× legacy scale (×1.5 panel factor = 3×) + 270° straight into the DSI frame buffer */
     {
         int64_t t0 = esp_timer_get_time();
-        esp_err_t ret = tab5_present(buffer, EMU_W, EMU_H, 2.0f, 2.0f, byte_swap_input);
+        esp_err_t ret = tab5_present(buffer, EMU_W, EMU_H, 2.0f, 2.0f, TAB5_EMU_SCALE, byte_swap_input);
         if (ret != ESP_OK) {
             ESP_LOGE(TAG, "Tab5 emu present failed (0x%x)", ret);
         }
@@ -1069,9 +1072,9 @@ void ili9341_write_frame_rgb565_custom(const uint16_t *buffer, uint16_t in_w,
     esp_cache_msync(s_hdmi_disp.fb, s_hdmi_disp.fb_size, ESP_CACHE_MSYNC_FLAG_DIR_C2M);
     (void)scale; (void)byte_swap_input;
 #elif defined(CONFIG_BOARD_M5STACK_TAB5)
-    /* Tab5: `scale` is in legacy 480×800 space; tab5_present adds the 1.5× panel factor */
+    /* Tab5: `scale` is in legacy 480×800 space; tab5_present adds the emulator panel factor */
     {
-        esp_err_t ret = tab5_present(buffer, in_w, in_h, scale, scale, byte_swap_input);
+        esp_err_t ret = tab5_present(buffer, in_w, in_h, scale, scale, TAB5_EMU_SCALE, byte_swap_input);
         if (ret != ESP_OK) {
             ESP_LOGE(TAG, "Tab5 custom present failed (0x%x)", ret);
         }

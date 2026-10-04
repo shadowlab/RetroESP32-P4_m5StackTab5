@@ -91,8 +91,9 @@ Drive a TV by pairing the Guition ESP32-P4 board with an **Olimex LT8912 MIPI-DS
 ### 3. M5Stack Tab5 — the tablet
 
 The **M5Stack Tab5** (ESP32-P4, 5″ 720×1280 touchscreen, USB-A host port) is supported as a third target. The
-launcher and emulators render at 1.5× / 3× straight into the panel's DSI frame buffer. Use a USB controller
-for play; touch drives the launcher. Not yet verified on real hardware — see **[TAB5.md](TAB5.md)** for the
+launcher and emulators render straight into the panel's DSI frame buffer (UI 1.25×, emulators 3×), with an
+**on-screen touch pad** (D-pad, A/B/X/Y, L/R, Start/Select, Menu, Volume) in the side bars; USB controllers
+work too. Not yet verified on real hardware — see **[TAB5.md](TAB5.md)** for the
 hardware map, build steps (`./build_all_tab5.sh`) and a first-boot checklist.
 
 ---

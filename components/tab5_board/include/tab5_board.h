@@ -43,6 +43,19 @@ extern "C" {
 /* Backlight PWM (driven by odroid_display's LEDC channel) */
 #define TAB5_LCD_BACKLIGHT_GPIO 22
 
+/*
+ * Presentation geometry.  The firmware draws a landscape image that is rotated 270 deg onto the
+ * portrait panel.  Landscape view = 1280x720; landscape X = panel Y, landscape Y = 719 - panel X.
+ *   launcher UI / PAPP apps : 800x480 logical  x 1.25  -> 1000x600, centred
+ *   emulators               : 320x240 (legacy x2) x 1.5 -> 960x720 (3x), centred
+ * Both leave >= 140 px side bars (landscape left/right) that hold the touch pad.
+ */
+#define TAB5_UI_SCALE    1.25f
+#define TAB5_UI_X_OFF    60     /* panel X of the UI rect (landscape: 60 px top margin)  */
+#define TAB5_UI_Y_OFF    140    /* panel Y of the UI rect (landscape: 140 px left margin) */
+#define TAB5_EMU_SCALE   1.5f
+#define TAB5_PAD_BAR_W   140    /* landscape px reserved at each side for the touch pad */
+
 typedef enum {
     TAB5_REV_UNKNOWN = 0,
     TAB5_REV_ILI9881C_GT911,
@@ -86,8 +99,15 @@ tab5_revision_t tab5_board_revision(void);
 void *tab5_display_fb(void);
 size_t tab5_display_fb_size(void);
 
-/** Fill the whole frame buffer with an RGB565 colour (CPU, cache-synced). */
+/**
+ * Fill the whole frame buffer with an RGB565 colour (CPU, cache-synced).
+ * If a fill hook is registered it runs after the fill, before the cache sync, so persistent
+ * decorations (the touch pad) survive every clear.
+ */
 void tab5_display_fill(uint16_t color);
+
+typedef void (*tab5_fill_hook_t)(uint16_t *fb);
+void tab5_display_set_fill_hook(tab5_fill_hook_t hook);
 
 /** Touch controller (GT911 or ST712x depending on revision). Idempotent. */
 esp_err_t tab5_touch_init(void);

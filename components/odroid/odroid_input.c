@@ -24,6 +24,7 @@
 #include "gamepad.h"   /* gamepad_is_connected() */
 #ifdef CONFIG_BOARD_M5STACK_TAB5
 #include "tab5_board.h"
+#include "tab5_pad.h"
 #endif
 #ifndef CONFIG_HDMI_OUTPUT
 #include "gt911_touch.h"
@@ -52,7 +53,7 @@
 static const char *TAG = "odroid_input";
 static bool s_initialized = false;
 
-#ifndef CONFIG_HDMI_OUTPUT
+#if !defined(CONFIG_HDMI_OUTPUT) && !defined(CONFIG_BOARD_M5STACK_TAB5)
 /* Cached touch state — updated at 2 Hz */
 static volatile int s_touch_menu   = 0;
 static volatile int s_touch_volume = 0;
@@ -334,6 +335,11 @@ void odroid_input_gamepad_read(odroid_gamepad_state *state)
     /* Custom GPIO gamepad — OR its buttons into the state */
     gpio_pad_read(state);
 
+#ifdef CONFIG_BOARD_M5STACK_TAB5
+    /* Tab5: full on-screen touch pad in the side bars (D-pad, A/B/X/Y, L/R, START/SELECT,
+     * MENU, VOL).  Replaces the handheld's two coarse touch zones, which would overlap it. */
+    tab5_pad_read(state);
+#else
     /* Touch-panel virtual shoulder buttons — sampled at 2 Hz to avoid CPU overhead.
      * Disabled when touch keyboard is active (odroid_input_touch_buttons_disable). */
     if (!odroid_input_touch_buttons_disable) {
@@ -357,6 +363,7 @@ void odroid_input_gamepad_read(odroid_gamepad_state *state)
         s_touch_menu = 0;
         s_touch_volume = 0;
     }
+#endif /* CONFIG_BOARD_M5STACK_TAB5 */
 #endif /* !CONFIG_HDMI_OUTPUT */
 
 #ifdef CONFIG_HDMI_OUTPUT

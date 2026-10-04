@@ -134,7 +134,7 @@ static esp_err_t lcd_enable(bool enable)
 static esp_err_t touch_io_new(uint8_t addr, esp_lcd_panel_io_handle_t *io)
 {
     const esp_lcd_panel_io_i2c_config_t cfg = {
-        .scl_speed_hz = 100000,
+        .scl_speed_hz = 400000,   /* both controllers support 400 kHz; halves touch read latency */
         .dev_addr = addr,
         .control_phase_bytes = 1,
         .lcd_cmd_bits = 16,
@@ -321,6 +321,13 @@ size_t tab5_display_fb_size(void)
     return (size_t)TAB5_PANEL_W * TAB5_PANEL_H * sizeof(uint16_t);
 }
 
+static tab5_fill_hook_t s_fill_hook = NULL;
+
+void tab5_display_set_fill_hook(tab5_fill_hook_t hook)
+{
+    s_fill_hook = hook;
+}
+
 void tab5_display_fill(uint16_t color)
 {
     if (!s_fb) return;
@@ -328,6 +335,7 @@ void tab5_display_fill(uint16_t color)
     uint32_t *p = (uint32_t *)s_fb;
     size_t n = tab5_display_fb_size() / sizeof(uint32_t);
     for (size_t i = 0; i < n; i++) p[i] = v;
+    if (s_fill_hook) s_fill_hook((uint16_t *)s_fb);
     esp_cache_msync(s_fb, tab5_display_fb_size(),
                     ESP_CACHE_MSYNC_FLAG_DIR_C2M | ESP_CACHE_MSYNC_FLAG_UNALIGNED);
 }
