@@ -1,4 +1,0 @@
-# NES is the tightest OTA slot (ota_0 = 576 KB); the Tab5 board code pushes it ~5 KB over.
-# Make WARN the default log level, which (with MAXIMUM_EQUALS_DEFAULT) compiles INFO/DEBUG
-# strings out of this one app. Warnings and errors stay.
-CONFIG_LOG_DEFAULT_LEVEL_WARN=y

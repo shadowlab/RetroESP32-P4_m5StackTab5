@@ -50,7 +50,7 @@ build() { # dir
   ( cd "$ROOT/$dir"
     rm -rf "$bdir"; mkdir -p "$bdir"
     local defaults="sdkconfig.defaults;$TAB5_DEFAULTS"
-    # optional per-project Tab5 overrides (e.g. apps/nes: log strings out to fit its 576 KB slot)
+    # optional per-project Tab5 overrides (apps/<app>/sdkconfig.tab5.defaults)
     [ -f sdkconfig.tab5.defaults ] && defaults="$defaults;sdkconfig.tab5.defaults"
     idf.py -B "$bdir" -DSDKCONFIG="$bdir/sdkconfig" -DSDKCONFIG_DEFAULTS="$defaults" build )
 }
@@ -86,14 +86,14 @@ python -m esptool --chip esp32p4 merge_bin -o "$OUT" --flash_mode qio --flash_si
   0xD000   "$BINS/ota_data_initial.bin" \
   0x10000  "$BINS/launcher.bin" \
   0x0D0000 "$BINS/nes_app.bin" \
-  0x160000 "$BINS/gb_app.bin" \
-  0x200000 "$BINS/sms_app.bin" \
-  0x350000 "$BINS/spectrum_app.bin" \
-  0x410000 "$BINS/stella_app.bin" \
-  0x550000 "$BINS/prosystem_app.bin" \
-  0x5F0000 "$BINS/handy_app.bin" \
-  0x690000 "$BINS/pce_app.bin" \
-  0x740000 "$BINS/atari800_app.bin" \
+  0x170000 "$BINS/gb_app.bin" \
+  0x210000 "$BINS/sms_app.bin" \
+  0x360000 "$BINS/spectrum_app.bin" \
+  0x420000 "$BINS/stella_app.bin" \
+  0x560000 "$BINS/prosystem_app.bin" \
+  0x600000 "$BINS/handy_app.bin" \
+  0x6A0000 "$BINS/pce_app.bin" \
+  0x750000 "$BINS/atari800_app.bin" \
   0x8C0000 "$BINS/snes_app.bin" \
   0x9B0000 "$BINS/genesis_app.bin" \
   0xB00000 "$BINS/neogeo_app.bin"

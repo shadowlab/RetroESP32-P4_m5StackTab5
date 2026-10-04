@@ -103,16 +103,16 @@ Bootloader is at **0x2000** (ESP32-P4 requirement, not 0x0); partition table at 
 | nvs | 0x009000 | 16 KB | NVS store |
 | otadata | 0x00D000 | 8 KB | OTA boot selection |
 | factory | 0x010000 | 768 KB | Launcher |
-| ota_0 | 0x0D0000 | 576 KB | NES |
-| ota_1 | 0x160000 | 640 KB | GB/GBC |
-| ota_2 | 0x200000 | 1.31 MB | SMS/GG/COL |
-| ota_3 | 0x350000 | 768 KB | ZX Spectrum |
-| ota_4 | 0x410000 | 1.25 MB | Atari 2600 |
-| ota_5 | 0x550000 | 640 KB | Atari 7800 |
-| ota_6 | 0x5F0000 | 640 KB | Atari Lynx |
-| ota_7 | 0x690000 | 704 KB | PC Engine |
-| ota_8 | 0x740000 | 768 KB | Atari 800 |
-| ota_9 | 0x800000 | 768 KB | *(free)* |
+| ota_0 | 0x0D0000 | 640 KB | NES |
+| ota_1 | 0x170000 | 640 KB | GB/GBC |
+| ota_2 | 0x210000 | 1.31 MB | SMS/GG/COL |
+| ota_3 | 0x360000 | 768 KB | ZX Spectrum |
+| ota_4 | 0x420000 | 1.25 MB | Atari 2600 |
+| ota_5 | 0x560000 | 640 KB | Atari 7800 |
+| ota_6 | 0x600000 | 640 KB | Atari Lynx |
+| ota_7 | 0x6A0000 | 704 KB | PC Engine |
+| ota_8 | 0x750000 | 768 KB | Atari 800 |
+| ota_9 | 0x810000 | 704 KB | *(free)* |
 | ota_10 | 0x8C0000 | 960 KB | SNES |
 | ota_11 | 0x9B0000 | 1.31 MB | Genesis |
 | ota_12 | 0xB00000 | 1.5 MB | Neo Geo |
@@ -342,7 +342,8 @@ For a native port, build a `.papp` from `ESP32_P4_PAPP_Template/` instead — no
 ## Binary Sizes
 
 Approximate (from `partitions_ota.csv`; re-measure after builds). Partitions that run **tight**:
-launcher (~706 KB / 768 KB), nes (~567 KB / 576 KB), atari800 (~734 KB / 768 KB). Others carry
+launcher (~706 KB / 768 KB; Tab5 ~735 KB), atari800 (~734 KB / 768 KB; Tab5 ~757 KB). NES got 64 KB
+from the free ota_9 slot (now 640 KB; Tab5 build ~575 KB). Others carry
 60–360 KB headroom. Largest cores: sms ~1231 KB, genesis ~1212 KB, stella ~1184 KB, neogeo ~1177 KB.
 On overflow: shrink the app (`-Os`, strip) or grow the partition and shift later offsets.
 
