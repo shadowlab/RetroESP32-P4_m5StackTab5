@@ -4,7 +4,7 @@ The Tab5 is a board target alongside the Guition 4.3″ handheld this firmware w
 It is selected with **`CONFIG_BOARD_M5STACK_TAB5=y`** (see `launcher/sdkconfig.tab5.defaults`).
 
 > **Status:** the launcher and all 12 emulator apps compile, link and fit their flash slots for the Tab5
-> with ESP-IDF 5.5.2; the handheld build still builds too.
+> with ESP-IDF 5.5.2 and with ESP-IDF 6.1; the handheld build still builds too.
 > The port has **not been run on hardware yet** — expect to iterate on the first boot. Items that most
 > need a look on a real device are listed under [First-boot checklist](#first-boot-checklist).
 
@@ -154,7 +154,7 @@ otherwise the board is probed as before.
 ## Building
 
 ```bash
-. $IDF_PATH/export.sh            # ESP-IDF 5.5.x
+. $IDF_PATH/export.sh            # ESP-IDF 5.5.x or 6.1
 ./build_all_tab5.sh              # launcher + 12 emulators -> firmware_tab5/ and RetroESP32_P4_Tab5_v1.bin
 ./build_all_tab5.sh launcher snes   # or just some projects
 python -m esptool --chip esp32p4 -b 460800 write_flash 0x0 RetroESP32_P4_Tab5_v1.bin
@@ -179,6 +179,15 @@ was grown from 576 KB to 640 KB with 64 KB from the unused `ota_9` slot (`ota_1`
 `ota_9`) got another 64 KB the same way: 832 KB for a ~757 KB build. The tightest slot is now the launcher
 (~735 / 768 KB). The partition table is shared with the other targets: after
 updating, flash the full image (or the partition table plus every app) once.
+
+**ESP-IDF 6.** The tree builds with ESP-IDF 6.1 as well as 5.5. What it took: the `audio` manifest no
+longer pins IDF 5.x; explicit `esp_driver_ledc` / `esp_driver_usb_serial_jtag` requirements; renamed or
+removed IDF fields (`rgb_ele_order`, `dma_burst_size`, no `use_dma2d`, `EXT_RAM_BSS_ATTR`, no
+`i2s_port_t` cast); and because 6.x ships GCC 15, which defaults to C23 / C++26, the older cores are pinned
+to the standard they were written for (nofrendo, smsplus, spectrum: `gnu17`; handy, stella: `gnu++20`).
+`sdkconfig.tab5.defaults` sets `CONFIG_COMPILER_DISABLE_DEFAULT_ERRORS=y` so warnings in the third-party
+cores stay warnings. Image sizes are within a few KB of the 5.5 builds. Only build-tested on 6.1 — the
+runtime has only been reasoned about against 5.5's drivers.
 
 ## First-boot checklist
 
