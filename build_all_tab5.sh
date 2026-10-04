@@ -111,6 +111,11 @@ for entry in "${ALL_APPS[@]}"; do
   check_fit "$BINS/$bin" "$part"
   ARGS+=("$(part_field "$part" 4)" "$BINS/$bin")
 done
-python -m esptool --chip esp32p4 merge_bin -o "$OUT" --flash_mode qio --flash_size 16MB --flash_freq 80m "${ARGS[@]}"
+# esptool 5 (ESP-IDF 6) renamed merge_bin to merge-bin and warns on the old name; esptool 4
+# (ESP-IDF 5.5) only knows merge_bin.  The short flash options work in both.
+ESPTOOL_MAJOR=$(python -m esptool version | grep -oE 'v[0-9]+' | head -1 | tr -d v)
+MERGE_CMD=merge_bin
+[ "${ESPTOOL_MAJOR:-4}" -ge 5 ] && MERGE_CMD=merge-bin
+python -m esptool --chip esp32p4 "$MERGE_CMD" -o "$OUT" -fm qio -fs 16MB -ff 80m "${ARGS[@]}"
 
 echo "Done: $OUT"

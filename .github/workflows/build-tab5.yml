@@ -30,7 +30,7 @@ jobs:
         idf: ['5.5.2', '6.1']
         project: [launcher, nes, gb, sms, spectrum, stella, prosystem, handy, pce, atari800, snes, genesis, neogeo]
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v5
 
       - name: Build
         shell: bash
@@ -38,7 +38,7 @@ jobs:
           . "$IDF_PATH/export.sh" > /dev/null
           ./build_all_tab5.sh ${{ matrix.project }}
 
-      - uses: actions/upload-artifact@v4
+      - uses: actions/upload-artifact@v6
         with:
           name: tab5-idf${{ matrix.idf }}-${{ matrix.project }}
           path: firmware_tab5/*.bin
@@ -55,9 +55,9 @@ jobs:
       matrix:
         idf: ['5.5.2', '6.1']
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v5
 
-      - uses: actions/download-artifact@v4
+      - uses: actions/download-artifact@v7
         with:
           pattern: tab5-idf${{ matrix.idf }}-*
           path: firmware_tab5
@@ -75,7 +75,7 @@ jobs:
             echo '```'
           } >> "$GITHUB_STEP_SUMMARY"
 
-      - uses: actions/upload-artifact@v4
+      - uses: actions/upload-artifact@v6
         with:
           name: RetroESP32_P4_Tab5-idf${{ matrix.idf }}
           path: |
