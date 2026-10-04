@@ -113,9 +113,11 @@ for entry in "${ALL_APPS[@]}"; do
 done
 # esptool 5 (ESP-IDF 6) renamed merge_bin to merge-bin and warns on the old name; esptool 4
 # (ESP-IDF 5.5) only knows merge_bin.  The short flash options work in both.
+# The header says DIO even though the firmware uses QIO: like ESP-IDF's own flash_args, the ROM
+# loads the bootloader in DIO and the bootloader switches the flash to QIO (CONFIG_ESPTOOLPY_FLASHMODE_QIO).
 ESPTOOL_MAJOR=$(python -m esptool version | grep -oE 'v[0-9]+' | head -1 | tr -d v)
 MERGE_CMD=merge_bin
 [ "${ESPTOOL_MAJOR:-4}" -ge 5 ] && MERGE_CMD=merge-bin
-python -m esptool --chip esp32p4 "$MERGE_CMD" -o "$OUT" -fm qio -fs 16MB -ff 80m "${ARGS[@]}"
+python -m esptool --chip esp32p4 "$MERGE_CMD" -o "$OUT" -fm dio -fs 16MB -ff 80m "${ARGS[@]}"
 
 echo "Done: $OUT"

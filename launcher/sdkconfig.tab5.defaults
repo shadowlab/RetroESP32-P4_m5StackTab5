@@ -5,6 +5,12 @@
 
 CONFIG_BOARD_M5STACK_TAB5=y
 
+# The Tab5's ESP32-P4 is a pre-v3 chip (v1.x). ESP-IDF 6 defaults to v3.1+ and a bootloader/app
+# built for one revision family does not boot on the other, so select it explicitly (ESP-IDF 5.5
+# already defaults to this).
+CONFIG_ESP32P4_SELECTS_REV_LESS_V3=y
+CONFIG_ESP32P4_REV_MIN_1=y
+
 # Flash + execution, as in M5Stack's own Tab5 firmware:
 #  - the Tab5's flash is wired for quad I/O
 #  - copy code (.text) and constants (.rodata) into the 200 MHz HEX PSRAM at boot and run from
