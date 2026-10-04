@@ -87,3 +87,7 @@ target_compile_options(${COMPONENT_LIB} PRIVATE
     -fno-exceptions
     -fno-rtti
 )
+
+# Newer toolchains (ESP-IDF 6 / GCC 15) default to C++26, which rejects constructs this legacy core
+# relies on; pin the standard it was written for and keep this warning non-fatal.
+target_compile_options(${COMPONENT_LIB} PRIVATE $<$<COMPILE_LANGUAGE:CXX>:-std=gnu++20> -Wno-error=uninitialized)

@@ -1,6 +1,6 @@
 idf_component_register(
     SRCS "psram_app_loader.c"
     INCLUDE_DIRS "include"
-    REQUIRES odroid audio gamepad gt911_touch esp_mm esp_psram esp_timer
+    REQUIRES odroid audio gamepad gt911_touch esp_mm esp_psram esp_timer esp_driver_usb_serial_jtag
              heap freertos fatfs nvs_flash pngaux ppa_engine esp_driver_ppa
 )

@@ -304,7 +304,6 @@ esp_err_t tab5_display_init(void)
             .hsync_back_porch = 140, .hsync_pulse_width = 40, .hsync_front_porch = 40,
             .vsync_back_porch = 20,  .vsync_pulse_width = 4,  .vsync_front_porch = 20,
         },
-        .flags.use_dma2d = true,
     };
     const esp_lcd_dpi_panel_config_t dpi_st7123 = {
         .virtual_channel = 0,
@@ -317,7 +316,6 @@ esp_err_t tab5_display_init(void)
             .hsync_back_porch = 40, .hsync_pulse_width = 2, .hsync_front_porch = 40,
             .vsync_back_porch = 8,  .vsync_pulse_width = 2, .vsync_front_porch = 220,
         },
-        .flags.use_dma2d = true,
     };
     const esp_lcd_dpi_panel_config_t dpi_st7121 = {
         .virtual_channel = 0,
@@ -330,7 +328,6 @@ esp_err_t tab5_display_init(void)
             .hsync_back_porch = 40, .hsync_pulse_width = 2,  .hsync_front_porch = 40,
             .vsync_back_porch = 24, .vsync_pulse_width = 20, .vsync_front_porch = 200,
         },
-        .flags.use_dma2d = true,
     };
 
     const ili9881c_vendor_config_t vc_ili9881c = {

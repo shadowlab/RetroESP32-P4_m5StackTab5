@@ -4,7 +4,7 @@
 idf_component_register(
     SRCS "main.c"
     INCLUDE_DIRS "." "includes" "sprites"
-    REQUIRES odroid st7701_lcd gt911_touch hdmi_display
+    REQUIRES odroid st7701_lcd gt911_touch hdmi_display esp_driver_ledc
              ppa_engine gamepad audio pngaux
              driver esp_lcd esp_psram fatfs vfs sdmmc nvs_flash
              esp_partition esp_app_format esp_event app_update

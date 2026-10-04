@@ -18,3 +18,7 @@ CONFIG_SPIRAM_XIP_FROM_PSRAM=y
 # timings - try on the device) uncomment:
 # CONFIG_TAB5_ILI9881C_DPI_CLOCK_MHZ=75
 # CONFIG_TAB5_ST712X_DPI_CLOCK_MHZ=73
+
+# The emulator cores are third-party code that is not warning-clean on newer GCC (ESP-IDF 6 ships
+# GCC 15 and turns more warnings into errors). Keep warnings as warnings.
+CONFIG_COMPILER_DISABLE_DEFAULT_ERRORS=y
