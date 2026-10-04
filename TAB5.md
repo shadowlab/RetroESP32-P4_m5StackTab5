@@ -151,7 +151,7 @@ The SD card layout, ROM folders and Neo Geo cache generation are identical to th
 
 **Slot sizes:** all 12 apps and the launcher fit their OTA slots in the Tab5 build. NES is the tightest
 (`ota_0`, 576 KB): the Tab5 board code and touch pad made it ~13 KB too big, so `apps/nes/sdkconfig.tab5.defaults` compiles
-INFO log strings out of that one app (572 KB, ~4 KB spare). Launcher: 732 KB of 768 KB. Running from PSRAM
+INFO log strings out of that one app (573 KB, ~3 KB spare). Launcher: 733 KB of 768 KB. Running from PSRAM
 does not change the flash image size.
 
 ## First-boot checklist
