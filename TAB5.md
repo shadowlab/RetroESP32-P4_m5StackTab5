@@ -120,8 +120,8 @@ idf.py -B build_tab5 -DSDKCONFIG=build_tab5/sdkconfig \
 The SD card layout, ROM folders and Neo Geo cache generation are identical to the other targets.
 
 **Slot sizes:** all 12 apps and the launcher fit their OTA slots in the Tab5 build. NES is the tightest
-(`ota_0`, 576 KB): the Tab5 board code made it ~5 KB too big, so `apps/nes/sdkconfig.tab5.defaults` compiles
-INFO log strings out of that one app (580 KB, 9 KB spare). Launcher: 725 KB of 768 KB.
+(`ota_0`, 576 KB): the Tab5 board code and touch pad made it ~13 KB too big, so `apps/nes/sdkconfig.tab5.defaults` compiles
+INFO log strings out of that one app (570 KB, ~6 KB spare). Launcher: 728 KB of 768 KB.
 
 ## First-boot checklist
 
