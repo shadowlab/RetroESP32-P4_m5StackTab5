@@ -175,8 +175,9 @@ The SD card layout, ROM folders and Neo Geo cache generation are identical to th
 
 **Slot sizes:** all 12 apps and the launcher fit their OTA slots in the Tab5 build. The NES slot (`ota_0`)
 was grown from 576 KB to 640 KB with 64 KB from the unused `ota_9` slot (`ota_1`…`ota_8` moved up by
-0x10000, sizes unchanged), so NES builds with full logging at ~590 KB. The tightest slots are now Atari 800
-(~757 / 768 KB) and the launcher (~735 / 768 KB). The partition table is shared with the other targets: after
+0x10000, sizes unchanged), so NES builds with full logging at ~590 KB. Atari 800 (`ota_8`, right before
+`ota_9`) got another 64 KB the same way: 832 KB for a ~757 KB build. The tightest slot is now the launcher
+(~735 / 768 KB). The partition table is shared with the other targets: after
 updating, flash the full image (or the partition table plus every app) once.
 
 ## First-boot checklist

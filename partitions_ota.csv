@@ -8,7 +8,9 @@
 #
 # ota_0 (NES) was grown from 576 KB to 640 KB: the M5Stack Tab5 build is ~575 KB.
 # The 64 KB came from the unused ota_9 slot (768 -> 704 KB); ota_1..ota_8 moved up
-# by 0x10000 with their sizes unchanged.  Offsets must match flash_all.ps1,
+# by 0x10000 with their sizes unchanged.  ota_8 (Atari 800) was then grown from
+# 768 KB to 832 KB with another 64 KB of ota_9 (now 640 KB, at 0x820000; it stays
+# unused).  Offsets must match flash_all.ps1,
 # generate_merged_bin*.ps1 and build_all_tab5.sh.
 #
 # Name,     Type, SubType, Offset,    Size,    Flags
@@ -23,8 +25,8 @@ ota_4,      app,  ota_4,   0x420000,  0x140000,
 ota_5,      app,  ota_5,   0x560000,  0x0A0000,
 ota_6,      app,  ota_6,   0x600000,  0x0A0000,
 ota_7,      app,  ota_7,   0x6A0000,  0x0B0000,
-ota_8,      app,  ota_8,   0x750000,  0x0C0000,
-ota_9,      app,  ota_9,   0x810000,  0x0B0000,
+ota_8,      app,  ota_8,   0x750000,  0x0D0000,
+ota_9,      app,  ota_9,   0x820000,  0x0A0000,
 ota_10,     app,  ota_10,  0x8C0000,  0x0F0000,
 ota_11,     app,  ota_11,  0x9B0000,  0x150000,
 ota_12,     app,  ota_12,  0xB00000,  0x180000,

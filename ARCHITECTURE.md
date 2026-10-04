@@ -111,8 +111,8 @@ Bootloader is at **0x2000** (ESP32-P4 requirement, not 0x0); partition table at 
 | ota_5 | 0x560000 | 640 KB | Atari 7800 |
 | ota_6 | 0x600000 | 640 KB | Atari Lynx |
 | ota_7 | 0x6A0000 | 704 KB | PC Engine |
-| ota_8 | 0x750000 | 768 KB | Atari 800 |
-| ota_9 | 0x810000 | 704 KB | *(free)* |
+| ota_8 | 0x750000 | 832 KB | Atari 800 |
+| ota_9 | 0x820000 | 640 KB | *(free)* |
 | ota_10 | 0x8C0000 | 960 KB | SNES |
 | ota_11 | 0x9B0000 | 1.31 MB | Genesis |
 | ota_12 | 0xB00000 | 1.5 MB | Neo Geo |
@@ -342,8 +342,8 @@ For a native port, build a `.papp` from `ESP32_P4_PAPP_Template/` instead — no
 ## Binary Sizes
 
 Approximate (from `partitions_ota.csv`; re-measure after builds). Partitions that run **tight**:
-launcher (~706 KB / 768 KB; Tab5 ~735 KB), atari800 (~734 KB / 768 KB; Tab5 ~757 KB). NES got 64 KB
-from the free ota_9 slot (now 640 KB; Tab5 build ~575 KB). Others carry
+launcher (~706 KB / 768 KB; Tab5 ~735 KB). NES and Atari 800 each got 64 KB from the free ota_9 slot
+(NES now 640 KB, Tab5 build ~590 KB; Atari 800 now 832 KB, Tab5 build ~757 KB). Others carry
 60–360 KB headroom. Largest cores: sms ~1231 KB, genesis ~1212 KB, stella ~1184 KB, neogeo ~1177 KB.
 On overflow: shrink the app (`-Os`, strip) or grow the partition and shift later offsets.
 
