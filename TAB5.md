@@ -228,6 +228,10 @@ boot on the Tab5's pre-v3 P4, so `sdkconfig.tab5.defaults` sets `CONFIG_ESP32P4_
 itself in IRAM, which left SNES (whose core keeps ~100 KB of hot code in IRAM) short: the Tab5 defaults
 move the unused SPI/PARLIO driver ISRs out of IRAM, and on this target the rarely used mosaic
 (`DrawLargePixel*`) renderers in `snes9x/tile.c` run from PSRAM instead (~13 KB IRAM headroom left).
+The SD card mount (`odroid_sdcard.c`) initialises the SDMMC controller itself and hands the mount a
+no-op init on 6.x, so the controller is set up exactly once when ESP-Hosted (Wi-Fi via the C6, slot 1)
+shares it with the card (slot 0) later — the workaround from ESP-Hosted's `mcu_hosted_sdio_sdmmc_combined`
+example for esp-idf#16233.
 It also sets `CONFIG_COMPILER_DISABLE_DEFAULT_ERRORS=y` so warnings in the third-party
 cores stay warnings. Image sizes are within a few KB of the 5.5 builds. Only build-tested on 6.1 — the
 runtime has only been reasoned about against 5.5's drivers.

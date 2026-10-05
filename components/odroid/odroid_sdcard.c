@@ -10,6 +10,7 @@
 
 #include <string.h>
 #include "esp_log.h"
+#include "esp_idf_version.h"
 #include "esp_vfs_fat.h"
 #include "driver/sdmmc_host.h"
 #include "sdmmc_cmd.h"
@@ -19,6 +20,24 @@
 
 static const char *TAG = "odroid_sdcard";
 static bool s_mounted = false;
+
+/*
+ * The P4 has one SDMMC controller with two slots: the SD card is on slot 0, and ESP-Hosted (Wi-Fi via the
+ * ESP32-C6, slot 1) also brings the controller up. On ESP-IDF 6 the controller must be initialised only once
+ * when the two share it (esp-idf#16233; ESP-Hosted's mcu_hosted_sdio_sdmmc_combined example works around it
+ * the same way): initialise it here explicitly - a no-op if ESP-Hosted or an earlier attempt already did -
+ * and give the mount a no-op init so it doesn't do it again. Unmount / a failed mount still only remove
+ * slot 0 (SDMMC_HOST_FLAG_DEINIT_ARG -> sdmmc_host_deinit_slot), so the C6's slot keeps running.
+ */
+#if ESP_IDF_VERSION >= ESP_IDF_VERSION_VAL(6, 0, 0)
+#define SDCARD_SHARED_HOST_INIT 1
+static esp_err_t sdmmc_host_init_noop(void)
+{
+    return ESP_OK;
+}
+#else
+#define SDCARD_SHARED_HOST_INIT 0
+#endif
 
 /* Global SD card base path — referenced by emulator components */
 const char* SD_BASE_PATH = "/sd";
@@ -69,8 +88,19 @@ esp_err_t odroid_sdcard_open(const char* base_path)
         };
 
         sdmmc_card_t *card = NULL;
+#if SDCARD_SHARED_HOST_INIT
+        ret = sdmmc_host_init();
+        if (ret == ESP_OK) {
+            host.init = &sdmmc_host_init_noop;
+            ret = esp_vfs_fat_sdmmc_mount(base_path, &host, &slot_config,
+                                           &mount_config, &card);
+        } else {
+            ESP_LOGW(TAG, "SDMMC host init failed (0x%x)", ret);
+        }
+#else
         ret = esp_vfs_fat_sdmmc_mount(base_path, &host, &slot_config,
                                        &mount_config, &card);
+#endif
         if (ret == ESP_OK) {
             ESP_LOGI(TAG, "SD Card mounted at %s (attempt %d)", base_path, attempt);
             sdmmc_card_print_info(stdout, card);
