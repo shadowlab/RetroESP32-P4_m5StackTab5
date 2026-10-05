@@ -33,18 +33,45 @@ The stock M5Stack Tab5 Keyboard also works with the host driver. It acts as a ge
 
 ## 1. Mechanical
 
-Copy these from the Tab5 Keyboard (SKU A164):
+Every console board uses the Tab5 Keyboard's (SKU A164) enclosure envelope. These figures come
+from M5Stack's dimension sheet; all units are mm, and "front" is the key side.
+
+**Dimensioned on the sheet**
 
 | Item | Value |
 |---|---|
-| Outline | 128.0 × 59.4 mm. Keep the overall height ≤ 13.1 mm so the Tab5 still sits flat. |
-| Attachment | Side latches that lock onto the Tab5, plus two M3 screw holes on the back |
-| Connector | 2 × 5 pin header, 2.54 mm pitch, in the same place and orientation as on the keyboard |
+| Overall width | 128.0 |
+| Width between the two top latch arms | 123.6 |
+| Overall height, including the latch arms | 59.4 |
+| Height to the top edge of the body (excluding the latch arms) | 57.95 |
+| Height of the key area (bottom edge to the top step) | 52.0 |
+| Thickness, including the keycaps | 13.19 |
+| Body thickness (excluding the keycaps) | 11.99 |
+| M3 screw holes on the back | 2, **96.0 apart** |
 
-M5Stack has not published a dimensioned drawing. Take the latch geometry, the header position
-and the M3 hole positions from M5Stack's 3D model, or measure a real keyboard. Then reuse one
-PCB outline and one printed shell for every console board. Only the button cut-outs and the
-silkscreen change between boards.
+**Taken from the drawing, not dimensioned**
+
+These were scaled off the drawing, so they are good to about ±0.5 mm. Confirm them with
+calipers before fabrication.
+
+| Item | Approximate value |
+|---|---|
+| M3 hole X | 16.0 in from each side edge (the holes are drawn symmetric: (128 − 96) / 2) |
+| M3 hole Y | about 14 down from the top of the latch arms |
+| 2×5 header | Along the top edge with the pins pointing up (+Y) into the Tab5. Seen from the front it spans about 22–32 from the left edge (about 27 to its centre). |
+| Top strip | The 5.95-tall band above the key area (57.95 − 52) holds the header and docks into the Tab5 |
+| Case screws | 4 small screws, one near each corner of the back shell (not the PCB mounting) |
+| Status LEDs | 2 small windows on the front, bottom-left |
+
+Layout rules for every console board:
+
+* Draw the PCB outline inside the shell. The PCB is **not** 128 × 59.4, because the shell
+  walls take part of it. Allow at least a 1.5 mm wall all round until a shell is drawn.
+* Keep everything that touches the Tab5 identical on every board: the header position and
+  orientation, the top strip, the latch arms and the M3 holes. Only the button cut-outs and
+  the silkscreen change.
+* Keep total height ≤ 13.19 mm. A PCB body of ≤ 11.99 mm plus buttons that stand no taller
+  than the keyboard's keycaps keeps the Tab5 sitting flat.
 
 ## 2. Electrical
 
@@ -315,7 +342,7 @@ also open the patched tree in STM32CubeIDE, but its output still needs `pack_ret
   (ES8388/ES7210) and IO expanders are still Guition-specific. The controller driver is ready
   for a Tab5 port but does not make the firmware run on a Tab5 by itself.
 * The connector pinout and the support circuit now come from M5Stack's schematic (§2.1,
-  §2.2). The mechanical outline (latches, header position, M3 holes) still needs M5Stack's 3D
-  model or measurements from a real keyboard (§1).
+  §2.2). The main outline is dimensioned (§1). The M3 hole Y position and the header position
+  were scaled off the drawing and still need checking with calipers.
 * Not done yet: consuming the keypad bits in the ColecoVision and 5200 cores, and a launcher
   hint such as "attach the Genesis pad".
