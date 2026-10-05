@@ -4,7 +4,7 @@ The Tab5 is a board target alongside the Guition 4.3″ handheld this firmware w
 It is selected with **`CONFIG_BOARD_M5STACK_TAB5=y`** (see `launcher/sdkconfig.tab5.defaults`).
 
 > **Status:** the launcher and all 12 emulator apps compile, link and fit their flash slots for the Tab5
-> with ESP-IDF 5.5.2 and with ESP-IDF 6.1; the handheld build still builds too.
+> with ESP-IDF 5.5.2 (the toolchain releases are built with); the handheld build still builds too.
 > The port has **not been run on hardware yet** — expect to iterate on the first boot. Items that most
 > need a look on a real device are listed under [First-boot checklist](#first-boot-checklist).
 
@@ -168,7 +168,7 @@ otherwise the board is probed as before.
 ## Building
 
 ```bash
-. $IDF_PATH/export.sh            # ESP-IDF 5.5.x or 6.1
+. $IDF_PATH/export.sh            # ESP-IDF 5.5.2
 ./build_all_tab5.sh              # launcher + 12 emulators -> firmware_tab5/ and RetroESP32_P4_Tab5_v1.bin
 ./build_all_tab5.sh launcher snes   # or just some projects
 ./build_all_tab5.sh --merge-only    # merge what is already in firmware_tab5/
@@ -194,19 +194,19 @@ from that file, so a partition change only needs editing there (and in the Windo
 ### CI
 
 `.github/workflows/build-tab5.yml` builds the launcher and each emulator in its own job with ESP-IDF
-5.5.2 and 6.1 (`espressif/idf` containers), then merges one image per IDF version.  The run's
-summary lists every image's size against its slot; the merged `RetroESP32_P4_Tab5_v1.bin` and the
-individual binaries are uploaded as the `RetroESP32_P4_Tab5-idf<version>` artifact.
+5.5.2 (`espressif/idf` container), then merges them into one image.  The run's summary lists every
+image's size against its slot; the merged `RetroESP32_P4_Tab5_v1.bin` and the individual binaries are
+uploaded as the `RetroESP32_P4_Tab5-idf5.5.2` artifact.
 
-Pushing a tag `tab5-v<version>` builds the same way and publishes a GitHub release with both merged
-images and their SHA-256 sums; a suffix (`tab5-v0.2.0-beta.1`) marks it as a pre-release:
+Pushing a tag `tab5-v<version>` builds the same way and publishes a GitHub release with the merged
+image and its SHA-256 sum; a suffix (`tab5-v0.2.0-beta.1`) marks it as a pre-release:
 
 ```bash
 git tag tab5-v0.2.0 && git push origin tab5-v0.2.0
 ```
 
 Creating the release on GitHub instead (new tag `tab5-v...` in the release form) works too: the
-build attaches the images to it and fills in the notes.
+build attaches the image to it and fills in the notes.
 
 The SD card layout, ROM folders and Neo Geo cache generation are identical to the other targets.
 
@@ -217,24 +217,17 @@ was grown from 576 KB to 640 KB with 64 KB from the unused `ota_9` slot (`ota_1`
 (~735 / 768 KB). The partition table is shared with the other targets: after
 updating, flash the full image (or the partition table plus every app) once.
 
-**ESP-IDF 6.** The tree builds with ESP-IDF 6.1 as well as 5.5. What it took: the `audio` manifest no
-longer pins IDF 5.x; explicit `esp_driver_ledc` / `esp_driver_usb_serial_jtag` requirements; renamed or
-removed IDF fields (`rgb_ele_order`, `dma_burst_size`, no `use_dma2d`, `EXT_RAM_BSS_ATTR`, no
-`i2s_port_t` cast); and because 6.x ships GCC 15, which defaults to C23 / C++26, the older cores are pinned
-to the standard they were written for (nofrendo, smsplus, spectrum: `gnu17`; handy, stella: `gnu++20`).
-It also pins the P4 chip revision: 6.x defaults to v3.1+ chips, and a bootloader built for v3 does not
-boot on the Tab5's pre-v3 P4, so `sdkconfig.tab5.defaults` sets `CONFIG_ESP32P4_SELECTS_REV_LESS_V3=y` and
-`CONFIG_ESP32P4_REV_MIN_1=y` (5.5's defaults). That memory map has less IRAM than v3's, and 6.x keeps more of
-itself in IRAM, which left SNES (whose core keeps ~100 KB of hot code in IRAM) short: the Tab5 defaults
-move the unused SPI/PARLIO driver ISRs out of IRAM, and on this target the rarely used mosaic
-(`DrawLargePixel*`) renderers in `snes9x/tile.c` run from PSRAM instead (~13 KB IRAM headroom left).
-The SD card mount (`odroid_sdcard.c`) initialises the SDMMC controller itself and hands the mount a
-no-op init on 6.x, so the controller is set up exactly once when ESP-Hosted (Wi-Fi via the C6, slot 1)
-shares it with the card (slot 0) later — the workaround from ESP-Hosted's `mcu_hosted_sdio_sdmmc_combined`
-example for esp-idf#16233.
-It also sets `CONFIG_COMPILER_DISABLE_DEFAULT_ERRORS=y` so warnings in the third-party
-cores stay warnings. Image sizes are within a few KB of the 5.5 builds. Only build-tested on 6.1 — the
-runtime has only been reasoned about against 5.5's drivers.
+**ESP-IDF version.** Releases are built with **ESP-IDF 5.5.2**, the only supported toolchain for this
+target: the Tab5's ESP32-P4 is a pre-v3 chip, which 5.5 targets by default (`CONFIG_ESP32P4_SELECTS_REV_LESS_V3`,
+`CONFIG_ESP32P4_REV_MIN_1`, spelled out in `sdkconfig.tab5.defaults`). ESP-IDF 6.x is not used for releases
+or CI. The tree did build with 6.1 at one point, and the compatibility changes are kept because they are
+compiled out or inert on 5.5: the `audio` manifest no longer pins IDF 5.x; explicit `esp_driver_ledc` /
+`esp_driver_usb_serial_jtag` requirements; renamed IDF fields (`rgb_ele_order`, `dma_burst_size`,
+`EXT_RAM_BSS_ATTR`, no `use_dma2d`, no `i2s_port_t` cast); the older cores pinned to the language standard
+they were written for (nofrendo, smsplus, spectrum: `gnu17`; handy, stella: `gnu++20`) since GCC 15
+defaults to C23 / C++26; `CONFIG_COMPILER_DISABLE_DEFAULT_ERRORS=y`; on 6.x only, the SNES mosaic
+(`DrawLargePixel*`) renderers run from PSRAM to fit 6.x's smaller pre-v3 IRAM, and the SD card mount
+(`odroid_sdcard.c`) initialises the SDMMC controller once so ESP-Hosted can share it later (esp-idf#16233).
 
 ## First-boot checklist
 

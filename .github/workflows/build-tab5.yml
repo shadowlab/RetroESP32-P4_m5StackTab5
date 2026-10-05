@@ -1,9 +1,9 @@
 # Build the M5Stack Tab5 firmware: the launcher and every emulator app, each in its own job,
 # then merge them into one flashable image (RetroESP32_P4_Tab5_v1.bin, flash at 0x0).
-# Built with ESP-IDF 5.5.2 (the reference toolchain) and 6.1.  build_all_tab5.sh fails a job when
+# Built with ESP-IDF 5.5.2, the toolchain releases are made with.  build_all_tab5.sh fails a job when
 # an image does not fit its partition in partitions_ota.csv.
 # Pushing a tag named tab5-v<version> (e.g. tab5-v0.1.0, or tab5-v0.1.0-beta.1 for a pre-release)
-# also publishes a GitHub release with the two merged images.
+# also publishes a GitHub release with the merged image.
 name: Build Tab5 firmware
 
 on:
@@ -30,7 +30,7 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        idf: ['5.5.2', '6.1']
+        idf: ['5.5.2']
         project: [launcher, nes, gb, sms, spectrum, stella, prosystem, handy, pce, atari800, snes, genesis, neogeo]
     steps:
       - uses: actions/checkout@v5
@@ -56,7 +56,7 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        idf: ['5.5.2', '6.1']
+        idf: ['5.5.2']
     steps:
       - uses: actions/checkout@v5
 
@@ -107,10 +107,8 @@ jobs:
         run: |
           cd dist
           main="RetroESP32_P4_Tab5_${TAG#tab5-}.bin"
-          alt="RetroESP32_P4_Tab5_${TAG#tab5-}_idf6.1.bin"
           cp RetroESP32_P4_Tab5-idf5.5.2/RetroESP32_P4_Tab5_v1.bin "$main"
-          cp RetroESP32_P4_Tab5-idf6.1/RetroESP32_P4_Tab5_v1.bin "$alt"
-          sha256sum "$main" "$alt" > SHA256SUMS
+          sha256sum "$main" > SHA256SUMS
 
           prerelease=()
           [[ "$TAG" =~ ^tab5-v[0-9.]+- ]] && prerelease=(--prerelease)
@@ -118,15 +116,10 @@ jobs:
           {
             echo "Firmware for the **M5Stack Tab5**, built by CI from \`${GITHUB_SHA::8}\`."
             echo
-            echo "| File | Built with |"
-            echo "|---|---|"
-            echo "| \`$main\` | ESP-IDF 5.5.2 (reference toolchain, use this one) |"
-            echo "| \`$alt\` | ESP-IDF 6.1 |"
-            echo
             echo "> **First update the ESP32-C6 firmware** with the separate [tab5-p4-c6-sdio-ota](https://github.com/shadowlab/tab5-p4-c6-sdio-ota) updater"
             echo "> (flash it on its own, wait for \`[PASS]\` in its log). It is not part of this release."
             echo
-            echo "Then flash one of these. Each is a complete image (bootloader, partition table, launcher and all 12 emulators), written at 0x0:"
+            echo "Then flash \`$main\`, built with ESP-IDF 5.5.2. It is a complete image (bootloader, partition table, launcher and all 12 emulators), written at 0x0:"
             echo
             echo '```'
             echo "python -m esptool --chip esp32p4 -b 460800 write_flash 0x0 $main"
@@ -151,10 +144,10 @@ jobs:
 
           if gh release view "$TAG" --repo "$GITHUB_REPOSITORY" > /dev/null 2>&1; then
             # release already drafted/published on GitHub (which also creates the tag): attach the images
-            gh release upload "$TAG" --repo "$GITHUB_REPOSITORY" --clobber "$main" "$alt" SHA256SUMS
+            gh release upload "$TAG" --repo "$GITHUB_REPOSITORY" --clobber "$main" SHA256SUMS
             gh release edit "$TAG" --repo "$GITHUB_REPOSITORY" --notes-file notes.md
           else
             gh release create "$TAG" --repo "$GITHUB_REPOSITORY" --verify-tag \
               --title "M5Stack Tab5 ${TAG#tab5-}" --notes-file notes.md "${prerelease[@]}" \
-              "$main" "$alt" SHA256SUMS
+              "$main" SHA256SUMS
           fi

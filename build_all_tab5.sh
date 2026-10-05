@@ -2,7 +2,7 @@
 # build_all_tab5.sh - Build the launcher + every emulator app for the M5Stack Tab5
 # and merge them into one image (RetroESP32_P4_Tab5_v1.bin, flash at 0x0).
 #
-# Usage:  ./build_all_tab5.sh            # needs an activated ESP-IDF 5.5.x or 6.x (idf.py on PATH)
+# Usage:  ./build_all_tab5.sh            # needs an activated ESP-IDF 5.5.2 (idf.py on PATH)
 #         ./build_all_tab5.sh launcher nes snes     # build only some projects, no merge
 #         ./build_all_tab5.sh --merge-only          # merge the binaries already in firmware_tab5/
 #
@@ -59,7 +59,7 @@ MERGE_ONLY=0
 SELECTED=("$@")
 
 command -v python >/dev/null || { echo "python not found - activate ESP-IDF first (. \$IDF_PATH/export.sh)"; exit 1; }
-[ "$MERGE_ONLY" = 1 ] || command -v idf.py >/dev/null || { echo "idf.py not found - activate ESP-IDF 5.5.x or 6.x first (. \$IDF_PATH/export.sh)"; exit 1; }
+[ "$MERGE_ONLY" = 1 ] || command -v idf.py >/dev/null || { echo "idf.py not found - activate ESP-IDF 5.5.2 first (. \$IDF_PATH/export.sh)"; exit 1; }
 
 mkdir -p "$BINS"
 
