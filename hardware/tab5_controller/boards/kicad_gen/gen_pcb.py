@@ -459,6 +459,18 @@ def import_ses(board, path):
     return n_tracks, n_vias
 
 
+# Orderable parts for the switch footprints. The KiCad footprints were drawn for
+# these families: SW_PUSH_6mm = 6x6 mm THT tact (6.5 x 4.5 mm pins),
+# SW_PUSH-12mm = Omron B3F-40xx (12.5 x 5.0 mm pins), and the angled footprint
+# is named after the C&K PTS645Vx31. A DigiKey number is filled in only where it
+# was checked against DigiKey's own listing; otherwise search DigiKey by MPN.
+PARTS = {
+    "SW_PUSH_6mm": ("C&K", "PTS645SM43-2 LFS", ""),
+    "SW_PUSH-12mm": ("Omron", "B3F-4055", "SW414-ND"),
+    "SW_Tactile_SPST_Angled_PTS645Vx31-2LFS": ("C&K", "PTS645VL31-2 LFS", "CKN9094-ND"),
+}
+
+
 def write_bom(board, path):
     """Group footprints by value + footprint; unfitted straps are listed as DNP."""
     import collections
@@ -472,18 +484,24 @@ def write_bom(board, path):
         groups.setdefault(key, []).append(f.GetReference())
     with open(path, "w", newline="") as fh:
         w = csv.writer(fh)
-        w.writerow(["Qty", "References", "Value", "Footprint", "Side", "Fit"])
+        w.writerow(["Qty", "References", "Value", "Footprint", "Side", "Fit", "Manufacturer", "MPN", "DigiKey"])
         for (value, fpn, side, dnp), refs in groups.items():
-            w.writerow([0 if dnp else len(refs), " ".join(refs), value, fpn, side, "DNP" if dnp else "yes"])
+            mfr, mpn, dk = PARTS.get(fpn, ("", "", ""))
+            w.writerow([0 if dnp else len(refs), " ".join(refs), value, fpn, side, "DNP" if dnp else "yes",
+                        mfr, mpn, dk])
     return path
 
 
 def main():
     args = [a for a in sys.argv[1:] if not a.startswith("--")]
     if len(args) != 1 or args[0] not in layout.CONSOLES:
-        sys.exit("usage: gen_pcb.py {%s} [--route] [--reuse-ses]" % ",".join(layout.CONSOLES))
+        sys.exit("usage: gen_pcb.py {%s} [--route] [--reuse-ses] [--bom-only]" % ",".join(layout.CONSOLES))
     configure(args[0])
     OUT, OUT_UNROUTED = CFG.pcb, CFG.pcb_unrouted
+    if "--bom-only" in sys.argv:
+        # Rewrite the BOM from the routed board, without re-placing or re-routing
+        print("BOM:", write_bom(pcbnew.LoadBoard(OUT), os.path.join(CFG.dir, CFG.base + "_bom.csv")))
+        return
     route = "--route" in sys.argv
     b = build()
     pcbnew.SaveBoard(OUT_UNROUTED, b.board)
