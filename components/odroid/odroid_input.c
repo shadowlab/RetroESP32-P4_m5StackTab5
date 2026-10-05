@@ -275,7 +275,7 @@ static const int8_t s_rp_map_genesis[RP_BTN_COUNT] = {
     [RP_BTN_LEFT]   = ODROID_INPUT_LEFT,   [RP_BTN_RIGHT]  = ODROID_INPUT_RIGHT,
     [RP_BTN_A]      = ODROID_INPUT_X,      [RP_BTN_B]      = ODROID_INPUT_A,
     [RP_BTN_C]      = ODROID_INPUT_B,
-    [RP_BTN_X ... RP_BTN_R2] = RP_NONE,         /* 3-button core */
+    [RP_BTN_X ... RP_BTN_R2] = RP_NONE,         /* X/Y/Z: genesis_run.c reads them for the 6-button pad */
     [RP_BTN_START]  = ODROID_INPUT_START,  [RP_BTN_SELECT] = ODROID_INPUT_SELECT,
     [RP_BTN_MENU]   = ODROID_INPUT_MENU,   [RP_BTN_VOLUME] = ODROID_INPUT_VOLUME,
     [RP_BTN_OPT1 ... RP_BTN_KPHASH] = RP_NONE,

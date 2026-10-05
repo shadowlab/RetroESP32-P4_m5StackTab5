@@ -239,7 +239,7 @@ in-game menu.
 | 2 | Game Boy | Same as NES | |
 | 3 | SNES | D-pad, A, B, X, Y, L, R, SELECT, START | |
 | 4 | SMS / GG | D-pad, 1→`B`, 2→`A`, START (Pause) | |
-| 5 | Genesis | D-pad, A→`A`, B→`B`, C→`C`, START, MODE→`SELECT` | The host remaps these for the 3-button core |
+| 5 | Genesis | D-pad, A→`A`, B→`B`, C→`C`, X→`X`, Y→`Y`, Z→`Z`, START, MODE→`SELECT` | A/B/C are remapped for the core. With this board attached, port 1 is a 6-button pad and the Genesis app passes X/Y/Z/MODE through. Holding MODE when the board connects keeps it 3-button. |
 | 6 | PC Engine | D-pad, II→`B`, I→`A`, SELECT, RUN→`START` | |
 | 7 | Atari 2600 | Joystick→D-pad, FIRE→`A`, GAME SELECT→`SELECT`, GAME RESET→`START`, paddle→AN0 | |
 | 8 | Atari 7800 | D-pad, left fire→`B`, right fire→`A`, PAUSE→`START`, SELECT, RESET→`OPT1` | |
