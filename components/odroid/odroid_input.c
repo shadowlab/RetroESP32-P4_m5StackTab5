@@ -22,6 +22,7 @@
 
 #include "odroid_input.h"
 #include "gamepad.h"   /* gamepad_is_connected() */
+#include "tab5_ctrl.h"
 #ifndef CONFIG_HDMI_OUTPUT
 #include "gt911_touch.h"
 #endif
@@ -247,6 +248,74 @@ static void gpio_pad_read(odroid_gamepad_state *state)
 }
 #endif /* !CONFIG_HDMI_OUTPUT */
 
+/* ─── Tab5 keyboard-port controller boards ──────────────────────── */
+/*  The board reports canonical RP_BTN_* bits; which ODROID input each one
+ *  drives depends on the console board that is plugged in, so a Genesis pad's
+ *  A/B/C or a Neo Geo pad's A/B/C/D land where those cores expect them.      */
+#define RP_NONE  (-1)
+
+static const int8_t s_rp_map_default[RP_BTN_COUNT] = {
+    [RP_BTN_UP]     = ODROID_INPUT_UP,     [RP_BTN_DOWN]   = ODROID_INPUT_DOWN,
+    [RP_BTN_LEFT]   = ODROID_INPUT_LEFT,   [RP_BTN_RIGHT]  = ODROID_INPUT_RIGHT,
+    [RP_BTN_A]      = ODROID_INPUT_A,      [RP_BTN_B]      = ODROID_INPUT_B,
+    [RP_BTN_C]      = RP_NONE,
+    [RP_BTN_X]      = ODROID_INPUT_X,      [RP_BTN_Y]      = ODROID_INPUT_Y,
+    [RP_BTN_Z]      = RP_NONE,
+    [RP_BTN_L]      = ODROID_INPUT_L,      [RP_BTN_R]      = ODROID_INPUT_R,
+    [RP_BTN_L2]     = ODROID_INPUT_L,      [RP_BTN_R2]     = ODROID_INPUT_R,
+    [RP_BTN_START]  = ODROID_INPUT_START,  [RP_BTN_SELECT] = ODROID_INPUT_SELECT,
+    [RP_BTN_MENU]   = ODROID_INPUT_MENU,   [RP_BTN_VOLUME] = ODROID_INPUT_VOLUME,
+    [RP_BTN_OPT1]   = ODROID_INPUT_SELECT, [RP_BTN_OPT2]   = ODROID_INPUT_START,
+    [RP_BTN_KP1 ... RP_BTN_KPHASH] = RP_NONE,   /* keypad: read via tab5_ctrl_get_buttons() */
+};
+
+/* Genesis core: ODROID A → pad B, B → pad C, X → pad A (genesis_run.c). */
+static const int8_t s_rp_map_genesis[RP_BTN_COUNT] = {
+    [RP_BTN_UP]     = ODROID_INPUT_UP,     [RP_BTN_DOWN]   = ODROID_INPUT_DOWN,
+    [RP_BTN_LEFT]   = ODROID_INPUT_LEFT,   [RP_BTN_RIGHT]  = ODROID_INPUT_RIGHT,
+    [RP_BTN_A]      = ODROID_INPUT_X,      [RP_BTN_B]      = ODROID_INPUT_A,
+    [RP_BTN_C]      = ODROID_INPUT_B,
+    [RP_BTN_X ... RP_BTN_R2] = RP_NONE,         /* 3-button core */
+    [RP_BTN_START]  = ODROID_INPUT_START,  [RP_BTN_SELECT] = ODROID_INPUT_SELECT,
+    [RP_BTN_MENU]   = ODROID_INPUT_MENU,   [RP_BTN_VOLUME] = ODROID_INPUT_VOLUME,
+    [RP_BTN_OPT1 ... RP_BTN_KPHASH] = RP_NONE,
+};
+
+/* Neo Geo core: A, B, then C ← ODROID X and D ← ODROID Y (esp32_platform.c).
+ * The Neo Geo board wires D to RP_BTN_X. */
+static const int8_t s_rp_map_neogeo[RP_BTN_COUNT] = {
+    [RP_BTN_UP]     = ODROID_INPUT_UP,     [RP_BTN_DOWN]   = ODROID_INPUT_DOWN,
+    [RP_BTN_LEFT]   = ODROID_INPUT_LEFT,   [RP_BTN_RIGHT]  = ODROID_INPUT_RIGHT,
+    [RP_BTN_A]      = ODROID_INPUT_A,      [RP_BTN_B]      = ODROID_INPUT_B,
+    [RP_BTN_C]      = ODROID_INPUT_X,      [RP_BTN_X]      = ODROID_INPUT_Y,
+    [RP_BTN_Y ... RP_BTN_R2] = RP_NONE,
+    [RP_BTN_START]  = ODROID_INPUT_START,  [RP_BTN_SELECT] = ODROID_INPUT_SELECT,
+    [RP_BTN_MENU]   = ODROID_INPUT_MENU,   [RP_BTN_VOLUME] = ODROID_INPUT_VOLUME,
+    [RP_BTN_OPT1 ... RP_BTN_KPHASH] = RP_NONE,
+};
+
+static void tab5_pad_read(odroid_gamepad_state *state)
+{
+    uint32_t mask = tab5_ctrl_get_buttons();
+    if (!mask) return;
+
+    tab5_ctrl_info_t info;
+    tab5_ctrl_get_info(&info);
+    const int8_t *map = s_rp_map_default;
+    if (info.console == RP_CONSOLE_GENESIS)     map = s_rp_map_genesis;
+    else if (info.console == RP_CONSOLE_NEOGEO) map = s_rp_map_neogeo;
+
+    for (int b = 0; b < RP_BTN_COUNT; b++) {
+        if ((mask & RP_BIT(b)) && map[b] != RP_NONE)
+            state->values[map[b]] = 1;
+    }
+
+    /* Paddle boards feed the existing Atari paddle path */
+    int an = tab5_ctrl_get_analog(0);
+    if (an >= 0)
+        odroid_paddle_adc_raw = an * 4095 / 255;
+}
+
 void odroid_input_gamepad_init(void)
 {
     if (s_initialized) return;
@@ -255,6 +324,9 @@ void odroid_input_gamepad_init(void)
     /* Detect and init custom GPIO gamepad (if connected) */
     gpio_pad_detect_and_init();
 #endif
+
+    /* Controller board on the Tab5 keyboard port (no-op unless enabled) */
+    tab5_ctrl_init();
 
     /* USB gamepad is initialized in odroid_system_init() */
     s_initialized = true;
@@ -320,6 +392,9 @@ void odroid_input_gamepad_read(odroid_gamepad_state *state)
         }
 #endif
     }
+
+    /* Tab5 keyboard-port controller board — OR its buttons into the state */
+    tab5_pad_read(state);
 
 #ifndef CONFIG_HDMI_OUTPUT
     /* Custom GPIO gamepad — OR its buttons into the state */
