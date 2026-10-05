@@ -22,13 +22,14 @@ SHOULDER_Y = 38.0                # side-edge shoulder buttons, below the latch a
 
 # Switch types: body (w, h) and pin positions in the local frame, pad radius.
 #   6, 12 : THT tact switches 6x6 / 12x12, pins on a 6.5x4.5 / 12.5x5.0 grid
+#   court : footprint courtyard (keep-out incl. legs), from the KiCad library
 #   "ra"  : right-angle 6x6 tact switch at a side edge, actuator pointing out
 #           along -x (rotate 180 for the right edge). Generic footprint; take
 #           the final one from the chosen part's datasheet.
 SWITCHES = {
-    6:    dict(body=(6.0, 6.0), pins=[(sx * 3.25, sy * 2.25) for sx in (-1, 1) for sy in (-1, 1)], pad_r=0.9),
-    12:   dict(body=(12.0, 12.0), pins=[(sx * 6.25, sy * 2.5) for sx in (-1, 1) for sy in (-1, 1)], pad_r=1.1),
-    "ra": dict(body=(7.0, 6.0), pins=[(2.5, sy * 3.25) for sy in (-1, 1)] + [(0.0, sy * 3.5) for sy in (-1, 1)], pad_r=0.9),
+    6:    dict(body=(6.0, 6.0), court=(9.5, 7.5), pins=[(sx * 3.25, sy * 2.25) for sx in (-1, 1) for sy in (-1, 1)], pad_r=0.9),
+    12:   dict(body=(12.0, 12.0), court=(16.02, 12.5), pins=[(sx * 6.25, sy * 2.5) for sx in (-1, 1) for sy in (-1, 1)], pad_r=1.1),
+    "ra": dict(body=(7.0, 6.0), court=(7.0, 7.5), pins=[(2.5, sy * 3.25) for sy in (-1, 1)] + [(0.0, sy * 3.5) for sy in (-1, 1)], pad_r=0.9),
 }
 
 
@@ -113,14 +114,23 @@ def gb():
 
 
 def genesis():
-    """Genesis 3-button pad: A, B, C in a row rising to the right, START centred."""
+    """Genesis 6-button pad: X Y Z above A B C, MODE beside START.
+
+    Two rows of three, columns 14 mm apart and each column 1.5 mm higher than
+    the one to its left, like the 6-button pad. Rows are 16.5 mm apart: the 12 mm
+    switches are turned 90 deg, which makes their courtyard (legs included) 16.02
+    mm tall. The cluster sits low enough for Z's courtyard to clear the right M3
+    hole's. MODE uses the SELECT bit (catalog)."""
     cx, cy = CASE_W / 2, KEY_H / 2
     fx = cx + 41 * _S
-    return _dpad() + [
-        ("A",     "RP_BTN_A",     fx - 14.0, cy - 3.0, 12, 90),
-        ("B",     "RP_BTN_B",     fx, cy, 12, 90),
-        ("C",     "RP_BTN_C",     fx + 14.0, cy + 3.0, 12, 90),
-        ("START", "RP_BTN_START", cx, cy - 6 * _S - 2.5, 6, 45),   # lower: clears MENU
+    face = []
+    for col, (low, high) in enumerate((("A", "X"), ("B", "Y"), ("C", "Z"))):
+        x, rise = fx + (col - 1) * 14.0, col * 1.5
+        face.append((low, "RP_BTN_" + low, x, cy - 12.5 + rise, 12, 90))
+        face.append((high, "RP_BTN_" + high, x, cy + 4.0 + rise, 12, 90))
+    return _dpad() + face + [
+        ("MODE",  "RP_BTN_SELECT", cx - 7.5 * _S, cy - 6 * _S, 6, 45),
+        ("START", "RP_BTN_START",  cx + 7.5 * _S, cy - 6 * _S, 6, 45),
     ] + _menu(), ("stadium", cx, cy, 41 * _S, 31 * _S)
 
 
@@ -143,7 +153,7 @@ CONSOLES = {
     "gb":      (2, "Game Boy"),
     "snes":    (3, "SNES"),
     "sms":     (4, "Master System / Game Gear"),
-    "genesis": (5, "Genesis / Mega Drive"),
+    "genesis": (5, "Genesis / Mega Drive 6-button"),
 }
 
 
@@ -156,6 +166,15 @@ def _xf(b, pts):
 def body(b):
     w, h = SWITCHES[b[4]]["body"]
     return _xf(b, [(-w / 2, -h / 2), (w / 2, -h / 2), (w / 2, h / 2), (-w / 2, h / 2)])
+
+
+def court(b):
+    w, h = SWITCHES[b[4]]["court"]
+    return _xf(b, [(-w / 2, -h / 2), (w / 2, -h / 2), (w / 2, h / 2), (-w / 2, h / 2)])
+
+
+M3_Y_EST = 45.0                  # estimated M3 hole height (see README §1)
+M3_COURT_R = 3.45                # MountingHole_3.2mm_M3 courtyard radius
 
 
 def pads(b):
@@ -179,17 +198,34 @@ def _gap(p, q):
     return best
 
 
+def _point_gap(pt, poly):
+    """Distance from a point to a convex polygon (0 if inside)."""
+    px, py = pt
+    best, inside = 1e9, True
+    for i in range(len(poly)):
+        (ax, ay), (bx, by) = poly[i], poly[(i + 1) % len(poly)]
+        dx, dy = bx - ax, by - ay
+        t = max(0.0, min(1.0, ((px - ax) * dx + (py - ay) * dy) / (dx * dx + dy * dy)))
+        best = min(best, math.hypot(px - ax - t * dx, py - ay - t * dy))
+        if dx * (py - ay) - dy * (px - ax) < 0:
+            inside = False
+    return 0.0 if inside else best
+
+
 def check(buttons):
     pts = [pt for b in buttons for pt in body(b) + pads(b)]
     xs, ys = [p[0] for p in pts], [p[1] for p in pts]
     body_gap = min(_gap(body(a), body(b)) for a, b in itertools.combinations(buttons, 2))
     pad_gap = min(math.dist(p, q) - pad_r(a) - pad_r(b)
                   for a, b in itertools.combinations(buttons, 2) for p in pads(a) for q in pads(b))
+    court_gap = min(_gap(court(a), court(b)) for a, b in itertools.combinations(buttons, 2))
+    # distance from each M3 hole centre to the nearest courtyard corner/edge, minus its courtyard
+    hole_gap = min(_point_gap((hx, M3_Y_EST), court(b)) - M3_COURT_R for hx, _ in M3_HOLES for b in buttons)
     inside = min(xs) >= WALL and max(xs) <= CASE_W - WALL and min(ys) >= WALL and max(ys) <= KEY_H - WALL
     side = [p for b in buttons if b[4] == "ra" for p in body(b)]
     below_latch = all(p[1] <= LATCH_BOTTOM for p in side)
     return dict(x=(min(xs), max(xs)), y=(min(ys), max(ys)), body_gap=body_gap, pad_gap=pad_gap,
-                inside=inside, below_latch=below_latch)
+                court_gap=court_gap, hole_gap=hole_gap, inside=inside, below_latch=below_latch)
 
 
 def svg(buttons, outline, path):
@@ -253,6 +289,7 @@ def main():
         print(f"| {n} | `{bit}` | {x:.2f} | {y:.2f} | {kind} | {rot}° |")
     print(f"\nextent x {c['x'][0]:.1f}..{c['x'][1]:.1f}, y {c['y'][0]:.1f}..{c['y'][1]:.1f}; "
           f"closest bodies {c['body_gap']:.2f} mm; closest pads {c['pad_gap']:.2f} mm; "
+          f"courtyards {c['court_gap']:.2f} mm; M3 holes {c['hole_gap']:.2f} mm; "
           f"inside wall margin: {c['inside']}; side buttons below latch arms: {c['below_latch']}")
 
 

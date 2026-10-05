@@ -12,7 +12,7 @@ goes. Every board:
 | [SNES](snes/README.md) | 3 | D-pad, A B X Y, L R (side edges), SELECT START, MENU | [svg](snes/layout.svg) | [`snes/kicad`](snes/kicad) |
 | [NES](nes/README.md) | 1 | D-pad, B A, SELECT START, MENU | [svg](nes/layout.svg) | [`nes/kicad`](nes/kicad) |
 | [Game Boy](gb/README.md) | 2 | D-pad, B A (diagonal), SELECT START, MENU | [svg](gb/layout.svg) | [`gb/kicad`](gb/kicad) |
-| [Genesis / Mega Drive](genesis/README.md) | 5 | D-pad, A B C, START, MENU | [svg](genesis/layout.svg) | [`genesis/kicad`](genesis/kicad) |
+| [Genesis / Mega Drive 6-button](genesis/README.md) | 5 | D-pad, X Y Z over A B C, MODE START, MENU | [svg](genesis/layout.svg) | [`genesis/kicad`](genesis/kicad) |
 | [Master System / Game Gear](sms/README.md) | 4 | D-pad, 1 2, START, MENU | [svg](sms/layout.svg) | [`sms/kicad`](sms/kicad) |
 
 Every KiCad project:
@@ -21,14 +21,16 @@ Every KiCad project:
   warnings remain);
 * has a schematic that matches its PCB net for net (`check_netlist.py`).
 
-The SNES layout follows the user's reference drawing. The NES, Game Boy, Genesis and
-SMS/GG layouts follow each console's own pad, scaled the same way.
+The SNES layout follows the user's reference drawing. The NES, Game Boy, Genesis (6-button)
+and SMS/GG layouts follow each console's own pad, scaled the same way. X/Y/Z/MODE on the
+Genesis board need 6-button support in the Genesis core before games can use them (see
+[`genesis/README.md`](genesis/README.md)).
 
 ## How the boards are made
 
 | File | Role |
 |---|---|
-| [`layout.py`](layout.py) | Button positions for every console, the console IDs, and clearance checks (switch bodies, pads, wall margin, latch arms). It also draws `<console>/layout.svg`. |
+| [`layout.py`](layout.py) | Button positions for every console, the console IDs, and clearance checks (switch bodies, pads, footprint courtyards, M3 holes, wall margin, latch arms). It also draws `<console>/layout.svg`. |
 | [`kicad_gen/gen_pcb.py`](kicad_gen/gen_pcb.py) | Builds the PCB: switches and the 2×5 header on the front; MCU, support parts, one diode per switch, console-ID straps and SWD pads on the back. It routes with Freerouting, pours GND, runs DRC and writes a BOM. |
 | [`kicad_gen/gen_sch.py`](kicad_gen/gen_sch.py) | Builds the schematic from the same board data, so it can't drift from the PCB. |
 | [`kicad_gen/check_netlist.py`](kicad_gen/check_netlist.py) | Compares the schematic netlist with the PCB pad by pad |

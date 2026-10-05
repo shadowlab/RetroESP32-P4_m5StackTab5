@@ -1,7 +1,7 @@
 Qty,References,Value,Footprint,Side,Fit
 4,C1 C2 C3 C5,100nF,C_0603_1608Metric,back,yes
 1,C4,4.7uF,C_0603_1608Metric,back,yes
-9,D1 D2 D3 D4 D5 D6 D7 D8 D9,1N4148W,D_SOD-123,back,yes
+13,D1 D2 D3 D4 D5 D6 D7 D8 D9 D10 D11 D12 D13,1N4148W,D_SOD-123,back,yes
 1,J1,Tab5 Ext.Port1,PinHeader_2x05_P2.54mm_Horizontal,front,yes
 1,J2,SWD,PinHeader_1x05_P2.54mm_Vertical,back,yes
 2,R1 R2,4.7k,R_0603_1608Metric,back,yes
@@ -13,8 +13,12 @@ Qty,References,Value,Footprint,Side,Fit
 1,SW3,LEFT,SW_PUSH_6mm,front,yes
 1,SW4,RIGHT,SW_PUSH_6mm,front,yes
 1,SW5,A,SW_PUSH-12mm,front,yes
-1,SW6,B,SW_PUSH-12mm,front,yes
-1,SW7,C,SW_PUSH-12mm,front,yes
-1,SW8,START,SW_PUSH_6mm,front,yes
-1,SW9,MENU,SW_PUSH_6mm,front,yes
+1,SW6,X,SW_PUSH-12mm,front,yes
+1,SW7,B,SW_PUSH-12mm,front,yes
+1,SW8,Y,SW_PUSH-12mm,front,yes
+1,SW9,C,SW_PUSH-12mm,front,yes
+1,SW10,Z,SW_PUSH-12mm,front,yes
+1,SW11,MODE,SW_PUSH_6mm,front,yes
+1,SW12,START,SW_PUSH_6mm,front,yes
+1,SW13,MENU,SW_PUSH_6mm,front,yes
 1,U1,STM32F030C8T6,LQFP-48_7x7mm_P0.5mm,back,yes

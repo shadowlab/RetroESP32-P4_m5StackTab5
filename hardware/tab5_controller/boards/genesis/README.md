@@ -1,6 +1,6 @@
-# Genesis / Mega Drive board (console ID 5)
+# Genesis / Mega Drive 6-button board (console ID 5)
 
-![Genesis / Mega Drive layout inside the Tab5 Keyboard envelope](layout.svg)
+![Genesis / Mega Drive 6-button layout inside the Tab5 Keyboard envelope](layout.svg)
 
 The coordinate conventions, case outline and markings are the same as on the
 [SNES board](../snes/README.md). The d-pad uses the SNES board's positions so all boards feel
@@ -8,10 +8,26 @@ the same.
 
 ## Layout
 
-* **A, B, C:** a row rising to the right (14 mm apart, +3 mm per step), like the 3-button pad. The host maps them for the Genesis core: A → pad A, B → pad B, C → pad C (`s_rp_map_genesis` in `odroid_input.c`).
-* **START:** centred, 2.5 mm lower than on the SNES board so it clears MENU.
-* **MENU:** centred above START.
-* **No MODE / X / Y / Z:** the core is 3-button. The X/Y/Z bits already exist in the protocol, so a 6-button board only needs the core to read them.
+Based on the 6-button pad (MK-1653):
+
+* **Face buttons:** X Y Z in a row above A B C. Each row has three 12×12 switches, 14 mm apart,
+  with every column 1.5 mm higher than the one to its left, as on the pad.
+  * The rows are 16.5 mm apart. The switches are turned 90° so neighbours in a row don't
+    share pad space, and that makes each switch's courtyard (legs included) 16.02 mm tall.
+  * The cluster sits low enough for Z's courtyard to clear the right M3 hole (0.54 mm).
+* **MODE:** to the left of START, where SELECT sits on the SNES board. It is wired to the
+  SELECT bit, as the console catalog specifies for Genesis MODE.
+* **START:** in the SNES board's START position.
+* **MENU:** centred above MODE/START.
+
+> **Emulator support:** the board reports all six face buttons plus MODE, but the Genesis
+> core in this repo (gwenesis) only emulates the 3-button pad:
+> * `gwenesis_io.c` has no X/Y/Z/MODE buttons and doesn't implement the 6-button pad's
+>   TH-counter read sequence;
+> * the host map `s_rp_map_genesis` in `odroid_input.c` drops X/Y/Z.
+>
+> Until both are extended, A/B/C/START work as on the 3-button pad, and X/Y/Z/MODE are
+> ignored. The board itself needs no change when that support lands.
 
 | Button | RetroPad bit | x | y | Switch | Rotation |
 |---|---|---|---|---|---|
@@ -19,13 +35,17 @@ the same.
 | DOWN | `RP_BTN_DOWN` | 29.97 | 13.50 | 6x6 | 0° |
 | LEFT | `RP_BTN_LEFT` | 17.47 | 26.00 | 6x6 | 0° |
 | RIGHT | `RP_BTN_RIGHT` | 42.47 | 26.00 | 6x6 | 0° |
-| A | `RP_BTN_A` | 84.03 | 23.00 | 12x12 | 90° |
-| B | `RP_BTN_B` | 98.03 | 26.00 | 12x12 | 90° |
-| C | `RP_BTN_C` | 112.03 | 29.00 | 12x12 | 90° |
-| START | `RP_BTN_START` | 64.00 | 18.52 | 6x6 | 45° |
+| A | `RP_BTN_A` | 84.03 | 13.50 | 12x12 | 90° |
+| X | `RP_BTN_X` | 84.03 | 30.00 | 12x12 | 90° |
+| B | `RP_BTN_B` | 98.03 | 15.00 | 12x12 | 90° |
+| Y | `RP_BTN_Y` | 98.03 | 31.50 | 12x12 | 90° |
+| C | `RP_BTN_C` | 112.03 | 16.50 | 12x12 | 90° |
+| Z | `RP_BTN_Z` | 112.03 | 33.00 | 12x12 | 90° |
+| MODE | `RP_BTN_SELECT` | 57.77 | 21.02 | 6x6 | 45° |
+| START | `RP_BTN_START` | 70.22 | 21.02 | 6x6 | 45° |
 | MENU | `RP_BTN_MENU` | 64.00 | 31.00 | 6x6 | 45° |
 
-Clearance check (`python3 ../layout.py genesis`): extent x 14.2..118.0, y 10.5..41.2; closest bodies 2.00 mm; closest pads 3.11 mm; inside wall margin: True; side buttons below latch arms: True.
+Clearance check (`python3 ../layout.py genesis`): extent x 14.2..118.0, y 7.2..41.2; closest bodies 2.00 mm; closest pads 1.80 mm; courtyards 0.48 mm; M3 holes 0.54 mm; inside wall margin: True; side buttons below latch arms: True.
 
 Console-ID straps: fit R6, R8 (0 Ω), leave the others unfitted. Every board carries all five
 strap footprints.
@@ -37,9 +57,9 @@ routed two-layer PCB, a BOM and the DRC report.
 
 | Check | Result |
 |---|---|
-| DRC | 0 unconnected pads, no clearance/short/edge errors (silkscreen warnings only) |
-| Routing | 358 track segments, 27 vias, GND pour on both layers |
-| Schematic vs PCB | 35 schematic nets, 35 PCB nets, 0 differences |
+| DRC | 0 unconnected pads, no clearance/short/edge/courtyard errors (silkscreen warnings only) |
+| Routing | 425 track segments, 34 vias, GND pour on both layers |
+| Schematic vs PCB | 39 schematic nets, 39 PCB nets, 0 differences |
 
 | Front | Back (seen from the back) |
 |---|---|
