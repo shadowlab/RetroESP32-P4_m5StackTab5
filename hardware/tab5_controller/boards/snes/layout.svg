@@ -5,7 +5,7 @@
 <polygon points="20.0,94.7 33.2,94.7 33.2,20.0 20.0,20.0" fill="#ccc" stroke="#333"/>
 <polygon points="774.8,94.7 788.0,94.7 788.0,20.0 774.8,20.0" fill="#ccc" stroke="#333"/>
 <polygon points="136.4,61.4 215.6,61.4 215.6,31.7 136.4,31.7" fill="none" stroke="#c33" stroke-dasharray="3 2"/>
-<text x="224" y="46" fill="#c33">2x5 header (back side)</text>
+<text x="224" y="46" fill="#c33">2x5 header to the Tab5</text>
 <line x1="116.0" y1="64.39999999999999" x2="116.0" y2="376.4" stroke="#36c" stroke-dasharray="2 3"/>
 <line x1="692.0" y1="64.39999999999999" x2="692.0" y2="376.4" stroke="#36c" stroke-dasharray="2 3"/>
 <polygon points="29.0,367.4 779.0,367.4 779.0,73.4 29.0,73.4" fill="none" stroke="#999" stroke-dasharray="4 3"/>

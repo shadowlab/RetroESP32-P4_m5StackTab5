@@ -1,0 +1,50 @@
+# Master System / Game Gear board (console ID 4)
+
+![Master System / Game Gear layout inside the Tab5 Keyboard envelope](layout.svg)
+
+The coordinate conventions, case outline and markings are the same as on the
+[SNES board](../snes/README.md). The d-pad uses the SNES board's positions so all boards feel
+the same.
+
+## Layout
+
+* **1 and 2:** 12×12 switches side by side. They are wired to the B and A bits, so the default map turns them into ODROID B and A (buttons 1 and 2 in the SMS core).
+* **START:** Game Gear START / Master System PAUSE, centred and lowered to clear MENU.
+* **MENU:** centred above START.
+* **ColecoVision:** it uses the same core but needs a keypad, which this board doesn't have.
+
+| Button | RetroPad bit | x | y | Switch | Rotation |
+|---|---|---|---|---|---|
+| UP | `RP_BTN_UP` | 29.97 | 38.25 | 6x6 | 0° |
+| DOWN | `RP_BTN_DOWN` | 29.97 | 13.50 | 6x6 | 0° |
+| LEFT | `RP_BTN_LEFT` | 17.47 | 26.00 | 6x6 | 0° |
+| RIGHT | `RP_BTN_RIGHT` | 42.47 | 26.00 | 6x6 | 0° |
+| 1 | `RP_BTN_B` | 90.03 | 24.00 | 12x12 | 90° |
+| 2 | `RP_BTN_A` | 106.03 | 24.00 | 12x12 | 90° |
+| START | `RP_BTN_START` | 64.00 | 18.52 | 6x6 | 45° |
+| MENU | `RP_BTN_MENU` | 64.00 | 31.00 | 6x6 | 45° |
+
+Clearance check (`python3 ../layout.py sms`): extent x 14.2..112.0, y 10.5..41.2; closest bodies 2.82 mm; closest pads 3.11 mm; inside wall margin: True; side buttons below latch arms: True.
+
+Console-ID straps: fit R8 (0 Ω), leave the others unfitted. Every board carries all five
+strap footprints.
+
+## PCB and schematic
+
+[`kicad/`](kicad) holds a complete KiCad project (`retropad_sms.kicad_pro`): a schematic, a
+routed two-layer PCB, a BOM and the DRC report.
+
+| Check | Result |
+|---|---|
+| DRC | 0 unconnected pads, no clearance/short/edge errors (silkscreen warnings only) |
+| Routing | 329 track segments, 21 vias, GND pour on both layers |
+| Schematic vs PCB | 34 schematic nets, 34 PCB nets, 0 differences |
+
+| Front | Back (seen from the back) |
+|---|---|
+| ![front](kicad/front.png) | ![back](kicad/back.png) |
+
+![Schematic](kicad/schematic.png)
+
+The MCU section, support parts, J1 header and the
+[pre-order checklist](../README.md#before-ordering-any-board) are shared with every board.

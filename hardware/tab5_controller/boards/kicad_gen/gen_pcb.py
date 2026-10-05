@@ -1,14 +1,16 @@
 #!/usr/bin/env python3
-"""Generate the RetroPad SNES board (console ID 3) as a KiCad 7 PCB.
+"""Generate a RetroPad console board as a KiCad 7 PCB.
 
-    python3 gen_snes_pcb.py            # place + net -> retropad_snes_unrouted.kicad_pcb
-    python3 gen_snes_pcb.py --route    # ...then Freerouting -> retropad_snes.kicad_pcb
+    python3 gen_pcb.py snes            # place + net -> ../snes/kicad/retropad_snes_unrouted.kicad_pcb
+    python3 gen_pcb.py snes --route    # ...then Freerouting -> ../snes/kicad/retropad_snes.kicad_pcb
+
+The console names and ids come from ../layout.py (CONSOLES / BOARDS).
 
 Needs KiCad 7+ (its Python module `pcbnew`) and, for --route, Java 17+ and
 freerouting 1.9.0 (FREEROUTING_JAR, default ./freerouting.jar; xvfb-run
 when there is no display).
 
-Button positions come from ../../layout.py, so the board always matches the
+Button positions come from ../layout.py, so the board always matches the
 reviewed layout. Coordinates in this file follow layout.py: mm, front view,
 x from the left edge of the case, y up from the bottom edge.
 """
@@ -21,21 +23,53 @@ import uuid
 import pcbnew
 
 HERE = os.path.dirname(os.path.abspath(__file__))
-sys.path.insert(0, os.path.join(HERE, "..", ".."))
+BOARDS_DIR = os.path.dirname(HERE)
+sys.path.insert(0, BOARDS_DIR)
 import layout  # noqa: E402
 
 FP = "/usr/share/kicad/footprints"
-OUT_UNROUTED = os.path.join(HERE, "retropad_snes_unrouted.kicad_pcb")
-OUT = os.path.join(HERE, "retropad_snes.kicad_pcb")
 
-# Footprints carry the UUID of their schematic symbol (gen_snes_sch.py derives
-# the same ones), which is what links the PCB to retropad_snes.kicad_sch.
+# Footprints carry the UUID of their schematic symbol (gen_sch.py derives the
+# same ones), which is what links each PCB to its schematic.
 UUID_NS = uuid.UUID("8d3c5a62-1f0e-4f7e-9a51-5e7a0b2c9d11")
-SCH_FILE = "retropad_snes.kicad_sch"
+
+
+class Console:
+    """Names, paths and console-ID straps for one board."""
+
+    def __init__(self, name):
+        self.name = name
+        self.id, self.title = layout.CONSOLES[name]
+        self.base = "retropad_" + name
+        self.dir = os.path.join(BOARDS_DIR, name, "kicad")
+        self.pcb = os.path.join(self.dir, self.base + ".kicad_pcb")
+        self.pcb_unrouted = os.path.join(self.dir, self.base + "_unrouted.kicad_pcb")
+        self.sch_file = self.base + ".kicad_sch"
+        # ID0..ID3 = bits of the console id (0R fitted = bit set); AN_EN unused
+        self.straps = [("R%d" % (6 + i), "ID%d" % i, bool(self.id >> i & 1)) for i in range(4)]
+        self.straps.append(("R10", "AN_EN", False))
+
+    def buttons(self):
+        return layout.BOARDS[self.name]()[0]
+
+    def strap_note(self):
+        fit = [r for r, _, f in self.straps if f]
+        dnp = [r for r, _, f in self.straps if not f]
+        return "%s = ID %d (fit %s; %s DNP)" % (self.title, self.id, ", ".join(fit) or "none", ", ".join(dnp))
+
+
+CFG = None
+
+
+def configure(name):
+    global CFG
+    CFG = Console(name)
+    os.makedirs(CFG.dir, exist_ok=True)
+    return CFG
 
 
 def symbol_uuid(ref):
-    return str(uuid.uuid5(UUID_NS, "retropad_snes/" + ref))
+    return str(uuid.uuid5(UUID_NS, CFG.base + "/" + ref))
 
 # Sheet origin: layout (0, 0) lands here, and layout y is flipped (KiCad y points down).
 OX, OY = 40.0, 140.0
@@ -54,10 +88,6 @@ HEADER_X = layout.HEADER_X      # centre of the 5 pin columns
 HEADER_BODY_DEPTH = 6.58        # pin row 1 to the front face of the header body
 M3_Y = 45.0                     # estimate; caliper-check on a real keyboard
 M3_X = (16.0, 112.0)
-
-# Console ID 3 = ID0 + ID1 bridged to GND
-STRAPS = [("R6", "ID0", True), ("R7", "ID1", True), ("R8", "ID2", False),
-          ("R9", "ID3", False), ("R10", "AN_EN", False)]
 
 # STM32F030C8T6 LQFP48 pin -> net (pins not listed are left unconnected)
 MCU_PINS = {
@@ -114,7 +144,7 @@ class Builder:
         fp.SetReference(ref)
         fp.SetValue(value)
         fp.SetPath(pcbnew.KIID_PATH("/" + symbol_uuid(ref)))
-        fp.SetProperty("Sheetfile", SCH_FILE)
+        fp.SetProperty("Sheetfile", CFG.sch_file)
         fp.SetProperty("Sheetname", "")
         self.board.Add(fp)
         fp.SetPosition(mm(x, y))
@@ -164,7 +194,9 @@ class Builder:
         z.SetNet(self.net(netname))
         z.SetLocalClearance(pcbnew.FromMM(0.3))
         z.SetMinThickness(pcbnew.FromMM(0.25))
-        z.SetPadConnection(pcbnew.ZONE_CONNECTION_THERMAL)
+        # Thermal reliefs on through-hole pads only; small SMD pads connect solidly
+        # (a 0603 pad squeezed by tracks can otherwise end up with one spoke).
+        z.SetPadConnection(pcbnew.ZONE_CONNECTION_THT_THERMAL)
         ol = z.Outline()
         ol.NewOutline()
         for x, y in OUTLINE:
@@ -175,19 +207,18 @@ class Builder:
 
 def build():
     b = Builder()
-    B = b.board
-    buttons, _ = layout.snes()
+    buttons = CFG.buttons()
 
     # Outline, mounting holes, labels
     b.line(pcbnew.Edge_Cuts, OUTLINE, closed=True, width=0.1)
     for i, x in enumerate(M3_X):
         b.place("MountingHole", "MountingHole_3.2mm_M3", f"H{i + 1}", "M3", x, M3_Y)
-    b.text(pcbnew.F_SilkS, 64, 49.5, "RetroPad SNES  (console ID 3)", 1.2)
-    b.text(pcbnew.B_SilkS, 100, 53.5, "RetroPad SNES rev 0.1", 1.0, mirror=True)
+    b.text(pcbnew.F_SilkS, 64, 49.5, "RetroPad %s  (console ID %d)" % (CFG.title, CFG.id), 1.2)
+    b.text(pcbnew.B_SilkS, 100, 53.5, "RetroPad %s rev 0.1" % CFG.name.upper(), 1.0, mirror=True)
 
     # Buttons (front) and their matrix diodes (back)
-    for n, (name, _bit, x, y, kind, rot) in enumerate(buttons, start=1):
-        bit = RP_BIT[name]
+    for n, (name, rp, x, y, kind, rot) in enumerate(buttons, start=1):
+        bit = RP_BIT[rp[len("RP_BTN_"):]]
         row, col = f"ROW{bit % 8}", f"COL{bit // 8}"
         key = f"K_{name}"
         sref, dref = f"SW{n}", f"D{n}"
@@ -235,9 +266,9 @@ def build():
     passive("R4", "10k", 54.0, 41.0, "+3V3", "NRST", 90.0)
     passive("R5", "10k", 76.0, 50.0, "BOOT0", "GND", 90.0)
 
-    # Console-ID / analog straps: 0R to GND = bit set. The PCB carries all five;
-    # the BOM decides the console (fit R6+R7 for SNES, leave R8-R10 unfitted).
-    for i, (ref, sig, fitted) in enumerate(STRAPS):
+    # Console-ID / analog straps: 0R to GND = bit set. Every board carries all
+    # five footprints; the BOM decides the console id (see Console.straps).
+    for i, (ref, sig, fitted) in enumerate(CFG.straps):
         r = passive(ref, "0R" if fitted else "DNP", 79.0 + i * 3.0, 41.0, sig, "GND", 90.0)
         if not fitted:
             r.SetDNP(True) if hasattr(r, "SetDNP") else None
@@ -250,6 +281,11 @@ def build():
                  HEADER_X - 5.08, pin1_y, 90.0)
     for pin, netname in HEADER_PINS.items():
         b.connect(j1, pin, netname)
+    # Connector GND pins (here and on J2) connect solidly: tracks around them
+    # can leave a thermal relief with a single spoke
+    for p in j1.Pads():
+        if p.GetNetname() == "GND":
+            p.SetZoneConnection(pcbnew.ZONE_CONNECTION_FULL)
     b.text(pcbnew.F_SilkS, HEADER_X, 44.6, "VERIFY PIN 1 vs KEYBOARD", 0.8)
 
     # SWD (pads only; 1 = 3V3, 2 = SWCLK, 3 = SWDIO, 4 = NRST, 5 = GND as on the keyboard)
@@ -257,6 +293,9 @@ def build():
                  88.0, 53.5, 90.0, back=True)
     for pin, netname in {1: "+3V3", 2: "SWCLK", 3: "SWDIO", 4: "NRST", 5: "GND"}.items():
         b.connect(j2, pin, netname)
+    for p in j2.Pads():
+        if p.GetNetname() == "GND":
+            p.SetZoneConnection(pcbnew.ZONE_CONNECTION_FULL)
     b.text(pcbnew.B_SilkS, 93.0, 50.6, "SWD 3V3 CLK DIO RST GND", 0.8, mirror=True)
 
     return b
@@ -357,6 +396,11 @@ def write_bom(board, path):
 
 
 def main():
+    args = [a for a in sys.argv[1:] if not a.startswith("--")]
+    if len(args) != 1 or args[0] not in layout.CONSOLES:
+        sys.exit("usage: gen_pcb.py {%s} [--route] [--reuse-ses]" % ",".join(layout.CONSOLES))
+    configure(args[0])
+    OUT, OUT_UNROUTED = CFG.pcb, CFG.pcb_unrouted
     route = "--route" in sys.argv
     b = build()
     pcbnew.SaveBoard(OUT_UNROUTED, b.board)
@@ -366,8 +410,8 @@ def main():
 
     work = os.environ.get("ROUTE_DIR", os.path.join(HERE, "build"))
     os.makedirs(work, exist_ok=True)
-    dsn = os.path.join(work, "retropad_snes.dsn")
-    ses = os.path.join(work, "retropad_snes.ses")
+    dsn = os.path.join(work, CFG.base + ".dsn")
+    ses = os.path.join(work, CFG.base + ".ses")
     if "--reuse-ses" not in sys.argv or not os.path.exists(ses):
         if not pcbnew.ExportSpecctraDSN(b.board, dsn):
             sys.exit("DSN export failed")
@@ -375,7 +419,8 @@ def main():
         # Freerouting 1.9, single-threaded (2.x's multi-threaded optimiser has
         # returned sessions with nets missing). 1.9 opens a window, so run it
         # under a virtual display when there is no real one.
-        cmd = ["java", "-jar", jar, "-de", dsn, "-do", ses, "-mp", "100", "-mt", "1"]
+        passes = os.environ.get("FR_PASSES", "100")
+        cmd = ["java", "-jar", jar, "-de", dsn, "-do", ses, "-mp", passes, "-mt", "1"]
         if not os.environ.get("DISPLAY") and shutil.which("xvfb-run"):
             cmd = ["xvfb-run", "-a"] + cmd
         subprocess.run(cmd, check=True)
@@ -391,7 +436,7 @@ def main():
     pcbnew.ZONE_FILLER(board).Fill(board.Zones())
     pcbnew.SaveBoard(OUT, board)
     print("saved", OUT, "| DRC report:", drc(OUT))
-    print("BOM:", write_bom(board, os.path.join(HERE, "retropad_snes_bom.csv")))
+    print("BOM:", write_bom(board, os.path.join(CFG.dir, CFG.base + "_bom.csv")))
 
 
 if __name__ == "__main__":

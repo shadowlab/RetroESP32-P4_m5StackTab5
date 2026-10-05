@@ -64,7 +64,87 @@ def snes(s=0.83, k=1.0):
     return buttons, outline
 
 
-BOARDS = {"snes": snes}
+# Shared by the boards below: the SNES d-pad, START/SELECT and MENU positions
+_S = 0.83
+
+
+def _dpad(cx=CASE_W / 2, cy=KEY_H / 2):
+    dx = cx - 41 * _S
+    return [
+        ("UP",    "RP_BTN_UP",    dx, cy + 12.25, 6, 0),
+        ("DOWN",  "RP_BTN_DOWN",  dx, cy - 12.5, 6, 0),
+        ("LEFT",  "RP_BTN_LEFT",  dx - 12.5, cy, 6, 0),
+        ("RIGHT", "RP_BTN_RIGHT", dx + 12.5, cy, 6, 0),
+    ]
+
+
+def _menu(cx=CASE_W / 2, cy=KEY_H / 2):
+    return [("MENU", "RP_BTN_MENU", cx, cy + 5.0, 6, 45)]
+
+
+def _rrect(r):
+    return ("rrect", CASE_W / 2, KEY_H / 2, 144 * _S / 2, 62 * _S / 2, r)
+
+
+def nes():
+    """NES pad: d-pad, SELECT/START pills, B and A side by side."""
+    cx, cy = CASE_W / 2, KEY_H / 2
+    fx = cx + 41 * _S
+    # 12 mm switches turned 90 deg so their pins run vertically and the pads of
+    # the two neighbouring switches stay clear of each other
+    return _dpad() + [
+        ("B",      "RP_BTN_B",      fx - 8.0, cy - 2.0, 12, 90),
+        ("A",      "RP_BTN_A",      fx + 8.0, cy - 2.0, 12, 90),
+        ("SELECT", "RP_BTN_SELECT", cx - 7.5 * _S, cy - 6 * _S, 6, 0),
+        ("START",  "RP_BTN_START",  cx + 7.5 * _S, cy - 6 * _S, 6, 0),
+    ] + _menu(), _rrect(4.0)
+
+
+def gb():
+    """Game Boy: B low-left / A high-right on a diagonal, SELECT/START angled."""
+    cx, cy = CASE_W / 2, KEY_H / 2
+    fx = cx + 41 * _S
+    return _dpad() + [
+        ("B",      "RP_BTN_B",      fx - 7.5, cy - 4.0, 12, 90),
+        ("A",      "RP_BTN_A",      fx + 7.5, cy + 4.0, 12, 90),
+        ("SELECT", "RP_BTN_SELECT", cx - 7.5 * _S, cy - 6 * _S, 6, 0),
+        ("START",  "RP_BTN_START",  cx + 7.5 * _S, cy - 6 * _S, 6, 0),
+    ] + _menu(), _rrect(10.0)
+
+
+def genesis():
+    """Genesis 3-button pad: A, B, C in a row rising to the right, START centred."""
+    cx, cy = CASE_W / 2, KEY_H / 2
+    fx = cx + 41 * _S
+    return _dpad() + [
+        ("A",     "RP_BTN_A",     fx - 14.0, cy - 3.0, 12, 90),
+        ("B",     "RP_BTN_B",     fx, cy, 12, 90),
+        ("C",     "RP_BTN_C",     fx + 14.0, cy + 3.0, 12, 90),
+        ("START", "RP_BTN_START", cx, cy - 6 * _S - 2.5, 6, 45),   # lower: clears MENU
+    ] + _menu(), ("stadium", cx, cy, 41 * _S, 31 * _S)
+
+
+def sms():
+    """Master System / Game Gear: buttons 1 and 2, START (GG start, SMS pause)."""
+    cx, cy = CASE_W / 2, KEY_H / 2
+    fx = cx + 41 * _S
+    return _dpad() + [
+        ("1",     "RP_BTN_B",     fx - 8.0, cy - 2.0, 12, 90),
+        ("2",     "RP_BTN_A",     fx + 8.0, cy - 2.0, 12, 90),
+        ("START", "RP_BTN_START", cx, cy - 6 * _S - 2.5, 6, 45),   # lower: clears MENU
+    ] + _menu(), _rrect(4.0)
+
+
+BOARDS = {"snes": snes, "nes": nes, "gb": gb, "genesis": genesis, "sms": sms}
+
+# Console id (retropad_proto.h rp_console_t) and the name printed on each board
+CONSOLES = {
+    "nes":     (1, "NES"),
+    "gb":      (2, "Game Boy"),
+    "snes":    (3, "SNES"),
+    "sms":     (4, "Master System / Game Gear"),
+    "genesis": (5, "Genesis / Mega Drive"),
+}
 
 
 def _xf(b, pts):
@@ -121,7 +201,7 @@ def svg(buttons, outline, path):
 
     o = [f'<svg xmlns="http://www.w3.org/2000/svg" width="{W:.0f}" height="{H:.0f}" '
          f'viewBox="0 0 {W:.0f} {H:.0f}" font-family="sans-serif" font-size="10">',
-         f'<rect width="100%" height="100%" fill="#fff"/>']
+         '<rect width="100%" height="100%" fill="#fff"/>']
     # case: key area, top strip, latch arms
     o.append(f'<polygon points="{P(0,0)} {P(CASE_W,0)} {P(CASE_W,BODY_H)} {P(0,BODY_H)}" fill="#f4f4f4" stroke="#333"/>')
     o.append(f'<polygon points="{P(0,KEY_H)} {P(CASE_W,KEY_H)} {P(CASE_W,BODY_H)} {P(0,BODY_H)}" fill="#e2e2e2" stroke="#333"/>')
@@ -130,15 +210,20 @@ def svg(buttons, outline, path):
                  f'fill="#ccc" stroke="#333"/>')
     o.append(f'<polygon points="{P(HEADER_X-6.6,KEY_H+0.5)} {P(HEADER_X+6.6,KEY_H+0.5)} {P(HEADER_X+6.6,BODY_H-0.5)} '
              f'{P(HEADER_X-6.6,BODY_H-0.5)}" fill="none" stroke="#c33" stroke-dasharray="3 2"/>')
-    o.append(f'<text x="{20+(HEADER_X+8)*S:.0f}" y="{20+(CASE_H-KEY_H-3)*S:.0f}" fill="#c33">2x5 header (back side)</text>')
+    o.append(f'<text x="{20+(HEADER_X+8)*S:.0f}" y="{20+(CASE_H-KEY_H-3)*S:.0f}" fill="#c33">2x5 header to the Tab5</text>')
     for x, _ in M3_HOLES:
         o.append(f'<line x1="{20+x*S}" y1="{20+(CASE_H-KEY_H)*S}" x2="{20+x*S}" y2="{20+CASE_H*S}" stroke="#36c" stroke-dasharray="2 3"/>')
     # wall margin
     o.append(f'<polygon points="{P(WALL,WALL)} {P(CASE_W-WALL,WALL)} {P(CASE_W-WALL,KEY_H-WALL)} {P(WALL,KEY_H-WALL)}" '
              f'fill="none" stroke="#999" stroke-dasharray="4 3"/>')
-    # stadium outline of the original pad
-    _, cx, cy, d, r = outline
-    o.append(f'<path d="M {P(cx-d, cy+r)} L {P(cx+d, cy+r)} A {r*S:.1f} {r*S:.1f} 0 0 1 {P(cx+d, cy-r)} '
+    # silhouette of the original pad
+    if outline[0] == "rrect":
+        _, cx, cy, hw, hh, rr = outline
+        o.append(f'<rect x="{20+(cx-hw)*S:.1f}" y="{20+(CASE_H-cy-hh)*S:.1f}" width="{2*hw*S:.1f}" '
+                 f'height="{2*hh*S:.1f}" rx="{rr*S:.1f}" fill="none" stroke="#2a8" stroke-width="1.5"/>')
+    else:
+        _, cx, cy, d, r = outline
+        o.append(f'<path d="M {P(cx-d, cy+r)} L {P(cx+d, cy+r)} A {r*S:.1f} {r*S:.1f} 0 0 1 {P(cx+d, cy-r)} '
              f'L {P(cx-d, cy-r)} A {r*S:.1f} {r*S:.1f} 0 0 1 {P(cx-d, cy+r)} Z" fill="none" stroke="#2a8" stroke-width="1.5"/>')
     for b in buttons:
         o.append(f'<polygon points="{" ".join(P(*p) for p in body(b))}" fill="#fff8d0" stroke="#a80"/>')

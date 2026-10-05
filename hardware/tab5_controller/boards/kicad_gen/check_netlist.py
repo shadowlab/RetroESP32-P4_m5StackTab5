@@ -1,5 +1,7 @@
 #!/usr/bin/env python3
-"""Check that retropad_snes.kicad_sch and retropad_snes.kicad_pcb have identical connectivity.
+"""Check that a board's schematic and PCB have identical connectivity.
+
+    python3 check_netlist.py snes
 
 Exports the schematic netlist with kicad-cli and compares every named net,
 pad by pad, with the board. Exit status 1 on any difference.
@@ -12,16 +14,14 @@ import tempfile
 
 import pcbnew
 
-import gen_snes_sch as G
-
-HERE = os.path.dirname(os.path.abspath(__file__))
+import gen_sch as G
 
 
-def sch_nets():
+def sch_nets(cfg):
     with tempfile.TemporaryDirectory() as d:
         out = os.path.join(d, "sch.net")
         subprocess.run(["kicad-cli", "sch", "export", "netlist", "--format", "kicadsexpr", "-o", out,
-                        os.path.join(HERE, "retropad_snes.kicad_sch")], check=True, capture_output=True)
+                        os.path.join(cfg.dir, cfg.sch_file)], check=True, capture_output=True)
         tree = G.parse(open(out).read())
 
     def field(node, key):
@@ -38,8 +38,8 @@ def sch_nets():
     return result
 
 
-def pcb_nets():
-    board = pcbnew.LoadBoard(os.path.join(HERE, "retropad_snes.kicad_pcb"))
+def pcb_nets(cfg):
+    board = pcbnew.LoadBoard(cfg.pcb)
     nets = collections.defaultdict(set)
     for f in board.GetFootprints():
         for p in f.Pads():
@@ -49,7 +49,10 @@ def pcb_nets():
 
 
 def main():
-    sch, pcb = sch_nets(), pcb_nets()
+    if len(sys.argv) != 2 or sys.argv[1] not in G.pcb.layout.CONSOLES:
+        sys.exit("usage: check_netlist.py {%s}" % ",".join(G.pcb.layout.CONSOLES))
+    cfg = G.configure(sys.argv[1])
+    sch, pcb = sch_nets(cfg), pcb_nets(cfg)
     diffs = 0
     for name in sorted(set(sch) | set(pcb)):
         a, b = sch.get(name, frozenset()), pcb.get(name, frozenset())

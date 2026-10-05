@@ -1,0 +1,9 @@
+# KiCad generator scratch output (all boards)
+**/build/
+**/logs/
+**/fab/
+__pycache__/
+*_unrouted.*
+*.kicad_prl
+*-backups/
+fp-info-cache
