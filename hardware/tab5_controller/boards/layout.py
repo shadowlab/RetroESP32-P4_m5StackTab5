@@ -145,10 +145,36 @@ def sms():
     ] + _menu(), _rrect(4.0)
 
 
-BOARDS = {"snes": snes, "nes": nes, "gb": gb, "genesis": genesis, "sms": sms}
+BOARDS = {"snes": snes, "nes": nes, "gb": gb, "genesis": genesis, "sms": sms,
+          "snes_dd": snes}
+
+# Board core: "stm32" = STM32F030C8 + 8x4 key matrix (M5Stack keyboard firmware
+# patch), "avrdd" = AVR32DD28 in SOIC-28 with one pin per button.
+CORES = {"snes_dd": "avrdd"}
+
+
+def core_of(name):
+    return CORES.get(name, "stm32")
+
+
+# AVR DD boards: 13 button slots, one MCU pin each (switch to GND, internal
+# pull-up). A console's buttons fill the slots in the order its layout lists
+# them, so the slot table below is all the firmware needs to know per console
+# (kicad_gen/gen_avrdd_pinmap.py writes it into firmware_avrdd/pinmap.h).
+AVRDD_SLOTS = ["PD1", "PD2", "PD3", "PD4", "PD5", "PD6", "PD7",
+               "PC0", "PC1", "PC2", "PC3", "PF0", "PF1"]
+
+
+def avrdd_slots(name):
+    """[(button name, RP bit name, slot pin)] for a console's layout."""
+    buttons = BOARDS[name]()[0]
+    if len(buttons) > len(AVRDD_SLOTS):
+        raise ValueError("%s has %d buttons, AVR DD boards have %d slots" % (name, len(buttons), len(AVRDD_SLOTS)))
+    return [(b[0], b[1], AVRDD_SLOTS[i]) for i, b in enumerate(buttons)]
 
 # Console id (retropad_proto.h rp_console_t) and the name printed on each board
 CONSOLES = {
+    "snes_dd": (3, "SNES (AVR DD)"),
     "nes":     (1, "NES"),
     "gb":      (2, "Game Boy"),
     "snes":    (3, "SNES"),

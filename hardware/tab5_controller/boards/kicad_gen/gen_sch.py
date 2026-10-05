@@ -80,7 +80,44 @@ def uid(key):
 _libs = {}
 
 
+# KiCad 7 has no AVR DD symbols. The AVR32DD28 SOIC-28 is pin-compatible with
+# the AVR32DB28 apart from pin names, so its symbol is derived from that one.
+AVRDD_SYMBOL = "RetroPad:AVR32DD28-xSO"
+AVRDD_PIN_NAMES = {"13": "PD7", "14": "VDD", "15": "GND", "19": "UPDI/PF7"}
+
+
+def _avrdd_symbol():
+    sym = lib_symbol("MCU_Microchip_AVR_Dx:AVR32DB28x-xSO")
+    base = "AVR32DD28-xSO"
+
+    def fix(node):
+        out = []
+        for e in node:
+            if isinstance(e, list):
+                if e[0] == "symbol" and isinstance(e[1], str) and e[1].startswith("AVR32DB28x-xSO_"):
+                    e = [e[0], base + e[1][len("AVR32DB28x-xSO"):]] + e[2:]
+                if e[0] == "pin":
+                    num = next(x for x in e if isinstance(x, list) and x[0] == "number")[1]
+                    if num in AVRDD_PIN_NAMES:
+                        e = [[x[0], AVRDD_PIN_NAMES[num]] + x[2:] if isinstance(x, list) and x[0] == "name" else x
+                             for x in e]
+                if e[0] == "property" and e[1] in ("Value",):
+                    e = [e[0], e[1], "AVR32DD28-xSO"] + e[3:]
+                if e[0] == "property" and e[1] in ("ki_description", "Description"):
+                    e = [e[0], e[1], "AVR DD 24 MHz, 32 KB flash, 4 KB SRAM, SOIC-28 "
+                         "(symbol derived from the pin-compatible AVR32DB28)"] + e[3:]
+                e = fix(e)
+            out.append(e)
+        return out
+
+    sym = fix(sym)
+    sym[1] = AVRDD_SYMBOL
+    return sym
+
+
 def lib_symbol(lib_id):
+    if lib_id == AVRDD_SYMBOL:
+        return _avrdd_symbol()
     lib, name = lib_id.split(":")
     if lib not in _libs:
         _libs[lib] = parse(open(os.path.join(SYMS, lib + ".kicad_sym")).read())
@@ -219,7 +256,7 @@ class Sheet:
 def lib_for(fp):
     ref = fp.GetReference()
     if ref.startswith("U"):
-        return "MCU_ST_STM32F0:STM32F030C8Tx"
+        return AVRDD_SYMBOL if pcb.CFG.core == "avrdd" else "MCU_ST_STM32F0:STM32F030C8Tx"
     if ref.startswith("SW"):
         return "Switch:SW_Push"
     if ref.startswith("D"):
@@ -231,7 +268,7 @@ def lib_for(fp):
     if ref == "J1":
         return "Connector_Generic:Conn_02x05_Odd_Even"
     if ref == "J2":
-        return "Connector_Generic:Conn_01x05"
+        return "Connector_Generic:Conn_01x03" if pcb.CFG.core == "avrdd" else "Connector_Generic:Conn_01x05"
     if ref.startswith("H"):
         return "Mechanical:MountingHole"
     raise KeyError(ref)
@@ -283,32 +320,65 @@ def build():
             sh.power(net, ends[0][0], ends[0][1], ang)
         return pins
 
+    avrdd = pcb.CFG.core == "avrdd"
+
     # MCU
-    sh.text("MCU — STM32F030C8T6 running the RetroPad firmware (I2C slave 0x6D)", 30, 25, 2.0)
+    if avrdd:
+        sh.text("MCU — AVR32DD28 (SOIC-28) running firmware_avrdd (I2C client 0x6D, RetroPad protocol)", 30, 25, 2.0)
+        sh.text("PD1-PD7, PC0-PC3, PF0-PF1: one button per pin (internal pull-ups)", 30, 30, 1.27)
+    else:
+        sh.text("MCU — STM32F030C8T6 running the RetroPad firmware (I2C slave 0x6D)", 30, 25, 2.0)
     place("U1", 80, 95, stub=5.08)
 
-    # Tab5 connector + SWD
+    # Tab5 connector + programming header
     sh.text("Tab5 Ext.Port1 (M5Stack Tab5 Keyboard P1 pinout) — verify pin 1 orientation before fab", 150, 25, 1.5)
     place("J1", 175, 45, stub=7.62, power_as_label=True, ref_at=(0, -10.16), val_at=(0, 10.16))
-    sh.text("SWD (same order as the keyboard's P2)", 150, 70, 1.5)
+    if avrdd:
+        sh.text("UPDI programming (SerialUPDI / MPLAB Snap)", 150, 70, 1.5)
+    else:
+        sh.text("SWD (same order as the keyboard's P2)", 150, 70, 1.5)
     place("J2", 175, 85, stub=7.62, power_as_label=True, ref_at=(0, -10.16), val_at=(0, 10.16))
 
     # Support parts
-    sh.text("Decoupling, pull-ups, reset, BOOT0 (copied from the M5Stack keyboard)", 150, 110, 1.5)
-    for i, ref in enumerate(["C1", "C2", "C3", "C5", "C4"]):
+    if avrdd:
+        sh.text("Decoupling (VDD x2, VDDIO2), I2C pull-ups, RESET pull-up", 150, 110, 1.5)
+        caps, res = ["C1", "C2", "C3", "C4"], ["R1", "R2", "R3"]
+    else:
+        sh.text("Decoupling, pull-ups, reset, BOOT0 (copied from the M5Stack keyboard)", 150, 110, 1.5)
+        caps, res = ["C1", "C2", "C3", "C5", "C4"], ["R1", "R2", "R3", "R4", "R5"]
+    for i, ref in enumerate(caps):
         place(ref, 160 + i * 15, 130)
-    for i, ref in enumerate(["R1", "R2", "R3", "R4", "R5"]):
+    for i, ref in enumerate(res):
         place(ref, 160 + i * 15, 155)
     sh.text("Console ID straps: 0R to GND = bit set. " + pcb.CFG.strap_note(), 150, 172, 1.5)
-    for i, ref in enumerate(["R6", "R7", "R8", "R9", "R10"]):
+    for i, (ref, _sig, _fit) in enumerate(pcb.CFG.straps):
         place(ref, 160 + i * 15, 190)
+    if avrdd:
+        sh.text("R11 (DNP): UPDI to J1 pin 10 / G9 — experimental in-system programming from the Tab5",
+                150, 200, 1.27)
+        place("R11", 235, 190)
     sh.text("Mounting holes (M3, 96 mm apart)", 150, 210, 1.5)
     place("H1", 160, 220)
     place("H2", 175, 220)
 
+    buttons = pcb.CFG.buttons()
+    if avrdd:
+        # One pin per button: K_<button> label -> switch -> GND
+        sh.text("Buttons — one MCU pin each, switch to GND (internal pull-up); slot table in "
+                "firmware_avrdd/pinmap.h", 260, 25, 1.5)
+        for i, (name, *_r) in enumerate(buttons):
+            sref = "SW%d" % (i + 1)
+            y = g(40 + i * 12.7)
+            sp = sh.symbol(lib_for(fps[sref]), sref, fps[sref].GetValue(), g(300), y, 0, footprint=fpid(sref),
+                           ref_at=(-2.54, -5.08), val_at=(-2.54, 3.81))
+            sn = nets(sref)
+            sh.terminate(sp["1"], sn["1"])
+            sh.terminate(sp["2"], sn["2"])
+            sh.text(name, g(320), y - 1.27, 1.27)
+        return sh
+
     # Button matrix: ROWn -> diode (A->K) -> switch -> COLn, one line per button
     sh.text("Button matrix — row driven high, column read with pull-down; diode anode on the row", 260, 25, 1.5)
-    buttons = pcb.CFG.buttons()
     for i, (name, *_r) in enumerate(buttons):
         n = i + 1
         y = g(40 + i * 12.7)

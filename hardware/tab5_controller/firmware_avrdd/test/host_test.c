@@ -1,0 +1,125 @@
+/*
+ * Host test for firmware_avrdd/main.c: builds the real firmware against fake
+ * registers and replays what the Tab5 driver (components/tab5_ctrl) does over
+ * I2C. Run with ./run_host_test.sh
+ */
+#include <stdio.h>
+#include <string.h>
+
+#define main firmware_main
+#include "../main.c"
+#undef main
+
+PORT_t PORTA, PORTC, PORTD, PORTF;
+TWI_t TWI0;
+TCB_t TCB0;
+ADC_t ADC0;
+__typeof__(VREF) VREF;
+__typeof__(PORTMUX) PORTMUX;
+__typeof__(CLKCTRL) CLKCTRL;
+
+static int fails;
+static void check(const char *what, long got, long want)
+{
+    printf("  %-44s got %-6ld want %-6ld %s\n", what, got, want, got == want ? "ok" : "FAIL");
+    fails += got != want;
+}
+
+/* One I2C client event: set SSTATUS, run the ISR, report the response command */
+static uint8_t twi(uint8_t status)
+{
+    TWI0.SSTATUS = status;
+    TWI0_TWIS_vect();
+    return TWI0.SCTRLB;
+}
+
+/* Host write [reg, data...] then stop */
+static void host_write(uint8_t reg, const uint8_t *data, int n)
+{
+    twi(TWI_APIF_bm | TWI_AP_bm);                       /* address + W */
+    TWI0.SDATA = reg;  twi(TWI_DIF_bm);
+    for (int i = 0; i < n; i++) { TWI0.SDATA = data[i]; twi(TWI_DIF_bm); }
+    twi(TWI_APIF_bm);                                   /* stop */
+}
+
+/* Host read of n bytes (ACK all but the last), like i2c_master_transmit_receive */
+static void host_read(uint8_t reg, uint8_t *out, int n)
+{
+    host_write(reg, NULL, 0);
+    twi(TWI_APIF_bm | TWI_AP_bm | TWI_DIR_bm);          /* repeated start + R */
+    for (int i = 0; i < n; i++) {
+        uint8_t cmd = twi(TWI_DIF_bm | TWI_DIR_bm);     /* host ACKed the previous byte */
+        if (cmd != TWI_SCMD_RESPONSE_gc) { printf("  read ended early at byte %d\n", i); fails++; }
+        out[i] = TWI0.SDATA;
+    }
+    /* host NACKs the last byte: the client must complete, not send more */
+    check("client completes after host NACK", twi(TWI_DIF_bm | TWI_DIR_bm | TWI_RXACK_bm), TWI_SCMD_COMPTRANS_gc);
+    twi(TWI_APIF_bm);                                   /* stop */
+}
+
+static void press(PORT_t *port, int pin, int down)
+{
+    if (down) port->IN &= (uint8_t)~(1 << pin); else port->IN |= (uint8_t)(1 << pin);
+}
+
+/* n scans of the firmware's own sample + debounce, as its 1 ms main loop does */
+static void scan(int n)
+{
+    for (int i = 0; i < n; i++)
+        debounce_step(buttons_sample());
+}
+
+int main(void)
+{
+    /* SNES board: ID straps on PA0 + PA1 pulled low (console 3), all buttons up */
+    PORTA.IN = 0xFF & (uint8_t)~0x03;
+    PORTC.IN = PORTD.IN = PORTF.IN = 0xFF;
+    s_console = read_console_id();
+    buttons_init();
+    twi_init();
+    printf("boot\n");
+    check("console id from straps", s_console, RP_CONSOLE_SNES);
+    check("TWI address", TWI0.SADDR, 0x6D << 1);
+    check("pull-up on PD1 (UP)", PORTD.PIN1CTRL & PORT_PULLUPEN_bm, PORT_PULLUPEN_bm);
+
+    printf("probe (tab5_ctrl.c probe())\n");
+    uint8_t v[RP_EXT_BLOCK_LEN];
+    host_read(RP_REG_FW_VERSION, v, 1);
+    check("FW_VERSION", v[0], FW_VERSION);
+    host_read(RP_REG_INFO, v, 8);
+    check("signature RPAD", memcmp(v, "RPAD", 4), 0);
+    check("protocol version", v[RP_INFO_PROTO_VER], RP_PROTO_VERSION);
+    check("console id", v[RP_INFO_CONSOLE_ID], RP_CONSOLE_SNES);
+    check("analog count (SNES has none)", v[RP_INFO_ANALOG_COUNT], 0);
+    uint8_t zero = 0;
+    host_write(RP_REG_INT_CFG, &zero, 1);
+    host_write(RP_REG_EVENT_NUM, &zero, 1);
+    host_read(RP_REG_INT_CFG, v, 1);
+    check("INT_CFG written 0 reads back 0", v[0], 0);
+
+    printf("poll (tab5_ctrl.c poll_retropad())\n");
+    press(&PORTD, 1, 1);       /* UP  = slot 0, PD1 */
+    press(&PORTC, 0, 1);       /* A   = slot 7, PC0 */
+    press(&PORTF, 1, 1);       /* R   = slot 12, PF1 */
+    scan(2);
+    host_read(RP_REG_BUTTONS, v, 8);
+    check("not reported before debounce", v[0] | v[1] | v[2] | v[3], 0);
+    scan(DEBOUNCE_SCANS + 1);
+    host_read(RP_REG_BUTTONS, v, 8);
+    uint32_t mask = v[0] | (uint32_t)v[1] << 8 | (uint32_t)v[2] << 16 | (uint32_t)v[3] << 24;
+    check("UP|A|R after debounce", mask, RP_BIT(RP_BTN_UP) | RP_BIT(RP_BTN_A) | RP_BIT(RP_BTN_R));
+    press(&PORTD, 1, 0);
+    scan(DEBOUNCE_SCANS + 1);
+    host_read(RP_REG_BUTTONS, v, 4);
+    mask = v[0] | (uint32_t)v[1] << 8 | (uint32_t)v[2] << 16 | (uint32_t)v[3] << 24;
+    check("UP released", mask, RP_BIT(RP_BTN_A) | RP_BIT(RP_BTN_R));
+
+    printf("unknown console id falls back to the generic order, never all-UP\n");
+    s_console = RP_CONSOLE_NEOGEO;
+    PORTC.IN = PORTD.IN = PORTF.IN = 0xFF;
+    press(&PORTF, 1, 1);       /* slot 12 */
+    check("slot 12 -> MENU (generic)", buttons_sample(), RP_BIT(RP_BTN_MENU));
+
+    printf("%s\n", fails ? "FAILED" : "ALL PASSED");
+    return fails != 0;
+}

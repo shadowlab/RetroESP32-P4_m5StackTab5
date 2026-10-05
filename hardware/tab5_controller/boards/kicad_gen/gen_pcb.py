@@ -45,9 +45,11 @@ class Console:
         self.pcb = os.path.join(self.dir, self.base + ".kicad_pcb")
         self.pcb_unrouted = os.path.join(self.dir, self.base + "_unrouted.kicad_pcb")
         self.sch_file = self.base + ".kicad_sch"
-        # ID0..ID3 = bits of the console id (0R fitted = bit set); AN_EN unused
+        self.core = layout.core_of(name)
+        # ID0..ID3 = bits of the console id (0R fitted = bit set)
         self.straps = [("R%d" % (6 + i), "ID%d" % i, bool(self.id >> i & 1)) for i in range(4)]
-        self.straps.append(("R10", "AN_EN", False))
+        if self.core == "stm32":
+            self.straps.append(("R10", "AN_EN", False))     # analog-fitted strap (unused here)
 
     def buttons(self):
         return layout.BOARDS[self.name]()[0]
@@ -100,9 +102,28 @@ MCU_PINS = {
     25: "ID0", 26: "ID1", 27: "ID2", 45: "ID3", 46: "AN_EN",
 }
 
+# AVR32DD28 SOIC-28 pin -> net (checked against DxCore's pinout from Microchip's
+# DFP and KiCad's pin-compatible AVR32DB28 symbol). Button slots are added from
+# layout.avrdd_slots(); pins not listed are left unconnected.
+AVRDD_PIN_NO = {"PA7": 1, "PC0": 2, "PC1": 3, "PC2": 4, "PC3": 5, "PD1": 7, "PD2": 8, "PD3": 9,
+                "PD4": 10, "PD5": 11, "PD6": 12, "PD7": 13, "PF0": 16, "PF1": 17, "PA0": 22,
+                "PA1": 23, "PA2": 24, "PA3": 25, "PA4": 26, "PA5": 27, "PA6": 28}
+AVRDD_PINS = {
+    14: "+3V3", 20: "+3V3", 6: "+3V3",          # VDD, VDD, VDDIO2 (PORTC supply)
+    15: "GND", 21: "GND",
+    18: "RESET", 19: "UPDI",                    # PF6 / PF7
+    24: "SDA", 25: "SCL",                       # PA2 / PA3 (TWI0 default)
+    22: "ID0", 23: "ID1", 28: "ID2", 1: "ID3",  # PA0 / PA1 / PA6 / PA7
+    26: "AN0", 27: "AN1",                       # PA4 / PA5 (AIN24 / AIN25)
+}
+
 # M5Stack Tab5 Keyboard P1 pinout (SCH_Tab5_Keyboard_SCH_V1.0)
 HEADER_PINS = {1: None, 2: "GND", 3: "GND", 4: "GND", 5: "+3V3", 6: None,
                7: "SCL", 8: "SDA", 9: "INT", 10: None}
+
+# Header pins that differ on AVR DD boards: INT is not wired (the host polls)
+# and G9 can reach UPDI through an unfitted 0R for in-system programming tests.
+HEADER_PINS_AVRDD = {**HEADER_PINS, 9: None, 10: "G9_UPDI"}
 
 RP_BIT = {name: i for i, name in enumerate(
     "UP DOWN LEFT RIGHT A B C X Y Z L R L2 R2 START SELECT MENU VOLUME OPT1 OPT2".split())}
@@ -205,6 +226,70 @@ class Builder:
         return z
 
 
+def build_avrdd_core(b):
+    """AVR32DD28 (SOIC-28) on the back, one pin per button, UPDI programming."""
+    u = b.place("Package_SO", "SOIC-28W_7.5x17.9mm_P1.27mm", "U1", "AVR32DD28-I/SO", 64.0, 46.5, 90.0, back=True)
+    pins = dict(AVRDD_PINS)
+    for name, _rp, slot in layout.avrdd_slots(CFG.name):
+        pins[AVRDD_PIN_NO[slot]] = "K_" + name
+    for pin, netname in pins.items():
+        b.connect(u, pin, netname)
+
+    def passive(ref, value, x, y, a, c, rot=0.0, fp="R_0603_1608Metric", lib="Resistor_SMD"):
+        f = b.place(lib, fp, ref, value, x, y, rot, back=True)
+        b.connect(f, 1, a)
+        b.connect(f, 2, c)
+        return f
+
+    cap = dict(fp="C_0603_1608Metric", lib="Capacitor_SMD")
+    passive("C1", "100nF", 52.0, 44.0, "+3V3", "GND", 90.0, **cap)    # VDD (pin 14)
+    passive("C2", "100nF", 62.1, 54.3, "+3V3", "GND", 90.0, **cap)    # VDD (pin 20)
+    passive("C3", "100nF", 66.0, 38.4, "+3V3", "GND", 0.0, **cap)     # VDDIO2 (pin 6)
+    passive("C4", "4.7uF", 76.0, 49.5, "+3V3", "GND", 90.0, **cap)    # bulk
+    passive("R1", "4.7k", 46.0, 47.0, "+3V3", "SCL", 90.0)
+    passive("R2", "4.7k", 44.0, 47.0, "+3V3", "SDA", 90.0)
+    passive("R3", "10k", 57.6, 54.3, "+3V3", "RESET", 90.0)
+
+    # Console-ID straps: 0R to GND = bit set (internal pull-ups read at boot)
+    for i, (ref, sig, fitted) in enumerate(CFG.straps):
+        r = passive(ref, "0R" if fitted else "DNP", 81.0 + i * 3.0, 41.0, sig, "GND", 90.0)
+        if not fitted:
+            r.SetExcludedFromBOM(True)
+    b.text(pcbnew.B_SilkS, 85.5, 37.8, "ID0 ID1 ID2 ID3", 0.8, mirror=True)
+
+    # Experimental: UPDI to header pin 10 (G9), so the Tab5 could reprogram the board
+    r = passive("R11", "DNP", 36.0, 47.0, "UPDI", "G9_UPDI", 90.0)
+    r.SetExcludedFromBOM(True)
+
+    place_header(b, HEADER_PINS_AVRDD)
+
+    # UPDI programming header: 1 = 3V3, 2 = UPDI, 3 = GND
+    j2 = b.place("Connector_PinHeader_2.54mm", "PinHeader_1x03_P2.54mm_Vertical", "J2", "UPDI",
+                 90.0, 53.5, 90.0, back=True)
+    for pin, netname in {1: "+3V3", 2: "UPDI", 3: "GND"}.items():
+        b.connect(j2, pin, netname)
+    for p in j2.Pads():
+        if p.GetNetname() == "GND":
+            p.SetZoneConnection(pcbnew.ZONE_CONNECTION_FULL)
+    b.text(pcbnew.B_SilkS, 92.5, 50.6, "UPDI 3V3 UPDI GND", 0.8, mirror=True)
+
+
+def place_header(b, pins):
+    """2x5 right-angle header to the Tab5: pins point up out of the top edge."""
+    pin1_y = EDGE_TOP - HEADER_BODY_DEPTH
+    j1 = b.place("Connector_PinHeader_2.54mm", "PinHeader_2x05_P2.54mm_Horizontal", "J1", "Tab5 Ext.Port1",
+                 HEADER_X - 5.08, pin1_y, 90.0)
+    for pin, netname in pins.items():
+        b.connect(j1, pin, netname)
+    # Connector GND pins (here and on J2) connect solidly: tracks around them
+    # can leave a thermal relief with a single spoke
+    for p in j1.Pads():
+        if p.GetNetname() == "GND":
+            p.SetZoneConnection(pcbnew.ZONE_CONNECTION_FULL)
+    b.text(pcbnew.F_SilkS, HEADER_X, 44.6, "VERIFY PIN 1 vs KEYBOARD", 0.8)
+    return j1
+
+
 def build():
     b = Builder()
     buttons = CFG.buttons()
@@ -232,16 +317,25 @@ def build():
             sw = b.place("Button_Switch_THT", "SW_Tactile_SPST_Angled_PTS645Vx31-2LFS", sref, name,
                          px, y - 2.25 if left else y + 2.25, frot)
             dx = x + (7.0 if left else -7.0)
-            d = b.place("Diode_SMD", "D_SOD-123", dref, "1N4148W", dx, y, 90.0, back=True)
         else:
             lib, fpn = ("SW_PUSH_6mm", 6) if kind == 6 else ("SW_PUSH-12mm", 12)
             sw = b.place("Button_Switch_THT", lib, sref, name, x, y, rot, anchor="pads")
-            d = b.place("Diode_SMD", "D_SOD-123", dref, "1N4148W", x, y, rot, back=True)
-        # Switch: pin 1 -> diode cathode, pin 2 -> column. Diode anode -> row.
+            dx = x
         b.connect(sw, 1, key)
+        if CFG.core == "avrdd":
+            # One MCU pin per button: switch to GND, internal pull-up in the MCU
+            b.connect(sw, 2, "GND")
+            continue
+        # Matrix: switch pin 1 -> diode cathode, pin 2 -> column. Diode anode -> row.
+        d = b.place("Diode_SMD", "D_SOD-123", dref, "1N4148W", dx, y,
+                    90.0 if kind == "ra" else rot, back=True)
         b.connect(sw, 2, col)
         b.connect(d, 1, key)    # SOD-123 pad 1 = cathode
         b.connect(d, 2, row)
+
+    if CFG.core == "avrdd":
+        build_avrdd_core(b)
+        return b
 
     # MCU and support parts (back side, top-middle band)
     u = b.place("Package_QFP", "LQFP-48_7x7mm_P0.5mm", "U1", "STM32F030C8T6", 64.0, 47.0, 0.0, back=True)
@@ -275,18 +369,7 @@ def build():
             r.SetExcludedFromBOM(True) if hasattr(r, "SetExcludedFromBOM") else None
     b.text(pcbnew.B_SilkS, 85.0, 37.8, "ID0 ID1 ID2 ID3 AN", 0.8, mirror=True)
 
-    # 2x5 right-angle header to the Tab5: pins point up out of the top edge
-    pin1_y = EDGE_TOP - HEADER_BODY_DEPTH
-    j1 = b.place("Connector_PinHeader_2.54mm", "PinHeader_2x05_P2.54mm_Horizontal", "J1", "Tab5 Ext.Port1",
-                 HEADER_X - 5.08, pin1_y, 90.0)
-    for pin, netname in HEADER_PINS.items():
-        b.connect(j1, pin, netname)
-    # Connector GND pins (here and on J2) connect solidly: tracks around them
-    # can leave a thermal relief with a single spoke
-    for p in j1.Pads():
-        if p.GetNetname() == "GND":
-            p.SetZoneConnection(pcbnew.ZONE_CONNECTION_FULL)
-    b.text(pcbnew.F_SilkS, HEADER_X, 44.6, "VERIFY PIN 1 vs KEYBOARD", 0.8)
+    place_header(b, HEADER_PINS)
 
     # SWD (pads only; 1 = 3V3, 2 = SWCLK, 3 = SWDIO, 4 = NRST, 5 = GND as on the keyboard)
     j2 = b.place("Connector_PinHeader_2.54mm", "PinHeader_1x05_P2.54mm_Vertical", "J2", "SWD",
