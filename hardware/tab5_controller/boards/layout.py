@@ -146,11 +146,11 @@ def sms():
 
 
 BOARDS = {"snes": snes, "nes": nes, "gb": gb, "genesis": genesis, "sms": sms,
-          "snes_dd": snes}
+          "snes_dd": snes, "nes_dd": nes, "genesis_dd": genesis}
 
 # Board core: "stm32" = STM32F030C8 + 8x4 key matrix (M5Stack keyboard firmware
 # patch), "avrdd" = AVR32DD28 in SOIC-28 with one pin per button.
-CORES = {"snes_dd": "avrdd"}
+CORES = {"snes_dd": "avrdd", "nes_dd": "avrdd", "genesis_dd": "avrdd"}
 
 
 def core_of(name):
@@ -175,6 +175,8 @@ def avrdd_slots(name):
 # Console id (retropad_proto.h rp_console_t) and the name printed on each board
 CONSOLES = {
     "snes_dd": (3, "SNES (AVR DD)"),
+    "nes_dd": (1, "NES (AVR DD)"),
+    "genesis_dd": (5, "Genesis 6-button (AVR DD)"),
     "nes":     (1, "NES"),
     "gb":      (2, "Game Boy"),
     "snes":    (3, "SNES"),

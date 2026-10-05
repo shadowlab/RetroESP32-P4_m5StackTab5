@@ -114,6 +114,26 @@ int main(void)
     mask = v[0] | (uint32_t)v[1] << 8 | (uint32_t)v[2] << 16 | (uint32_t)v[3] << 24;
     check("UP released", mask, RP_BIT(RP_BTN_A) | RP_BIT(RP_BTN_R));
 
+    printf("NES and Genesis boards (same firmware, map chosen by the ID straps)\n");
+    PORTA.IN = 0xFF & (uint8_t)~0x01;                   /* ID0 only -> console 1 */
+    check("NES console id from straps", read_console_id(), RP_CONSOLE_NES);
+    s_console = RP_CONSOLE_NES;
+    PORTC.IN = PORTD.IN = PORTF.IN = 0xFF;
+    press(&PORTD, 6, 1);                                /* slot 5 = A on NES */
+    press(&PORTC, 1, 1);                                /* slot 8 = MENU on NES */
+    check("NES PD6 -> A, PC1 -> MENU", buttons_sample(), RP_BIT(RP_BTN_A) | RP_BIT(RP_BTN_MENU));
+    press(&PORTF, 0, 1);                                /* slot 11 not fitted on NES */
+    check("NES unused slot PF0 ignored", buttons_sample(), RP_BIT(RP_BTN_A) | RP_BIT(RP_BTN_MENU));
+    PORTA.IN = 0xFF & (uint8_t)~((1 << 0) | (1 << 6));  /* ID0 + ID2 -> console 5 */
+    check("Genesis console id from straps", read_console_id(), RP_CONSOLE_GENESIS);
+    s_console = RP_CONSOLE_GENESIS;
+    PORTC.IN = PORTD.IN = PORTF.IN = 0xFF;
+    press(&PORTD, 6, 1);                                /* slot 5 = X */
+    press(&PORTC, 2, 1);                                /* slot 9 = Z */
+    press(&PORTC, 3, 1);                                /* slot 10 = MODE (SELECT bit) */
+    check("Genesis PD6 -> X, PC2 -> Z, PC3 -> MODE", buttons_sample(),
+          RP_BIT(RP_BTN_X) | RP_BIT(RP_BTN_Z) | RP_BIT(RP_BTN_SELECT));
+
     printf("unknown console id falls back to the generic order, never all-UP\n");
     s_console = RP_CONSOLE_NEOGEO;
     PORTC.IN = PORTD.IN = PORTF.IN = 0xFF;

@@ -14,7 +14,9 @@ goes. Every board:
 | [Game Boy](gb/README.md) | 2 | D-pad, B A (diagonal), SELECT START, MENU | [svg](gb/layout.svg) | [`gb/kicad`](gb/kicad) |
 | [Genesis / Mega Drive 6-button](genesis/README.md) | 5 | D-pad, X Y Z over A B C, MODE START, MENU | [svg](genesis/layout.svg) | [`genesis/kicad`](genesis/kicad) |
 | [Master System / Game Gear](sms/README.md) | 4 | D-pad, 1 2, START, MENU | [svg](sms/layout.svg) | [`sms/kicad`](sms/kicad) |
-| [SNES, AVR DD prototype](snes_dd/README.md) | 3 | Same as SNES, on an AVR32DD28 with one pin per button | [svg](snes_dd/layout.svg) | [`snes_dd/kicad`](snes_dd/kicad) |
+| [SNES, AVR DD](snes_dd/README.md) | 3 | Same as SNES, on an AVR32DD28 with one pin per button | [svg](snes_dd/layout.svg) | [`snes_dd/kicad`](snes_dd/kicad) |
+| [NES, AVR DD](nes_dd/README.md) | 1 | Same as NES, on an AVR32DD28 | [svg](nes_dd/layout.svg) | [`nes_dd/kicad`](nes_dd/kicad) |
+| [Genesis 6-button, AVR DD](genesis_dd/README.md) | 5 | Same as Genesis, on an AVR32DD28 | [svg](genesis_dd/layout.svg) | [`genesis_dd/kicad`](genesis_dd/kicad) |
 
 There are two board cores (`layout.CORES`):
 * **`stm32`** (default): STM32F030C8 with an 8×4 key matrix and one diode per switch, running
@@ -58,7 +60,7 @@ curl -LO https://github.com/freerouting/freerouting/releases/download/v1.9.0/fre
 
 cd kicad_gen
 export FREEROUTING_JAR=$PWD/../freerouting-1.9.0.jar
-for c in snes nes gb genesis sms snes_dd; do
+for c in snes nes gb genesis sms snes_dd nes_dd genesis_dd; do
   python3 gen_pcb.py $c --route      # FR_PASSES=300 for more router passes
   python3 gen_sch.py $c
   python3 check_netlist.py $c        # must report 0 differences
