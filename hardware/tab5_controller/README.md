@@ -50,35 +50,56 @@ silkscreen change between boards.
 
 ### 2.1 Connector (Tab5 Ext.Port1)
 
-| Signal | Tab5 GPIO | Board side |
-|---|---|---|
-| SDA | G0 | STM32 PB11 (I2C2_SDA) |
-| SCL | G1 | STM32 PB10 (I2C2_SCL) |
-| INT | G50 | STM32 PA15. The host driver polls instead, so this pin is optional. |
-| 3V3, GND | — | MCU supply, about 15 mA |
+This is P1 in M5Stack's keyboard schematic (`SCH_Tab5_Keyboard_SCH_V1.0`): a 2×5 header with
+2.54 mm pitch. Copy it pin for pin.
 
-> **Check before fabrication:** the physical pin numbers of the 2x5 header (which pin is 3V3,
-> GND, SDA and so on) come from M5Stack's keyboard schematic
-> (`SCH_Tab5_Keyboard_SCH_V1.0`, linked from the product page). Copy that schematic's
-> connector symbol exactly. Don't rely on the signal table above for pin positions.
+| Pin | Net | Board side | | Pin | Net | Board side |
+|---|---|---|---|---|---|---|
+| 10 | G9 | **not connected** | | 9 | INT_G50 | STM32 PA15, 10 kΩ pull-up to 3V3 |
+| 8 | SDA_G0 | STM32 PB11 (I2C2_SDA), 4.7 kΩ pull-up | | 7 | SCL_G1 | STM32 PB10 (I2C2_SCL), 4.7 kΩ pull-up |
+| 6 | SYS_EXT5V | **not connected** | | 5 | VCC_3V3 | Board supply |
+| 4 | GND | GND | | 3 | GND | GND |
+| 2 | GND | GND | | 1 | SYS_VIN | **not connected** |
 
-### 2.2 MCU
+* The whole board runs from the Tab5's 3.3 V on pin 5. Leave SYS_VIN and SYS_EXT5V open, as
+  M5Stack does.
+* G9 (pin 10) is unused on the keyboard. It is the only spare line to the Tab5, so it could
+  carry a future signal. Leave it open for now.
+* The host driver polls the board, so INT is optional. Keep the pin and its pull-up anyway, so
+  the board still works with software written for the stock keyboard.
+
+### 2.2 MCU and reference circuit
 
 Use an **STM32F030C8T6 (LQFP48)**, the same part as the keyboard, so M5Stack's bootloader and
-pinout carry over unchanged.
+pinout carry over unchanged. Copy M5Stack's support circuit:
 
-| STM32 pin | Use |
-|---|---|
-| PB0–PB7 | Matrix rows ROW0–ROW7. Each row is driven high in turn. |
-| PA0–PA3 | Matrix columns COL0–COL3, with internal pull-downs |
-| PA4, PA5, PA8 | Spare matrix columns (future use) |
-| PA6, PA7 | **AN0 / AN1** analog inputs (ADC_IN6/7). They are not part of the matrix. |
-| PB12, PB13, PB14, PB8 | **Console ID straps** ID0–ID3 |
-| PB9 | **AN strap.** Fit it to enable AN0/AN1. |
-| PB10 / PB11 | I2C2 to the Tab5 |
-| PA15 | INT (open, active low) |
-| PB15 | 2 × WS2812 status LEDs (optional, same as the keyboard) |
-| PA13 / PA14 / NRST | SWD pads for flashing |
+| Part | Keyboard ref | Value / connection |
+|---|---|---|
+| I2C pull-ups | R1, R2 | 4.7 kΩ from PB10 and PB11 to 3V3 |
+| INT pull-up | R3 | 10 kΩ from PA15 to 3V3 |
+| Reset | R4, C4 | 10 kΩ pull-up and 100 nF to GND on NRST (pin 7) |
+| BOOT0 | R5 | 10 kΩ to GND (pin 44) |
+| Decoupling | C1, C2, C5 | 3 × 100 nF on VDD (pins 1, 24, 48) and VDDA (pin 9). VSS/VSSA (pins 23, 47, 8) go to GND. |
+| SWD header | P2 | 1 = 3V3, 2 = SWCLK (PA14), 3 = SWDIO (PA13), 4 = NRST, 5 = GND |
+| Status LEDs (optional) | U2, U3, R7 | 2 × WS2812E-1313 in a chain, with the data input from PB15 through 1 kΩ |
+
+Pin use on a RetroPad board:
+
+| STM32 pin | Keyboard use | RetroPad use |
+|---|---|---|
+| PB0–PB7 | ROW0–ROW7 | Same: matrix rows, each driven high in turn |
+| PA0–PA3 | COL0–COL3 | Same: matrix columns, with internal pull-downs |
+| PA4, PA5, PA8 | COL4, COL5, COL8 | Spare matrix columns (future use) |
+| PA6, PA7 | COL6, COL7 | **AN0 / AN1** analog inputs (ADC_IN6/7), taken out of the matrix |
+| PA9, PA10 | COL9, COL10 (two FN keys straight to GND) | Unused |
+| PB12, PB13, PB14, PB8 | unconnected | **Console ID straps** ID0–ID3 |
+| PB9 | unconnected | **AN strap.** Fit it to enable AN0/AN1. |
+| PB10 / PB11 | I2C2 | Same |
+| PA15 | INT | Same |
+| PB15 | RGB_DATA | Same (optional) |
+
+Every pin the RetroPad adds was unconnected on the keyboard, so nothing on the keyboard
+circuit has to move.
 
 ### 2.3 Buttons: one matrix wiring for every board
 
@@ -120,9 +141,10 @@ the buttons its console has. Bit *b* sits at **row = b % 8, column = b / 8**:
 | 30 | `KP0` | ROW6 (PB6) | COL3 (PA3) |
 | 31 | `KP#` | ROW7 (PB7) | COL3 (PA3) |
 
-**Put a diode on every switch:** anode to the row, cathode to the column (1N4148W or
-BAT54-class). Gamepads routinely hold a diagonal plus two buttons. Without diodes that creates
-phantom presses in a scanned matrix.
+**Put a diode on every switch, wired the way the keyboard does it:** anode on the ROW net,
+cathode to one side of the switch, and the other side of the switch to the COL net (D1–D69
+in M5Stack's matrix sheet). Gamepads routinely hold a diagonal plus two buttons. Without the
+diodes that creates phantom presses.
 
 ### 2.4 Console ID straps
 
@@ -292,7 +314,8 @@ also open the patched tree in STM32CubeIDE, but its output still needs `pack_ret
 * **This repo has no Tab5 board support yet.** The display (MIPI panel), touch, audio
   (ES8388/ES7210) and IO expanders are still Guition-specific. The controller driver is ready
   for a Tab5 port but does not make the firmware run on a Tab5 by itself.
-* Confirm the 2x5 header pin positions and the mechanical outline against M5Stack's schematic
-  and 3D model (see §1 and §2.1).
+* The connector pinout and the support circuit now come from M5Stack's schematic (§2.1,
+  §2.2). The mechanical outline (latches, header position, M3 holes) still needs M5Stack's 3D
+  model or measurements from a real keyboard (§1).
 * Not done yet: consuming the keypad bits in the ColecoVision and 5200 cores, and a launcher
   hint such as "attach the Genesis pad".
