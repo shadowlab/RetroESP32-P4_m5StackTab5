@@ -1,6 +1,0 @@
-build/
-logs/
-__pycache__/
-*_unrouted.*
-*.kicad_prl
-fab/
