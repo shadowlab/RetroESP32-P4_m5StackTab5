@@ -97,7 +97,7 @@ jobs:
     steps:
       - uses: actions/download-artifact@v7
         with:
-          pattern: RetroESP32_P4_Tab5-idf*
+          name: RetroESP32_P4_Tab5-idf5.5.2
           path: dist
 
       - name: Publish
@@ -107,7 +107,7 @@ jobs:
         run: |
           cd dist
           main="RetroESP32_P4_Tab5_${TAG#tab5-}.bin"
-          cp RetroESP32_P4_Tab5-idf5.5.2/RetroESP32_P4_Tab5_v1.bin "$main"
+          cp RetroESP32_P4_Tab5_v1.bin "$main"
           sha256sum "$main" > SHA256SUMS
 
           prerelease=()
@@ -133,7 +133,7 @@ jobs:
             echo
             echo "### Image sizes (ESP-IDF 5.5.2)"
             echo '```'
-            grep ' KB / ' RetroESP32_P4_Tab5-idf5.5.2/merge.log
+            grep ' KB / ' merge.log
             echo '```'
             echo
             echo "### SHA-256"
