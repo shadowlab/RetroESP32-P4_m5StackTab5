@@ -1,17 +1,24 @@
 # SNES board — KiCad PCB
 
-`retropad_snes.kicad_pcb` is a two-layer, fully routed board for the SNES RetroPad (console ID
-3). It was made with KiCad 7 and opens in KiCad 7, 8 and 9.
+A complete KiCad project for the SNES RetroPad (console ID 3): a schematic and a two-layer,
+fully routed board, linked to each other. It was made with KiCad 7 and opens in KiCad 7, 8 and
+9.
+
+![Schematic](schematic.png)
 
 ![Front](front.png)
 ![Back (seen from the back)](back.png)
 
 | File | What it is |
 |---|---|
-| `retropad_snes.kicad_pcb` / `.kicad_pro` | The routed board |
+| `retropad_snes.kicad_pro` | The KiCad project; open this |
+| `retropad_snes.kicad_sch` / `retropad_snes_schematic.pdf` | Schematic (one A3 sheet) and a PDF of it |
+| `retropad_snes.kicad_pcb` | The routed board |
 | `retropad_snes_bom.csv` | Bill of materials. R8–R10 are listed as DNP (not fitted). |
 | `retropad_snes_drc.rpt` | KiCad DRC report for this board |
-| `gen_snes_pcb.py` | Script that builds the whole board from `../../layout.py` |
+| `gen_snes_pcb.py` | Builds the board from `../../layout.py` |
+| `gen_snes_sch.py` | Builds the schematic from the same board data |
+| `check_netlist.py` | Confirms the schematic and the board have identical connectivity |
 
 ## What's on it
 
@@ -48,14 +55,41 @@
   silkscreen warnings (labels overlapping pads or running past the edge where L/R overhang),
   plus "library not configured" notes that only appear on a machine without KiCad's library
   table. All are cosmetic.
+* **Schematic vs board:** `check_netlist.py` reports the same 39 nets on each side with 0
+  differences.
 * **Netlist check:** every switch is on the right row and column, diode polarity matches
   KiCad's convention (pad 1 = cathode), all MCU pins match the firmware's pin map, and J1
   carries M5Stack's P1 pinout.
 * **Gerber and drill export:** both succeed.
 
-There is **no schematic**. The board is generated with its nets defined in
-`gen_snes_pcb.py`. KiCad's "update PCB from schematic" would therefore delete the nets, so
-don't run it on this board.
+## Schematic
+
+The schematic covers the same circuit on one A3 sheet:
+* **MCU:** the STM32F030C8T6.
+* **Tab5 header and SWD:** P1/P2 order as on the keyboard.
+* **Support parts:** decoupling, pull-ups, reset and BOOT0.
+* **Console-ID straps:** R8–R10 are marked DNP.
+* **Mounting holes.**
+* **Button matrix:** one line per button, ROWn → diode → switch → COLn.
+
+Nets are named with global labels, so the net names match the board exactly (ROW0–7,
+COL0–3, K_UP and so on, SCL, SDA, INT, ID0–ID3, +3V3, GND).
+
+How it stays in step with the board:
+* `gen_snes_sch.py` doesn't keep its own list of connections. It builds the board in memory
+  and gives each symbol pin the net of the footprint pad with the same number.
+* Each footprint carries its symbol's UUID, so in KiCad **Tools → Update PCB from
+  Schematic** matches every part and reports no changes.
+* `check_netlist.py` exports the schematic netlist with `kicad-cli` and compares it with the
+  board pad by pad. Current result: 39 nets on each side, 0 differences.
+
+You can now edit the design in KiCad the normal way, schematic first. Just remember that
+re-running the generator scripts overwrites the `.kicad_sch` and `.kicad_pcb` files. Once you
+start editing by hand, treat the scripts as the starting point and stop re-running them.
+
+KiCad 7's command line has no ERC, so ERC hasn't been run. When you open the schematic, run
+**Inspect → Electrical Rules Checker** once. Expect only notes about the power pins being
+driven from the connector (J1 has no power-flag symbol).
 
 ## ⚠ Before ordering
 
@@ -83,6 +117,8 @@ the Tab5's 5 V rail (pin 6) onto this board's 3.3 V supply:
 sudo apt install kicad xvfb openjdk-21-jre        # KiCad 7+, Java, virtual display
 curl -LO https://github.com/freerouting/freerouting/releases/download/v1.9.0/freerouting-1.9.0.jar
 FREEROUTING_JAR=$PWD/freerouting-1.9.0.jar python3 gen_snes_pcb.py --route
+python3 gen_snes_sch.py
+python3 check_netlist.py                          # schematic vs board: must report 0 differences
 ```
 
 Freerouting 1.9 is used single-threaded on purpose. In testing, 2.1's multi-threaded

@@ -16,6 +16,7 @@ import os
 import shutil
 import subprocess
 import sys
+import uuid
 
 import pcbnew
 
@@ -26,6 +27,15 @@ import layout  # noqa: E402
 FP = "/usr/share/kicad/footprints"
 OUT_UNROUTED = os.path.join(HERE, "retropad_snes_unrouted.kicad_pcb")
 OUT = os.path.join(HERE, "retropad_snes.kicad_pcb")
+
+# Footprints carry the UUID of their schematic symbol (gen_snes_sch.py derives
+# the same ones), which is what links the PCB to retropad_snes.kicad_sch.
+UUID_NS = uuid.UUID("8d3c5a62-1f0e-4f7e-9a51-5e7a0b2c9d11")
+SCH_FILE = "retropad_snes.kicad_sch"
+
+
+def symbol_uuid(ref):
+    return str(uuid.uuid5(UUID_NS, "retropad_snes/" + ref))
 
 # Sheet origin: layout (0, 0) lands here, and layout y is flipped (KiCad y points down).
 OX, OY = 40.0, 140.0
@@ -103,6 +113,9 @@ class Builder:
         fp.SetFPID(pcbnew.LIB_ID(lib, name))
         fp.SetReference(ref)
         fp.SetValue(value)
+        fp.SetPath(pcbnew.KIID_PATH("/" + symbol_uuid(ref)))
+        fp.SetProperty("Sheetfile", SCH_FILE)
+        fp.SetProperty("Sheetname", "")
         self.board.Add(fp)
         fp.SetPosition(mm(x, y))
         fp.SetOrientationDegrees(rot)
