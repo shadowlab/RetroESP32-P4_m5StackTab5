@@ -78,10 +78,17 @@ Re-run it after changing the scale or the case numbers.
   side edges.
 * **MENU:** added. The reference pad has no menu button.
 
+## PCB
+
+A routed, DRC-clean KiCad board is in [`kicad/`](kicad). That page has the list of things to
+check before ordering. The most important is the orientation of the 2×5 header.
+
 ## Open items
 
 1. The M3 hole height (main README §1). The holes share x with LEFT (x = 16) and A
    (x = 112). They are clear of both if the holes are near y ≈ 45, as the drawing suggests.
 2. The latch-arm length down the sides. It is taken from the STL (about 11 mm). If the
    shipping case's arms are longer, lower `SHOULDER_Y` in `layout.py` and re-run.
-3. The right-angle switch part for L/R and the matching shell openings.
+3. The right-angle switch part for L/R and the matching shell openings. The PCB uses the C&K
+   PTS645Vx31 footprint.
+4. The 2×5 header's pin-1 orientation and height (see [`kicad/README.md`](kicad/README.md)).

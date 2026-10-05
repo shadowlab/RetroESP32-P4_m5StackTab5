@@ -356,6 +356,8 @@ also open the patched tree in STM32CubeIDE, but its output still needs `pack_ret
 
 ## 7. Status and open items
 
+* **SNES board:** a routed, DRC-clean KiCad PCB is in
+  [`boards/snes/kicad`](boards/snes/kicad). Check the 2×5 header orientation before ordering.
 * **Firmware:** the patch applies cleanly to upstream and builds (17 KB of the 52 KB app
   area). It has not yet run on real hardware.
 * **Host driver:** the launcher builds with ESP-IDF v5.5.2 both with the driver off (the
