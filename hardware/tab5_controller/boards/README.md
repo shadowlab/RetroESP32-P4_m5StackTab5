@@ -23,8 +23,8 @@ Every KiCad project:
 
 The SNES layout follows the user's reference drawing. The NES, Game Boy, Genesis (6-button)
 and SMS/GG layouts follow each console's own pad, scaled the same way. X/Y/Z/MODE on the
-Genesis board need 6-button support in the Genesis core before games can use them (see
-[`genesis/README.md`](genesis/README.md)).
+Genesis board reach games once the Genesis core's 6-button support
+(https://github.com/shadowlab/RetroESP32-P4_m5StackTab5/pull/4) is merged.
 
 ## How the boards are made
 
