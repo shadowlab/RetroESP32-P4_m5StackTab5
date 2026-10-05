@@ -17,10 +17,19 @@ CASE_W, CASE_H, KEY_H, BODY_H = 128.0, 59.4, 52.0, 57.95
 WALL = 1.5                       # assumed shell wall until a shell is drawn
 M3_HOLES = [(16.0, None), (112.0, None)]   # x known (96 apart); y still to be measured
 HEADER_X = 26.0                  # connector centre, from M5's STL (front view)
+LATCH_BOTTOM = BODY_H - 11.0     # latch arms reach about 11 mm down the sides (STL)
+SHOULDER_Y = 38.0                # side-edge shoulder buttons, below the latch arms
 
-# Tact-switch pin grid (centre to pin, local frame) and pad radius
-PINS = {6: (3.25, 2.25), 12: (6.25, 2.5)}
-PAD_R = {6: 0.9, 12: 1.1}
+# Switch types: body (w, h) and pin positions in the local frame, pad radius.
+#   6, 12 : THT tact switches 6x6 / 12x12, pins on a 6.5x4.5 / 12.5x5.0 grid
+#   "ra"  : right-angle 6x6 tact switch at a side edge, actuator pointing out
+#           along -x (rotate 180 for the right edge). Generic footprint; take
+#           the final one from the chosen part's datasheet.
+SWITCHES = {
+    6:    dict(body=(6.0, 6.0), pins=[(sx * 3.25, sy * 2.25) for sx in (-1, 1) for sy in (-1, 1)], pad_r=0.9),
+    12:   dict(body=(12.0, 12.0), pins=[(sx * 6.25, sy * 2.5) for sx in (-1, 1) for sy in (-1, 1)], pad_r=1.1),
+    "ra": dict(body=(7.0, 6.0), pins=[(2.5, sy * 3.25) for sy in (-1, 1)] + [(0.0, sy * 3.5) for sy in (-1, 1)], pad_r=0.9),
+}
 
 
 def snes(s=0.83, k=1.0):
@@ -44,6 +53,12 @@ def snes(s=0.83, k=1.0):
         ("A",      "RP_BTN_A",      fx + 13.5 * k, cy, 12, 45),
         ("SELECT", "RP_BTN_SELECT", cx - 7.5 * s, cy - 6 * s, 6, 45),
         ("START",  "RP_BTN_START",  cx + 7.5 * s, cy - 6 * s, 6, 45),
+        # Not on the reference pad: centred above SELECT/START
+        ("MENU",   "RP_BTN_MENU",   cx, cy + 5.0, 6, 45),
+        # Shoulders: the top edge docks into the Tab5, so L/R come out of the
+        # side edges instead, below the latch arms
+        ("L",      "RP_BTN_L",      WALL + 3.5, SHOULDER_Y, "ra", 0),
+        ("R",      "RP_BTN_R",      CASE_W - WALL - 3.5, SHOULDER_Y, "ra", 180),
     ]
     outline = ("stadium", cx, cy, 41 * s, 31 * s)   # two circles of radius 31s at +-41s
     return buttons, outline
@@ -59,13 +74,16 @@ def _xf(b, pts):
 
 
 def body(b):
-    h = b[4] / 2
-    return _xf(b, [(-h, -h), (h, -h), (h, h), (-h, h)])
+    w, h = SWITCHES[b[4]]["body"]
+    return _xf(b, [(-w / 2, -h / 2), (w / 2, -h / 2), (w / 2, h / 2), (-w / 2, h / 2)])
 
 
 def pads(b):
-    px, py = PINS[b[4]]
-    return _xf(b, [(sx * px, sy * py) for sx in (-1, 1) for sy in (-1, 1)])
+    return _xf(b, SWITCHES[b[4]]["pins"])
+
+
+def pad_r(b):
+    return SWITCHES[b[4]]["pad_r"]
 
 
 def _gap(p, q):
@@ -85,10 +103,13 @@ def check(buttons):
     pts = [pt for b in buttons for pt in body(b) + pads(b)]
     xs, ys = [p[0] for p in pts], [p[1] for p in pts]
     body_gap = min(_gap(body(a), body(b)) for a, b in itertools.combinations(buttons, 2))
-    pad_gap = min(math.dist(p, q) - PAD_R[a[4]] - PAD_R[b[4]]
+    pad_gap = min(math.dist(p, q) - pad_r(a) - pad_r(b)
                   for a, b in itertools.combinations(buttons, 2) for p in pads(a) for q in pads(b))
     inside = min(xs) >= WALL and max(xs) <= CASE_W - WALL and min(ys) >= WALL and max(ys) <= KEY_H - WALL
-    return dict(x=(min(xs), max(xs)), y=(min(ys), max(ys)), body_gap=body_gap, pad_gap=pad_gap, inside=inside)
+    side = [p for b in buttons if b[4] == "ra" for p in body(b)]
+    below_latch = all(p[1] <= LATCH_BOTTOM for p in side)
+    return dict(x=(min(xs), max(xs)), y=(min(ys), max(ys)), body_gap=body_gap, pad_gap=pad_gap,
+                inside=inside, below_latch=below_latch)
 
 
 def svg(buttons, outline, path):
@@ -105,7 +126,8 @@ def svg(buttons, outline, path):
     o.append(f'<polygon points="{P(0,0)} {P(CASE_W,0)} {P(CASE_W,BODY_H)} {P(0,BODY_H)}" fill="#f4f4f4" stroke="#333"/>')
     o.append(f'<polygon points="{P(0,KEY_H)} {P(CASE_W,KEY_H)} {P(CASE_W,BODY_H)} {P(0,BODY_H)}" fill="#e2e2e2" stroke="#333"/>')
     for x0 in (0, CASE_W - 2.2):
-        o.append(f'<polygon points="{P(x0,BODY_H)} {P(x0+2.2,BODY_H)} {P(x0+2.2,CASE_H)} {P(x0,CASE_H)}" fill="#ccc" stroke="#333"/>')
+        o.append(f'<polygon points="{P(x0,LATCH_BOTTOM)} {P(x0+2.2,LATCH_BOTTOM)} {P(x0+2.2,CASE_H)} {P(x0,CASE_H)}" '
+                 f'fill="#ccc" stroke="#333"/>')
     o.append(f'<polygon points="{P(HEADER_X-6.6,KEY_H+0.5)} {P(HEADER_X+6.6,KEY_H+0.5)} {P(HEADER_X+6.6,BODY_H-0.5)} '
              f'{P(HEADER_X-6.6,BODY_H-0.5)}" fill="none" stroke="#c33" stroke-dasharray="3 2"/>')
     o.append(f'<text x="{20+(HEADER_X+8)*S:.0f}" y="{20+(CASE_H-KEY_H-3)*S:.0f}" fill="#c33">2x5 header (back side)</text>')
@@ -121,7 +143,11 @@ def svg(buttons, outline, path):
     for b in buttons:
         o.append(f'<polygon points="{" ".join(P(*p) for p in body(b))}" fill="#fff8d0" stroke="#a80"/>')
         for p in pads(b):
-            o.append(f'<circle cx="{P(*p).split(",")[0]}" cy="{P(*p).split(",")[1]}" r="{PAD_R[b[4]]*S:.1f}" fill="#c9a227"/>')
+            o.append(f'<circle cx="{P(*p).split(",")[0]}" cy="{P(*p).split(",")[1]}" r="{pad_r(b)*S:.1f}" fill="#c9a227"/>')
+        if b[4] == "ra":
+            d = -1 if b[5] == 0 else 1
+            ex = b[2] + d * 5.0
+            o.append(f'<polygon points="{P(ex, b[3]-1.5)} {P(ex, b[3]+1.5)} {P(ex + d*2.5, b[3])}" fill="#a80"/>')
         tx, ty = P(b[2], b[3]).split(",")
         o.append(f'<text x="{tx}" y="{float(ty)+3:.1f}" text-anchor="middle" font-weight="bold">{b[0]}</text>')
     o.append('</svg>')
@@ -138,10 +164,11 @@ def main():
     c = check(buttons)
     print("| Button | RetroPad bit | x | y | Switch | Rotation |\n|---|---|---|---|---|---|")
     for n, bit, x, y, sz, rot in buttons:
-        print(f"| {n} | `{bit}` | {x:.2f} | {y:.2f} | {sz}x{sz} | {rot}° |")
+        kind = "6x6 right-angle" if sz == "ra" else f"{sz}x{sz}"
+        print(f"| {n} | `{bit}` | {x:.2f} | {y:.2f} | {kind} | {rot}° |")
     print(f"\nextent x {c['x'][0]:.1f}..{c['x'][1]:.1f}, y {c['y'][0]:.1f}..{c['y'][1]:.1f}; "
           f"closest bodies {c['body_gap']:.2f} mm; closest pads {c['pad_gap']:.2f} mm; "
-          f"inside wall margin: {c['inside']}")
+          f"inside wall margin: {c['inside']}; side buttons below latch arms: {c['below_latch']}")
 
 
 if __name__ == "__main__":
