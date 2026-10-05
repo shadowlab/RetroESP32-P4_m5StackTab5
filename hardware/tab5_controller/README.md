@@ -63,6 +63,28 @@ calipers before fabrication.
 | Case screws | 4 small screws, one near each corner of the back shell (not the PCB mounting) |
 | Status LEDs | 2 small windows on the front, bottom-left |
 
+**M5Stack's STL doesn't match the drawing.** M5Stack's own downloadable STL
+(`Tab5_Keyboard.stl`, assembly `TAB5_ASM_V2`) describes a different case from the dimension
+sheet and the schematic. Both files come from the product page:
+
+| | Dimension sheet + schematic | STL `TAB5_ASM_V2` |
+|---|---|---|
+| Keys | 5 × 14 = 70 | 4 × 14 = 56 windows, 8.5 × 9.0 pitch |
+| Height | 59.4 overall, 52 key area | 45.0 shell, 50.8 with latch arms |
+| Width / thickness | 128.0 / 11.99 (13.19 with keycaps) | 128.0 / 12.0 (13.3 with keycaps) |
+| Fixing | 2 × M3, 96 apart | Corner screws 120 apart (about 1.6 mm pilot holes) |
+| Latch arms | About 2.2 wide (123.6 between them) | 3.0 wide × 16.5 tall, standing about 5.8 above the shell |
+| Connector opening | Centred about 27 from the left (scaled off the drawing) | 13.2 wide, **centred 26.0 from the left** (front view) |
+
+These boards follow the **dimension sheet**, because it agrees with the 70-key schematic and
+with the product's published size (128 × 59.4 × 13.1). Both sources put the connector at about
+26–27 mm, so use **26.0** from the STL. Before the first fabrication run, take these from a
+real keyboard with calipers:
+
+1. The latch-arm width and how far the arms stand above the body.
+2. The M3 hole height.
+3. The header's distance below the top edge.
+
 Layout rules for every console board:
 
 * Draw the PCB outline inside the shell. The PCB is **not** 128 × 59.4, because the shell
@@ -342,7 +364,8 @@ also open the patched tree in STM32CubeIDE, but its output still needs `pack_ret
   (ES8388/ES7210) and IO expanders are still Guition-specific. The controller driver is ready
   for a Tab5 port but does not make the firmware run on a Tab5 by itself.
 * The connector pinout and the support circuit now come from M5Stack's schematic (§2.1,
-  §2.2). The main outline is dimensioned (§1). The M3 hole Y position and the header position
-  were scaled off the drawing and still need checking with calipers.
+  §2.2). The main outline is dimensioned (§1). M5Stack's STL conflicts with the drawing on
+  height, key rows, fixing and latch arms (§1), so the latch arms, M3 hole height and header
+  depth need checking with calipers on a real unit.
 * Not done yet: consuming the keypad bits in the ColecoVision and 5200 cores, and a launcher
   hint such as "attach the Genesis pad".
