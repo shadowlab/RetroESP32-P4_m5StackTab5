@@ -38,7 +38,7 @@
 #define RP_INFO_MAGIC2          2       /* 'A' */
 #define RP_INFO_MAGIC3          3       /* 'D' */
 #define RP_INFO_PROTO_VER       4       /* RP_PROTO_VERSION */
-#define RP_INFO_CONSOLE_ID      5       /* rp_console_t, from the ID straps */
+#define RP_INFO_CONSOLE_ID      5       /* rp_console_t, from the ID straps or console-select switch */
 #define RP_INFO_ANALOG_COUNT    6       /* 0 or 2 (AN-fitted strap) */
 #define RP_INFO_FLAGS           7       /* reserved, 0 */
 
@@ -47,8 +47,8 @@
 /* ── Console IDs (4-bit strap value on the board) ───────────────────────── */
 typedef enum {
     RP_CONSOLE_GENERIC   = 0,   /* no straps fitted */
-    RP_CONSOLE_NES       = 1,   /* the shared NES / Game Boy board */
-    RP_CONSOLE_GB        = 2,   /* Game Boy / Color; mapped the same as NES */
+    RP_CONSOLE_NES       = 1,
+    RP_CONSOLE_GB        = 2,   /* Game Boy / Color */
     RP_CONSOLE_SNES      = 3,
     RP_CONSOLE_SMS       = 4,   /* Master System / Game Gear */
     RP_CONSOLE_GENESIS   = 5,

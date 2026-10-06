@@ -71,6 +71,7 @@
   Gamepad (USB HID controller)
 */
 #include "gamepad.h"
+#include "tab5_ctrl.h"
 
 /*
   Touch Panel
