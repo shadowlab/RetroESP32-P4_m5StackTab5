@@ -15,9 +15,8 @@ goes. Every board:
 | Board | Console ID | Buttons | Layout | KiCad project |
 |---|---|---|---|---|
 | [SNES](snes/README.md) | 3 | D-pad, A B X Y, L R (side edges), SELECT START, MENU | [svg](snes/layout.svg) | [`snes/kicad`](snes/kicad) |
-| [NES / Game Boy](nes_gb/README.md) | 1 | D-pad, B A (A raised 4 mm), SELECT START, MENU | [svg](nes_gb/layout.svg) | [`nes_gb/kicad`](nes_gb/kicad) |
+| [NES / Game Boy / Master System](nes_gb_sms/README.md) | 1, 2 or 4 (slide switch) | D-pad, B A (A raised 4 mm), SELECT START, MENU | [svg](nes_gb_sms/layout.svg) | [`nes_gb_sms/kicad`](nes_gb_sms/kicad) |
 | [Genesis / Mega Drive 6-button](genesis/README.md) | 5 | D-pad, X Y Z over A B C, MODE START, MENU | [svg](genesis/layout.svg) | [`genesis/kicad`](genesis/kicad) |
-| [Master System / Game Gear](sms/README.md) | 4 | D-pad, 1 2, START, MENU | [svg](sms/layout.svg) | [`sms/kicad`](sms/kicad) |
 
 Every KiCad project:
 * is a schematic plus a routed, two-layer, 125 × 55 mm PCB;
@@ -25,11 +24,12 @@ Every KiCad project:
   warnings remain);
 * has a schematic that matches its PCB net for net (`check_netlist.py`).
 
-The SNES layout follows the user's reference drawing. The NES / Game Boy, Genesis (6-button)
-and SMS/GG layouts follow each console's own pad, scaled the same way. X/Y/Z/MODE on the
+The SNES layout follows the user's reference drawing. The NES / Game Boy / Master System and
+Genesis (6-button) layouts follow each console's own pad, scaled the same way. X/Y/Z/MODE on the
 Genesis board reach games through the Genesis core's 6-button support (`components/gwenesis`,
-merged from https://github.com/shadowlab/RetroESP32-P4_m5StackTab5/pull/4). The NES / Game Boy board puts
-A 4 mm above B, between the NES pad's level buttons and the Game Boy's diagonal.
+merged from https://github.com/shadowlab/RetroESP32-P4_m5StackTab5/pull/4). The NES / Game Boy / Master System
+board puts A 4 mm above B, between the NES pad's level buttons and the Game Boy's diagonal, and
+picks its console with a slide switch (see [Console-select switch](#console-select-switch)).
 
 ## How the boards are made
 
@@ -75,6 +75,22 @@ four pins, numbered like the parts' own symbols:
 
 Each board's `kicad/fp-lib-table` points KiCad at `kicad_lib/RetroPad.pretty`.
 
+### Console-select switch
+
+The NES / Game Boy / Master System board has no ID straps. A 3-position slide switch (C&K
+PCM13SMTR, SP3T, right angle) grounds one ID line: NES = ID0 (console 1), Game Boy = ID1 (2),
+Master System = ID2 (4). Each console is a single ID bit, so no logic is needed. The firmware
+re-reads the ID every 100 ms, and a new position counts once two readings agree. The Tab5 then
+switches the button map and jumps the launcher to that console's games.
+
+* The switch sits on the front at the bottom edge, centred under SELECT/START, with its lever
+  about 1.2 mm past the board edge. The case's bottom wall needs a slot for it.
+* The silkscreen labels the positions NES, GB, SMS in pad order 1, 2, 4. **Check against the
+  PCM13 datasheet which lever position closes which pad** before ordering, and swap the labels
+  in `layout.ID_SWITCH` if needed. KiCad's `SW_SP3T` symbol puts the common on pin 3.
+* The board's buttons serve all three consoles: Master System 1 / 2 are B / A and its START is
+  START (Pause); SELECT does nothing there.
+
 ### Regenerating
 
 ```
@@ -84,7 +100,7 @@ curl -LO https://github.com/freerouting/freerouting/releases/download/v1.9.0/fre
 
 cd kicad_gen
 export FREEROUTING_JAR=$PWD/../freerouting-1.9.0.jar
-for c in snes nes_gb genesis sms; do
+for c in snes nes_gb_sms genesis; do
   python3 gen_pcb.py $c --route      # FR_PASSES=300 for more router passes
   python3 gen_sch.py $c
   python3 check_netlist.py $c        # must report 0 differences
@@ -107,6 +123,7 @@ BOMs list the orderable switches and Tab5 header (Manufacturer / MPN / DigiKey c
 | `SW_PUSH_6mm_4pin` | C&K PTS645SM43-2 LFS (6×6 mm, 4.3 mm, ~160 gf) | search by MPN |
 | `SW_PUSH-12mm_4pin` | Omron B3F-4055 (12×12 mm, 7.3 mm, 260 gf, takes B32 caps) | SW414-ND |
 | `SW_Tactile_SPST_Angled_PTS645Vx31-2LFS` | C&K PTS645VL31-2 LFS (right angle) | CKN9094-ND |
+| `SW_SP3T_PCM13` (SW_ID, NES / GB / SMS board only) | C&K PCM13SMTR (SP3T slide, right angle, SMD) | search by MPN |
 | `PinHeader_2x05_P2.54mm_Horizontal` (J1, to the Tab5) | Samtec TSW-105-08-G-D-RA (2×5 right angle, 5.84 mm mating pins); check the pin length against M5Stack's keyboard first | SAM1037-05-ND |
 
 After changing `PARTS`, run `python3 gen_pcb.py <console> --bom-only` to rewrite a BOM from

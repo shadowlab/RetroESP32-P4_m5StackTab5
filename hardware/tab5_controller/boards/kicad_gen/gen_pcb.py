@@ -88,13 +88,19 @@ class Console:
         self.pcb = os.path.join(self.dir, self.base + ".kicad_pcb")
         self.pcb_unrouted = os.path.join(self.dir, self.base + "_unrouted.kicad_pcb")
         self.sch_file = self.base + ".kicad_sch"
-        # ID0..ID3 = bits of the console id (0R fitted = bit set)
-        self.straps = [("R%d" % (6 + i), "ID%d" % i, bool(self.id >> i & 1)) for i in range(4)]
+        # ID0..ID3 = bits of the console id (0R fitted = bit set). Boards in
+        # layout.ID_SWITCH pick the console with a slide switch instead.
+        self.id_switch = layout.ID_SWITCH.get(name)
+        self.straps = [] if self.id_switch else \
+            [("R%d" % (6 + i), "ID%d" % i, bool(self.id >> i & 1)) for i in range(4)]
 
     def buttons(self):
         return layout.BOARDS[self.name]()[0]
 
     def strap_note(self):
+        if self.id_switch:
+            return "%s: console set by slide switch SW_ID (%s)" % (
+                self.title, ", ".join("%s = %s" % (c, sig) for _p, sig, c in self.id_switch))
         fit = [r for r, _, f in self.straps if f]
         dnp = [r for r, _, f in self.straps if not f]
         return "%s = ID %d (fit %s; %s DNP)" % (self.title, self.id, ", ".join(fit) or "none", ", ".join(dnp))
@@ -284,6 +290,17 @@ def build_core(b):
             r.SetExcludedFromBOM(True)
         b.text(pcbnew.B_SilkS, x, 37.8, sig, 0.8, mirror=True)
 
+    # Console-select switch: SP3T slide (C&K PCM13), common (pad 3) to GND, one
+    # throw per ID line. Front side at the bottom edge, lever out through the
+    # case's bottom wall. Positions labelled in pad order 1, 2, 4.
+    if CFG.id_switch:
+        y0 = WALL + 2.2                      # mounting tabs 0.37 mm inside the edge (rule: 0.3)
+        sw = b.place("Button_Switch_SMD", "SW_SP3T_PCM13", "SW_ID", "PCM13SMTR", 64.0, y0, 0.0)
+        b.connect(sw, 3, "GND")
+        for pad, sig, _console in CFG.id_switch:
+            b.connect(sw, pad, sig)
+        b.text(pcbnew.F_SilkS, 64.0, y0 + 6.5, "  ".join(c for _p, _s, c in CFG.id_switch), 1.0)
+
     place_header(b, HEADER_PINS)
 
     # UPDI programming header: 1 = 3V3, 2 = UPDI, 3 = GND
@@ -434,6 +451,8 @@ PARTS = {
     "SW_PUSH_6mm_4pin": ("C&K", "PTS645SM43-2 LFS", ""),
     "SW_PUSH-12mm_4pin": ("Omron", "B3F-4055", "SW414-ND"),
     "SW_Tactile_SPST_Angled_PTS645Vx31-2LFS": ("C&K", "PTS645VL31-2 LFS", "CKN9094-ND"),
+    # Console-select slide switch (NES / GB / SMS board), SP3T, right angle, SMD
+    "SW_SP3T_PCM13": ("C&K", "PCM13SMTR", ""),
     # J1 to the Tab5: 2x5 right-angle male, 5.84 mm mating pins. Confirm the pin
     # length against M5Stack's keyboard before ordering (see README checklist).
     "PinHeader_2x05_P2.54mm_Horizontal": ("Samtec", "TSW-105-08-G-D-RA", "SAM1037-05-ND"),

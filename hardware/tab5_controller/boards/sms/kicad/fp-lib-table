@@ -1,4 +1,0 @@
-(fp_lib_table
-  (version 7)
-  (lib (name "RetroPad")(type "KiCad")(uri "${KIPRJMOD}/../../kicad_lib/RetroPad.pretty")(options "")(descr "RetroPad 4-pin switch footprints"))
-)

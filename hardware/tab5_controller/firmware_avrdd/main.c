@@ -133,6 +133,43 @@ static uint8_t analog_read(uint8_t muxpos)
     return (uint8_t)(ADC0.RES >> 4);                         /* 12-bit -> 8-bit */
 }
 
+/* ── console ID: re-read while running ─────────────────────────────────── *
+ * A board can carry a console-select switch instead of fixed straps, so the
+ * ID is re-read every ID_POLL_MS. A new value takes effect after two equal
+ * readings in a row, so a switch passing between positions can't flicker it. */
+#define ID_POLL_MS 100
+
+static uint8_t s_id_candidate = 0xFF;
+
+static void set_console(uint8_t id)
+{
+    if (id >= RP_CONSOLE_COUNT)
+        id = RP_CONSOLE_GENERIC;
+    if (HAS_ANALOG(id) && !s_analog_count)
+        analog_init();
+    uint8_t sreg = SREG;                    /* also called at boot, before sei() */
+    cli();
+    s_console = id;
+    s_analog_count = HAS_ANALOG(id) ? 2 : 0;
+    SREG = sreg;
+}
+
+/* One ID reading; returns true when the console changed. */
+static bool console_id_step(uint8_t raw)
+{
+    if (raw == s_console) {
+        s_id_candidate = 0xFF;
+        return false;
+    }
+    if (raw != s_id_candidate) {
+        s_id_candidate = raw;
+        return false;
+    }
+    s_id_candidate = 0xFF;
+    set_console(raw);
+    return true;
+}
+
 /* ── I2C client: RetroPad register window ─────────────────────────────── */
 static uint8_t s_reg;                  /* register pointer */
 static bool s_reg_set;                 /* first byte of a write sets the pointer */
@@ -259,24 +296,23 @@ static void debounce_step(uint32_t now)
 int main(void)
 {
     clock_init();
-    s_console = read_console_id();
-    if (s_console >= RP_CONSOLE_COUNT)
-        s_console = RP_CONSOLE_GENERIC;
     buttons_init();
     analog_pins_init();
-    if (HAS_ANALOG(s_console)) {
-        analog_init();
-        s_analog_count = 2;
-    }
+    set_console(read_console_id());
     snapshot();
     timer_init();
     twi_init();
     sei();
 
+    uint8_t id_ms = 0;
     for (;;) {
         if (!timer_tick())
             continue;
         debounce_step(buttons_sample());
+        if (++id_ms >= ID_POLL_MS) {
+            id_ms = 0;
+            console_id_step(read_console_id());
+        }
         if (s_analog_count) {
             uint8_t a0 = analog_read(ADC_MUXPOS_AIN24_gc);
             uint8_t a1 = analog_read(ADC_MUXPOS_AIN25_gc);

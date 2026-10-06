@@ -87,11 +87,12 @@ def _rrect(r):
     return ("rrect", CASE_W / 2, KEY_H / 2, 144 * _S / 2, 62 * _S / 2, r)
 
 
-def nes_gb():
-    """NES / Game Boy: d-pad, flat SELECT/START, B and A with A raised 4 mm.
+def nes_gb_sms():
+    """NES / Game Boy / Master System: d-pad, flat SELECT/START, B and A with A raised 4 mm.
 
-    The slant sits between the NES pad's level A/B and the Game Boy's diagonal,
-    so one board serves both consoles (the host maps them the same way).
+    The slant sits between the NES pad's level A/B and the Game Boy's diagonal.
+    The Master System's 1 / 2 are B / A, and its START is START (Pause); SELECT
+    is unused there. A slide switch picks which console the board reports.
     """
     cx, cy = CASE_W / 2, KEY_H / 2
     fx = cx + 41 * _S
@@ -126,18 +127,7 @@ def genesis():
     ] + _menu(), ("stadium", cx, cy, 41 * _S, 31 * _S)
 
 
-def sms():
-    """Master System / Game Gear: buttons 1 and 2, START (GG start, SMS pause)."""
-    cx, cy = CASE_W / 2, KEY_H / 2
-    fx = cx + 41 * _S
-    return _dpad() + [
-        ("1",     "RP_BTN_B",     fx - 8.0, cy - 2.0, 12, 90),
-        ("2",     "RP_BTN_A",     fx + 8.0, cy - 2.0, 12, 90),
-        ("START", "RP_BTN_START", cx, cy - 6 * _S - 2.5, 6, 45),   # lower: clears MENU
-    ] + _menu(), _rrect(4.0)
-
-
-BOARDS = {"snes": snes, "nes_gb": nes_gb, "genesis": genesis, "sms": sms}
+BOARDS = {"snes": snes, "nes_gb_sms": nes_gb_sms, "genesis": genesis}
 
 # Every board uses an AVR32DD28 (SOIC-28) with 13 button slots, one MCU pin
 # each (switch to GND, internal pull-up). A console's buttons fill the slots in
@@ -157,15 +147,21 @@ def avrdd_slots(name):
 
 # Console id (retropad_proto.h rp_console_t) and the name printed on each board
 CONSOLES = {
-    "nes_gb":  (1, "NES / Game Boy"),
+    "nes_gb_sms": (1, "NES / Game Boy / Master System"),
     "snes":    (3, "SNES"),
-    "sms":     (4, "Master System / Game Gear"),
     "genesis": (5, "Genesis / Mega Drive 6-button"),
 }
 
 # Console IDs with no board of their own that read a board's slots the same way:
-# ID 2 (Game Boy) is mapped like the shared NES / Game Boy board.
-ALIASES = {2: "nes_gb"}
+# the NES / Game Boy / Master System board reports ID 1, 2 or 4 from its switch.
+ALIASES = {2: "nes_gb_sms", 4: "nes_gb_sms"}
+
+# Boards that select their console with a switch instead of fixed ID straps:
+# SP3T slide switch, common to GND, one throw per console-ID bit. Each entry is
+# (switch pad, ID line it grounds, console it selects).
+ID_SWITCH = {
+    "nes_gb_sms": [(1, "ID0", "NES"), (2, "ID1", "GB"), (4, "ID2", "SMS")],
+}
 
 
 def _xf(b, pts):

@@ -16,8 +16,10 @@ client address 0x6D, M5Stack's keyboard registers plus the RetroPad block 0x70�
 * **Clock:** 24 MHz internal oscillator; buttons are scanned every 1 ms (TCB0).
 * **Buttons:** PD1–PD7, PC0–PC3 and PF0–PF1 are inputs with internal pull-ups, and a pressed
   button reads low. A change counts once it has been stable for 5 ms.
-* **Console ID:** read once at boot from straps on PA0, PA1, PA6 and PA7 (0 Ω to GND = bit
-  set). The ID selects the pin map row.
+* **Console ID:** read from PA0, PA1, PA6 and PA7 (pulled to GND = bit set) at boot and again
+  every 100 ms, so a console-select switch works while the board is running. A new ID takes
+  effect after two equal readings in a row. The ID selects the pin map row.
+  * Most boards use 0 Ω straps; the NES / Game Boy / Master System board uses a slide switch.
   * Every console ID has a row.
   * IDs with no board layout yet use a generic order, so a slot can never default to UP.
 * **Analog:** PA4/PA5 (AIN24/AIN25) are read as 8-bit values, but only for the Atari 2600 and
@@ -59,7 +61,9 @@ This builds the real `main.c` on the host and replays what `components/tab5_ctrl
   then with UP released;
 * checks that the client completes a read when the host NACKs.
 
-It then switches the ID straps to NES, Game Boy, Master System and Genesis and checks that
+It also moves a console-select switch between IDs (only a second equal reading takes effect, and
+a switch passing through another position doesn't), then switches the ID straps to NES, Game Boy,
+Master System and Genesis and checks that
 each board's pins map to the right bits, and checks the generic fallback for an ID without a
 layout. All pass.
 

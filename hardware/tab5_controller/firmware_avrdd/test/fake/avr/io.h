@@ -24,6 +24,7 @@ extern struct { volatile uint8_t OSCHFCTRLA, MCLKCTRLB; } CLKCTRL;
 #define TCB_CLKSEL_DIV2_gc (0x01 << 1)
 #define TCB_ENABLE_bm 0x01
 #define TCB_CAPT_bm 0x01
+static volatile uint8_t SREG;
 #define PORT_PULLUPEN_bm 0x08
 #define PORT_ISC_INPUT_DISABLE_gc 0x04
 #define VREF_REFSEL_VDD_gc 0x05

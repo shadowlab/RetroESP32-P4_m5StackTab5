@@ -1,10 +1,10 @@
 (kicad_sch
   (version 20230121)
   (generator eeschema)
-  (uuid "a309cff3-1dfb-5baa-b184-d84380f3c827")
+  (uuid "c1410d28-1080-5906-b835-1fb482a4b8a0")
   (paper "A3")
   (title_block
-    (title "RetroPad Master System / Game Gear controller (console ID 4)")
+    (title "RetroPad NES / Game Boy / Master System controller (console ID 1)")
     (date "2026-10-05")
     (rev "0.1")
     (company "RetroESP32-P4")
@@ -600,6 +600,67 @@
           (name "~" (effects (font (size 1.27 1.27))))
           (number "2" (effects (font (size 1.27 1.27)))))))
     (symbol
+      "Switch:SW_SP3T"
+      (pin_names (offset 0) hide)
+      (in_bom yes)
+      (on_board yes)
+      (property "Reference" "SW" (at 0 5.08 0) (effects (font (size 1.27 1.27))))
+      (property "Value" "SW_SP3T" (at 0 -5.08 0) (effects (font (size 1.27 1.27))))
+      (property "Footprint" "" (at -15.875 4.445 0) (effects (font (size 1.27 1.27)) hide))
+      (property "Datasheet" "~" (at 0 -7.62 0) (effects (font (size 1.27 1.27)) hide))
+      (property "ki_keywords" "switch sp3t ON-ON-ON" (at 0 0 0) (effects (font (size 1.27 1.27)) hide))
+      (property
+        "ki_description"
+        "Switch, three position, single pole triple throw, 3 position switch, SP3T"
+        (at 0 0 0)
+        (effects (font (size 1.27 1.27)) hide))
+      (property "ki_fp_filters" "SW* SP3T*" (at 0 0 0) (effects (font (size 1.27 1.27)) hide))
+      (symbol
+        "SW_SP3T_0_1"
+        (circle (center -2.032 0) (radius 0.4572) (stroke (width 0) (type default)) (fill (type none)))
+        (polyline
+          (pts (xy -1.651 0.254) (xy 1.651 2.286))
+          (stroke (width 0) (type default))
+          (fill (type none)))
+        (circle (center 2.032 -2.54) (radius 0.4572) (stroke (width 0) (type default)) (fill (type none)))
+        (circle (center 2.032 0) (radius 0.4572) (stroke (width 0) (type default)) (fill (type none)))
+        (circle (center 2.032 2.54) (radius 0.4572) (stroke (width 0) (type default)) (fill (type none))))
+      (symbol
+        "SW_SP3T_1_1"
+        (rectangle
+          (start -3.175 3.81)
+          (end 3.175 -3.81)
+          (stroke (width 0) (type default))
+          (fill (type background)))
+        (pin
+          passive
+          line
+          (at 5.08 2.54 180)
+          (length 2.54)
+          (name "1" (effects (font (size 1.27 1.27))))
+          (number "1" (effects (font (size 1.27 1.27)))))
+        (pin
+          passive
+          line
+          (at 5.08 0 180)
+          (length 2.54)
+          (name "2" (effects (font (size 1.27 1.27))))
+          (number "2" (effects (font (size 1.27 1.27)))))
+        (pin
+          passive
+          line
+          (at -5.08 0 0)
+          (length 2.54)
+          (name "3" (effects (font (size 1.27 1.27))))
+          (number "3" (effects (font (size 1.27 1.27)))))
+        (pin
+          passive
+          line
+          (at 5.08 -2.54 180)
+          (length 2.54)
+          (name "4" (effects (font (size 1.27 1.27))))
+          (number "4" (effects (font (size 1.27 1.27)))))))
+    (symbol
       "Mechanical:MountingHole"
       (pin_names (offset 1.016))
       (in_bom yes)
@@ -684,12 +745,12 @@
     "MCU — AVR32DD28 (SOIC-28) running firmware_avrdd (I2C client 0x6D, RetroPad protocol)"
     (at 30 25 0)
     (effects (font (size 2 2)) (justify left))
-    (uuid "3564c46f-d267-5541-90e8-ef62bae4266b"))
+    (uuid "48e59cf7-fddb-5742-9418-446ab9a64a8c"))
   (text
     "PD1-PD7, PC0-PC3, PF0-PF1: one button per pin (internal pull-ups)"
     (at 30 30 0)
     (effects (font (size 1.27 1.27)) (justify left))
-    (uuid "3fa57f37-a18d-5dbb-a6f8-f0a21421d5e0"))
+    (uuid "f4b6a9a1-e9c6-5b05-b1b6-5d218c0221f6"))
   (symbol
     (lib_id "RetroPad:AVR32DD28-xSO")
     (at 80.01 95.25 0)
@@ -697,7 +758,7 @@
     (in_bom yes)
     (on_board yes)
     (dnp no)
-    (uuid "432ce089-5c37-51f2-8ab5-b09a73b6a354")
+    (uuid "f9eca143-f77a-5903-9f0d-a496fc36883f")
     (property "Reference" "U1" (at 82.55 93.98 0) (effects (font (size 1.27 1.27)) (justify left)))
     (property
       "Value"
@@ -710,47 +771,49 @@
       (at 80.01 95.25 0)
       (effects (font (size 1.27 1.27)) hide))
     (property "Datasheet" "~" (at 80.01 95.25 0) (effects (font (size 1.27 1.27)) hide))
-    (pin "1" (uuid "4cc9675c-1070-5405-9d3c-3c60738546e8"))
-    (pin "10" (uuid "9cb78519-c003-5e12-9e88-780c5b9d6a4f"))
-    (pin "11" (uuid "a4d72967-f0cd-551e-ace4-300c6df8a46d"))
-    (pin "12" (uuid "f4f0453f-c6ed-52e0-984b-d034be412724"))
-    (pin "13" (uuid "d7101c3c-4fa1-5e0b-9f73-3b977d0731a6"))
-    (pin "14" (uuid "bd589757-274e-55af-bfa2-ed12e3d900c0"))
-    (pin "15" (uuid "2b922f76-5b7a-52b1-a9f0-7221021aca8d"))
-    (pin "16" (uuid "e56f7bfc-1ed5-5c26-968a-209faeceafb2"))
-    (pin "17" (uuid "63851651-339c-5b2b-9ae4-f0fa10202da7"))
-    (pin "18" (uuid "dbc3811c-6762-5ea0-99b2-37f569f1f527"))
-    (pin "19" (uuid "97f6e05a-836b-5da8-be62-24710a5cca5f"))
-    (pin "2" (uuid "c154a8d9-9ef8-5f78-98ac-49594094b8bb"))
-    (pin "20" (uuid "c3a4379a-38b5-5a85-b895-11b9c03d26b7"))
-    (pin "21" (uuid "c3a98900-5eb8-598e-858d-25dd3f1776cf"))
-    (pin "22" (uuid "54f8b60a-685d-52df-be4a-b82946b84900"))
-    (pin "23" (uuid "22d897a9-a59a-593b-88c9-28ca57f7e3f6"))
-    (pin "24" (uuid "3f13817f-ba44-5f1a-bdf1-a953aa566904"))
-    (pin "25" (uuid "f2b4a332-cc48-5273-a48e-29c8d9aa9899"))
-    (pin "26" (uuid "955a7500-4ee3-5711-a5ca-5e0b3d120c30"))
-    (pin "27" (uuid "4d41d427-b9f4-5086-ac5d-67e32639dea7"))
-    (pin "28" (uuid "156deaaf-a7d9-5369-b788-7bf6f8d6346f"))
-    (pin "3" (uuid "9656198d-b869-534e-8bb9-3e37d0fa22d8"))
-    (pin "4" (uuid "cd530ae6-e399-5681-83d6-2e1bc1c79aa9"))
-    (pin "5" (uuid "79c204e0-3346-5448-90a7-13e27974d657"))
-    (pin "6" (uuid "62a8ed6f-8371-5811-9e37-3419621588ff"))
-    (pin "7" (uuid "a2eff825-c070-5ebf-884e-045f4145d7c2"))
-    (pin "8" (uuid "906e887d-9fa0-56e3-ab4c-153470d38b97"))
-    (pin "9" (uuid "ebdd4d8a-9017-5f5d-8ef7-e1d0fb23171b"))
+    (pin "1" (uuid "54772777-65d9-5f77-9496-6b785546284a"))
+    (pin "10" (uuid "c8f25a75-40d1-5afb-b87d-704e710392e4"))
+    (pin "11" (uuid "0887d40e-7efe-51ad-bab9-eb7a9727db9f"))
+    (pin "12" (uuid "6c087908-0745-5a5d-a350-b35738fbf8b0"))
+    (pin "13" (uuid "f232b80f-07e3-589c-85f6-adfac17706fd"))
+    (pin "14" (uuid "33d0944d-7ac4-533d-b931-3159bb17012e"))
+    (pin "15" (uuid "8bac71f2-6925-530f-8bbc-9f2064cda381"))
+    (pin "16" (uuid "39a1a01c-535a-5fe4-84ca-68004dd06e0b"))
+    (pin "17" (uuid "5754b3fc-a207-53c9-8450-475e2fe93cb4"))
+    (pin "18" (uuid "bf90911b-9d61-5016-ba30-050743c67e3a"))
+    (pin "19" (uuid "ee7f8ed3-3d05-5356-a32c-50742575770f"))
+    (pin "2" (uuid "23d0dc90-a34f-58f4-860e-4cfc708b75b9"))
+    (pin "20" (uuid "a45d7660-2e9a-5ae8-ba86-a66728c8a176"))
+    (pin "21" (uuid "eb289c07-acc6-54c1-9e5c-7ee2741f66f9"))
+    (pin "22" (uuid "c9d5ceb8-6bae-5fc2-a50d-1ec8b8d07287"))
+    (pin "23" (uuid "3ae67180-8ae1-5f82-924f-e0e94acd08d1"))
+    (pin "24" (uuid "a51859ec-7c9d-5fbd-9c28-56397ad4af23"))
+    (pin "25" (uuid "829b579e-c3a8-5d39-921d-a854ee89458c"))
+    (pin "26" (uuid "850bb574-3d51-542a-b0b1-cb4f97873d69"))
+    (pin "27" (uuid "56c61ae8-b884-50aa-903b-3433aed812d0"))
+    (pin "28" (uuid "36d2032c-aa5d-5bac-8d61-8fa7b38dbeb3"))
+    (pin "3" (uuid "240378b6-c985-5cd4-8808-74c2d51f7901"))
+    (pin "4" (uuid "82155e3e-b3b0-536a-ac30-f028887e3596"))
+    (pin "5" (uuid "e67e1e0e-35bb-52c9-838e-46c2c5293071"))
+    (pin "6" (uuid "a6eb4907-e8ba-5334-9d14-c21187a96b9b"))
+    (pin "7" (uuid "d64f0de3-10a0-53b9-9a3d-1375abf69f8c"))
+    (pin "8" (uuid "48233c5d-e128-56b2-92f1-f8b8f7ebc743"))
+    (pin "9" (uuid "f46d28a4-02c8-5643-b35b-441dc8118213"))
     (instances
-      (project "retropad_sms" (path "/a309cff3-1dfb-5baa-b184-d84380f3c827" (reference "U1") (unit 1)))))
+      (project
+        "retropad_nes_gb_sms"
+        (path "/c1410d28-1080-5906-b835-1fb482a4b8a0" (reference "U1") (unit 1)))))
   (wire
     (pts (xy 100.33 97.79) (xy 105.41 97.79))
     (stroke (width 0) (type default))
-    (uuid "0cc81e7f-2837-5639-ab63-51a3cb82c10c"))
+    (uuid "27bade13-b65b-528a-897f-df39ba26321a"))
   (global_label
     "ID3"
     (shape bidirectional)
     (at 105.41 97.79 0)
     (fields_autoplaced)
     (effects (font (size 1.27 1.27)) (justify left))
-    (uuid "e55cb5c4-09ff-5405-85d6-ee72116c58b8")
+    (uuid "754a74fb-b409-5775-9546-97d4233a762b")
     (property
       "Intersheetrefs"
       "${INTERSHEET_REFS}"
@@ -759,14 +822,14 @@
   (wire
     (pts (xy 59.69 102.87) (xy 54.61 102.87))
     (stroke (width 0) (type default))
-    (uuid "67bd93a6-c5db-5000-ab49-fa1caf237475"))
+    (uuid "a323298b-5f94-53ee-9551-39f4baa163c8"))
   (global_label
     "K_RIGHT"
     (shape bidirectional)
     (at 54.61 102.87 180)
     (fields_autoplaced)
     (effects (font (size 1.27 1.27)) (justify right))
-    (uuid "6e0cabb8-479a-501c-9c37-02f51d0fcbb1")
+    (uuid "c27960d8-cb77-5b2e-adb4-314a83d7900a")
     (property
       "Intersheetrefs"
       "${INTERSHEET_REFS}"
@@ -775,14 +838,14 @@
   (wire
     (pts (xy 59.69 105.41) (xy 54.61 105.41))
     (stroke (width 0) (type default))
-    (uuid "ce057288-561b-5fe5-8ee7-286e0344fcdc"))
+    (uuid "1c9d84de-f366-5b98-a771-3b33b3de6896"))
   (global_label
-    "K_1"
+    "K_B"
     (shape bidirectional)
     (at 54.61 105.41 180)
     (fields_autoplaced)
     (effects (font (size 1.27 1.27)) (justify right))
-    (uuid "3466412a-bd84-55c7-9a29-46643e52d404")
+    (uuid "9873251e-02b6-5925-b131-5bda9bfaa0bc")
     (property
       "Intersheetrefs"
       "${INTERSHEET_REFS}"
@@ -791,14 +854,14 @@
   (wire
     (pts (xy 59.69 107.95) (xy 54.61 107.95))
     (stroke (width 0) (type default))
-    (uuid "e9d0dc7b-b36b-5eb3-9c73-8aea81020aa4"))
+    (uuid "ae6ccb20-9a38-50ff-b287-b685d275c24e"))
   (global_label
-    "K_2"
+    "K_A"
     (shape bidirectional)
     (at 54.61 107.95 180)
     (fields_autoplaced)
     (effects (font (size 1.27 1.27)) (justify right))
-    (uuid "1f902db1-f250-5607-8c83-4b4c694808c3")
+    (uuid "9887c607-6b57-52ec-b4e9-e94678a4e7e9")
     (property
       "Intersheetrefs"
       "${INTERSHEET_REFS}"
@@ -807,32 +870,32 @@
   (wire
     (pts (xy 59.69 110.49) (xy 54.61 110.49))
     (stroke (width 0) (type default))
-    (uuid "3856b723-e104-5c32-baad-be99cdcfb6a1"))
+    (uuid "daf58cd8-4bb0-5fb9-ba4a-33cb51a4342d"))
   (global_label
-    "K_START"
+    "K_SELECT"
     (shape bidirectional)
     (at 54.61 110.49 180)
     (fields_autoplaced)
     (effects (font (size 1.27 1.27)) (justify right))
-    (uuid "478b373f-2287-5aab-915d-d02e6e2ce021")
+    (uuid "eca96c35-4ec2-530f-9a53-f9dbeed967d6")
     (property
       "Intersheetrefs"
       "${INTERSHEET_REFS}"
       (at 54.61 110.49 0)
       (effects (font (size 1.27 1.27)) hide)))
-  (no_connect (at 59.69 85.09) (uuid "b29d042c-1bf6-59c2-93a1-1b4636ba2fc9"))
-  (no_connect (at 59.69 87.63) (uuid "856061ce-4f76-5e31-9a8f-1d7fca6ab52d"))
+  (no_connect (at 59.69 85.09) (uuid "5179bb5d-d3fa-53ab-bf99-263594e22c3b"))
+  (no_connect (at 59.69 87.63) (uuid "aeaf938f-9171-5212-aa85-615213abc69d"))
   (wire
     (pts (xy 59.69 90.17) (xy 54.61 90.17))
     (stroke (width 0) (type default))
-    (uuid "6b1fe47f-901a-59eb-9212-0d00bccbacd6"))
+    (uuid "ed846ee1-123c-5df6-b340-2f0900e9e33b"))
   (global_label
     "RESET"
     (shape bidirectional)
     (at 54.61 90.17 180)
     (fields_autoplaced)
     (effects (font (size 1.27 1.27)) (justify right))
-    (uuid "0eadf5c3-3928-5cc5-bc72-fe35b3c39ffb")
+    (uuid "ad37f132-bacf-5a68-adf6-1ea2b44952e4")
     (property
       "Intersheetrefs"
       "${INTERSHEET_REFS}"
@@ -841,14 +904,14 @@
   (wire
     (pts (xy 59.69 80.01) (xy 54.61 80.01))
     (stroke (width 0) (type default))
-    (uuid "fbfd618b-95d8-5421-880b-39ba985e9d5f"))
+    (uuid "a274b8c3-e644-5832-a603-8f8305f3d446"))
   (global_label
     "UPDI"
     (shape bidirectional)
     (at 54.61 80.01 180)
     (fields_autoplaced)
     (effects (font (size 1.27 1.27)) (justify right))
-    (uuid "7de45855-8263-55a9-b109-fd6344784afb")
+    (uuid "08637e11-8fd7-5242-9bb6-be15baec9082")
     (property
       "Intersheetrefs"
       "${INTERSHEET_REFS}"
@@ -857,14 +920,14 @@
   (wire
     (pts (xy 100.33 102.87) (xy 105.41 102.87))
     (stroke (width 0) (type default))
-    (uuid "408c439d-3cc7-5c3f-ac31-de19a8773c92"))
+    (uuid "9c8e94c3-7b7f-5226-8d67-d17471b6a5d1"))
   (global_label
-    "K_MENU"
+    "K_START"
     (shape bidirectional)
     (at 105.41 102.87 0)
     (fields_autoplaced)
     (effects (font (size 1.27 1.27)) (justify left))
-    (uuid "b54c89a3-b6e7-52cb-b616-9c34f1c3c9c1")
+    (uuid "24cd77e6-4faf-55a7-8a40-75e44dd0ec1b")
     (property
       "Intersheetrefs"
       "${INTERSHEET_REFS}"
@@ -873,14 +936,14 @@
   (wire
     (pts (xy 100.33 80.01) (xy 105.41 80.01))
     (stroke (width 0) (type default))
-    (uuid "89d9ca98-4770-57a8-bac1-c707bf7ec09f"))
+    (uuid "75df6f27-5150-5e8e-a856-3851289d3694"))
   (global_label
     "ID0"
     (shape bidirectional)
     (at 105.41 80.01 0)
     (fields_autoplaced)
     (effects (font (size 1.27 1.27)) (justify left))
-    (uuid "3bc8f0c3-5373-5580-88ff-f8c46988e9e1")
+    (uuid "37b7c30b-5e60-5bf7-85e8-7d1fc202b5cd")
     (property
       "Intersheetrefs"
       "${INTERSHEET_REFS}"
@@ -889,14 +952,14 @@
   (wire
     (pts (xy 100.33 82.55) (xy 105.41 82.55))
     (stroke (width 0) (type default))
-    (uuid "868c2511-c24f-5785-8bf6-e8e48d3988a0"))
+    (uuid "938cb573-b067-5907-a467-a2b377dd4b6c"))
   (global_label
     "ID1"
     (shape bidirectional)
     (at 105.41 82.55 0)
     (fields_autoplaced)
     (effects (font (size 1.27 1.27)) (justify left))
-    (uuid "3afed579-7696-5b9f-b57f-094ac5debec8")
+    (uuid "593f1b96-b309-58d4-a6e3-5d0d53317ae0")
     (property
       "Intersheetrefs"
       "${INTERSHEET_REFS}"
@@ -905,14 +968,14 @@
   (wire
     (pts (xy 100.33 85.09) (xy 105.41 85.09))
     (stroke (width 0) (type default))
-    (uuid "5e390014-f062-56fb-9273-16f87c87f016"))
+    (uuid "c5b154df-b2fb-59b0-bbf8-2ddcff47560f"))
   (global_label
     "SDA"
     (shape bidirectional)
     (at 105.41 85.09 0)
     (fields_autoplaced)
     (effects (font (size 1.27 1.27)) (justify left))
-    (uuid "535f98b8-d3d5-582f-a1be-0deee84aa046")
+    (uuid "7772e4d3-df92-5dc6-85f1-9afda9c211c6")
     (property
       "Intersheetrefs"
       "${INTERSHEET_REFS}"
@@ -921,14 +984,14 @@
   (wire
     (pts (xy 100.33 87.63) (xy 105.41 87.63))
     (stroke (width 0) (type default))
-    (uuid "55c34bb5-77db-5286-ac87-7ad4c274556a"))
+    (uuid "8c6a6f9e-832a-5f37-8f48-c317f5c6b308"))
   (global_label
     "SCL"
     (shape bidirectional)
     (at 105.41 87.63 0)
     (fields_autoplaced)
     (effects (font (size 1.27 1.27)) (justify left))
-    (uuid "a4b61b14-2da9-5f58-b575-599cd50ccab2")
+    (uuid "43a9fa65-fb4d-5931-8f57-8df3f96d2877")
     (property
       "Intersheetrefs"
       "${INTERSHEET_REFS}"
@@ -937,14 +1000,14 @@
   (wire
     (pts (xy 100.33 90.17) (xy 105.41 90.17))
     (stroke (width 0) (type default))
-    (uuid "a0b91943-e7a7-5650-8bf3-342ab8e74623"))
+    (uuid "a29e77f2-31ca-5626-b7f5-7960c4d5ea3e"))
   (global_label
     "AN0"
     (shape bidirectional)
     (at 105.41 90.17 0)
     (fields_autoplaced)
     (effects (font (size 1.27 1.27)) (justify left))
-    (uuid "95f32cc0-f31c-5acd-9fc8-ee18a2cae13e")
+    (uuid "5ca907bb-a8e3-59f5-9c4f-8cbf47e98d76")
     (property
       "Intersheetrefs"
       "${INTERSHEET_REFS}"
@@ -953,14 +1016,14 @@
   (wire
     (pts (xy 100.33 92.71) (xy 105.41 92.71))
     (stroke (width 0) (type default))
-    (uuid "d8e885e5-54cf-50b2-991d-7fcb52f195c3"))
+    (uuid "9635ac91-d863-5e40-b34a-9b532e988ccc"))
   (global_label
     "AN1"
     (shape bidirectional)
     (at 105.41 92.71 0)
     (fields_autoplaced)
     (effects (font (size 1.27 1.27)) (justify left))
-    (uuid "f59d9ebd-be30-540c-baf5-14bbe6bc0f89")
+    (uuid "95fd2793-7425-535c-957a-e6e98558016f")
     (property
       "Intersheetrefs"
       "${INTERSHEET_REFS}"
@@ -969,33 +1032,48 @@
   (wire
     (pts (xy 100.33 95.25) (xy 105.41 95.25))
     (stroke (width 0) (type default))
-    (uuid "bf3b422d-8fec-577d-a11b-ecc86f379d66"))
+    (uuid "3de31dd0-ea6c-5151-af68-9660c4bdc6e4"))
   (global_label
     "ID2"
     (shape bidirectional)
     (at 105.41 95.25 0)
     (fields_autoplaced)
     (effects (font (size 1.27 1.27)) (justify left))
-    (uuid "6f57ad0d-80c2-5219-b87b-9334a3e5adab")
+    (uuid "b88e9dfb-1e5b-5348-9bdf-8b78aa80f5fa")
     (property
       "Intersheetrefs"
       "${INTERSHEET_REFS}"
       (at 105.41 95.25 0)
       (effects (font (size 1.27 1.27)) hide)))
-  (no_connect (at 100.33 105.41) (uuid "0b6bfdee-ef83-57c9-81de-8c66f8c029cf"))
-  (no_connect (at 100.33 107.95) (uuid "b2b15f61-2b1a-52e3-9b4f-5b6bb1268d6c"))
-  (no_connect (at 100.33 110.49) (uuid "469e6e3d-5a31-5988-a1d2-b42ceee3bf07"))
+  (wire
+    (pts (xy 100.33 105.41) (xy 105.41 105.41))
+    (stroke (width 0) (type default))
+    (uuid "98258578-13b6-5cda-b1fb-bd127ff0d3b4"))
+  (global_label
+    "K_MENU"
+    (shape bidirectional)
+    (at 105.41 105.41 0)
+    (fields_autoplaced)
+    (effects (font (size 1.27 1.27)) (justify left))
+    (uuid "19fe5a20-a846-592f-9cdd-dfcd2c78f87d")
+    (property
+      "Intersheetrefs"
+      "${INTERSHEET_REFS}"
+      (at 105.41 105.41 0)
+      (effects (font (size 1.27 1.27)) hide)))
+  (no_connect (at 100.33 107.95) (uuid "57e62425-a4b1-5a9f-b4cd-c33cca23f0f3"))
+  (no_connect (at 100.33 110.49) (uuid "cccda5a1-48e1-53bb-abe7-ec96e75e4eb7"))
   (wire
     (pts (xy 59.69 95.25) (xy 54.61 95.25))
     (stroke (width 0) (type default))
-    (uuid "0547025b-c60d-52bf-bb0f-c1b76c1e0884"))
+    (uuid "689ada65-94a9-5355-a897-98627d4d2ea6"))
   (global_label
     "K_UP"
     (shape bidirectional)
     (at 54.61 95.25 180)
     (fields_autoplaced)
     (effects (font (size 1.27 1.27)) (justify right))
-    (uuid "a94cb452-6415-53ba-865c-d505a716ec09")
+    (uuid "bf799506-d1d1-576e-9c48-886d1b352a9b")
     (property
       "Intersheetrefs"
       "${INTERSHEET_REFS}"
@@ -1004,14 +1082,14 @@
   (wire
     (pts (xy 59.69 97.79) (xy 54.61 97.79))
     (stroke (width 0) (type default))
-    (uuid "d13bdd66-ba04-5978-aca6-007bfee41600"))
+    (uuid "b533e1ba-9706-5c41-ac06-6c837ee8c305"))
   (global_label
     "K_DOWN"
     (shape bidirectional)
     (at 54.61 97.79 180)
     (fields_autoplaced)
     (effects (font (size 1.27 1.27)) (justify right))
-    (uuid "19b3a4c5-7ae4-58f9-acda-6da8e4e21466")
+    (uuid "eea78c31-7e61-598d-b1c6-f6a7d7beff8d")
     (property
       "Intersheetrefs"
       "${INTERSHEET_REFS}"
@@ -1020,14 +1098,14 @@
   (wire
     (pts (xy 59.69 100.33) (xy 54.61 100.33))
     (stroke (width 0) (type default))
-    (uuid "77042967-59b8-5fed-b6f0-bda844ea5610"))
+    (uuid "b99a6c7e-921b-53c0-a6a2-8bc576c7f3c3"))
   (global_label
     "K_LEFT"
     (shape bidirectional)
     (at 54.61 100.33 180)
     (fields_autoplaced)
     (effects (font (size 1.27 1.27)) (justify right))
-    (uuid "e578e728-a0a2-51f3-9290-5893d953a1f9")
+    (uuid "975c2d9d-71c5-5b84-bb67-b8bda260adbd")
     (property
       "Intersheetrefs"
       "${INTERSHEET_REFS}"
@@ -1036,23 +1114,23 @@
   (wire
     (pts (xy 77.47 72.39) (xy 77.47 67.31))
     (stroke (width 0) (type default))
-    (uuid "df792eaa-1710-5c1a-8403-10c170b2ab07"))
+    (uuid "bfd33f30-fb2d-5243-b500-e6ba523df7e2"))
   (wire
     (pts (xy 80.01 72.39) (xy 80.01 67.31))
     (stroke (width 0) (type default))
-    (uuid "2d12845b-1e28-5c00-b694-3d12411f2f0a"))
+    (uuid "56bec70b-0f84-53cb-b177-9c81994e1e01"))
   (wire
     (pts (xy 82.55 72.39) (xy 82.55 67.31))
     (stroke (width 0) (type default))
-    (uuid "207890f7-3266-51f1-a210-0f3958d3a462"))
+    (uuid "b5861b82-e6c0-53a9-832e-ac0fc9978242"))
   (wire
     (pts (xy 77.47 67.31) (xy 80.01 67.31))
     (stroke (width 0) (type default))
-    (uuid "5f8afa0e-eaa1-5a4d-b067-8e92a397c0bd"))
+    (uuid "dc6b506c-2c78-56c1-bc80-764a5cfc426f"))
   (wire
     (pts (xy 80.01 67.31) (xy 82.55 67.31))
     (stroke (width 0) (type default))
-    (uuid "885a5ab5-f4a4-5d75-82db-c1ce5ea85e0e"))
+    (uuid "c67e77bc-0707-5658-bee8-8df9ad0ca49d"))
   (symbol
     (lib_id "power:+3V3")
     (at 77.47 67.31 0)
@@ -1060,7 +1138,7 @@
     (in_bom no)
     (on_board yes)
     (dnp no)
-    (uuid "847b3dc0-0c34-56df-9398-d8b53573e005")
+    (uuid "3a5774a0-0577-5951-a0a2-1a29a285da87")
     (property
       "Reference"
       "#PWR01"
@@ -1069,23 +1147,23 @@
     (property "Value" "+3V3" (at 80.01 68.58 0) (effects (font (size 1.27 1.27)) (justify left)))
     (property "Footprint" "" (at 77.47 67.31 0) (effects (font (size 1.27 1.27)) hide))
     (property "Datasheet" "~" (at 77.47 67.31 0) (effects (font (size 1.27 1.27)) hide))
-    (pin "1" (uuid "63535c0b-1d23-5617-9ded-d5583e0ee891"))
+    (pin "1" (uuid "15cf3b48-9add-54a2-ae03-63cdc8ea1314"))
     (instances
       (project
-        "retropad_sms"
-        (path "/a309cff3-1dfb-5baa-b184-d84380f3c827" (reference "#PWR01") (unit 1)))))
+        "retropad_nes_gb_sms"
+        (path "/c1410d28-1080-5906-b835-1fb482a4b8a0" (reference "#PWR01") (unit 1)))))
   (wire
     (pts (xy 77.47 118.11) (xy 77.47 123.19))
     (stroke (width 0) (type default))
-    (uuid "ba1e7022-bb0b-5c14-b5ec-2c400eeb1118"))
+    (uuid "36d4e851-1300-5d67-b1bd-d0fd8c76914a"))
   (wire
     (pts (xy 80.01 118.11) (xy 80.01 123.19))
     (stroke (width 0) (type default))
-    (uuid "53a528c8-54bf-5952-be47-0a4efe9ab74e"))
+    (uuid "3b4f92ee-112d-5d71-9119-24542907ec96"))
   (wire
     (pts (xy 77.47 123.19) (xy 80.01 123.19))
     (stroke (width 0) (type default))
-    (uuid "879632a7-1b38-5149-8e3c-3c8251c67938"))
+    (uuid "c1ee8076-0d0b-52ea-8198-4362ef1fb3fb"))
   (symbol
     (lib_id "power:GND")
     (at 77.47 123.19 0)
@@ -1093,7 +1171,7 @@
     (in_bom no)
     (on_board yes)
     (dnp no)
-    (uuid "fbccd8b1-4007-5260-ac03-97d67b1de38c")
+    (uuid "8e1fe9ab-af83-5b3d-a782-51f751b39466")
     (property
       "Reference"
       "#PWR02"
@@ -1102,16 +1180,16 @@
     (property "Value" "GND" (at 80.01 124.46 0) (effects (font (size 1.27 1.27)) (justify left)))
     (property "Footprint" "" (at 77.47 123.19 0) (effects (font (size 1.27 1.27)) hide))
     (property "Datasheet" "~" (at 77.47 123.19 0) (effects (font (size 1.27 1.27)) hide))
-    (pin "1" (uuid "e55279de-7768-5218-ae17-d2c17e5f5647"))
+    (pin "1" (uuid "8fbc30c5-80ff-534e-8163-df024a05437b"))
     (instances
       (project
-        "retropad_sms"
-        (path "/a309cff3-1dfb-5baa-b184-d84380f3c827" (reference "#PWR02") (unit 1)))))
+        "retropad_nes_gb_sms"
+        (path "/c1410d28-1080-5906-b835-1fb482a4b8a0" (reference "#PWR02") (unit 1)))))
   (text
     "Tab5 Ext.Port1 (M5Stack Tab5 Keyboard P1 pinout) — verify pin 1 orientation before fab"
     (at 150 25 0)
     (effects (font (size 1.5 1.5)) (justify left))
-    (uuid "0a0136f3-3f33-5ed2-98f5-014be7028af8"))
+    (uuid "1530eefa-7d7c-50bb-8c7a-40f07cceef6b"))
   (symbol
     (lib_id "Connector_Generic:Conn_02x05_Odd_Even")
     (at 175.26 44.45 0)
@@ -1119,7 +1197,7 @@
     (in_bom yes)
     (on_board yes)
     (dnp no)
-    (uuid "84fc271c-2b08-58f8-8dc1-dc6f89ae7720")
+    (uuid "8ad6f28f-fed7-53b7-8fc2-65a7b1af0bb8")
     (property "Reference" "J1" (at 175.26 34.29 0) (effects (font (size 1.27 1.27)) (justify left)))
     (property
       "Value"
@@ -1132,31 +1210,33 @@
       (at 175.26 44.45 0)
       (effects (font (size 1.27 1.27)) hide))
     (property "Datasheet" "~" (at 175.26 44.45 0) (effects (font (size 1.27 1.27)) hide))
-    (pin "1" (uuid "73bbc2dd-788b-5c9e-bc4f-5aae1047b0e5"))
-    (pin "10" (uuid "2a83e166-c873-5d67-834b-0e24a4012c10"))
-    (pin "2" (uuid "989ebe24-4e60-5d5e-a852-3e1d576dee87"))
-    (pin "3" (uuid "741a5b1f-9a78-5e44-920c-9f9fd9dcd413"))
-    (pin "4" (uuid "8866aff4-858b-5295-8b15-ec82ee173b26"))
-    (pin "5" (uuid "acda04ff-8eb5-52da-8d12-e9ffa3df41ff"))
-    (pin "6" (uuid "7eb58fd8-b2fc-5876-81fc-204d2ab21a42"))
-    (pin "7" (uuid "7a34c724-7b3f-5a15-85e7-163801b42759"))
-    (pin "8" (uuid "2b323602-25f0-574f-b929-7c2f8a6fce6c"))
-    (pin "9" (uuid "f7d30395-be86-5127-b986-b0b1e4eb60ec"))
+    (pin "1" (uuid "3d60d2d5-d682-5a69-a248-15685a98e8ba"))
+    (pin "10" (uuid "75c5381c-92cb-5ae8-85f0-9c182eebf546"))
+    (pin "2" (uuid "80bcedc5-8da2-5001-a25e-dd21bf9ae249"))
+    (pin "3" (uuid "42f60e69-eac6-5761-9c45-78f00041c669"))
+    (pin "4" (uuid "f3b75616-d1b1-5b5f-bb0e-61a3f7728bd3"))
+    (pin "5" (uuid "04c0cfdd-2ebb-57b9-90e5-7b6e83584697"))
+    (pin "6" (uuid "ce76a1a1-8ee0-5087-b3f6-eb560a289cb6"))
+    (pin "7" (uuid "747736ee-3ec3-5486-bd31-303bfa858776"))
+    (pin "8" (uuid "9b82b846-f998-5ace-864e-6cacd3589224"))
+    (pin "9" (uuid "f2e1b381-b690-51fe-93d9-f86993092b3a"))
     (instances
-      (project "retropad_sms" (path "/a309cff3-1dfb-5baa-b184-d84380f3c827" (reference "J1") (unit 1)))))
-  (no_connect (at 170.18 39.37) (uuid "8464cad8-7555-583d-b086-22b54f6a6d24"))
-  (no_connect (at 182.88 49.53) (uuid "4f23873a-bb45-5283-bcbe-85520396e1a1"))
+      (project
+        "retropad_nes_gb_sms"
+        (path "/c1410d28-1080-5906-b835-1fb482a4b8a0" (reference "J1") (unit 1)))))
+  (no_connect (at 170.18 39.37) (uuid "dbcfbfde-a5d1-5813-bdc2-70f6c44be3d2"))
+  (no_connect (at 182.88 49.53) (uuid "dcbbf6c3-040e-5fd0-a89f-7f4591f6fcf0"))
   (wire
     (pts (xy 182.88 39.37) (xy 190.5 39.37))
     (stroke (width 0) (type default))
-    (uuid "a4863243-2538-5230-837b-ad26c2de01bb"))
+    (uuid "af28a7bb-6d6b-55df-a281-264ac52814a8"))
   (global_label
     "GND"
     (shape bidirectional)
     (at 190.5 39.37 0)
     (fields_autoplaced)
     (effects (font (size 1.27 1.27)) (justify left))
-    (uuid "a1170f91-a7a5-5304-b8f1-6f5420a0a97e")
+    (uuid "386cf319-5992-5bc8-9b62-87e93b00e6b8")
     (property
       "Intersheetrefs"
       "${INTERSHEET_REFS}"
@@ -1165,14 +1245,14 @@
   (wire
     (pts (xy 170.18 41.91) (xy 162.56 41.91))
     (stroke (width 0) (type default))
-    (uuid "22676cd7-5a22-5d4b-b403-31f74dfd9d37"))
+    (uuid "4a1e5bd6-252e-57e8-bb63-d19cac244286"))
   (global_label
     "GND"
     (shape bidirectional)
     (at 162.56 41.91 180)
     (fields_autoplaced)
     (effects (font (size 1.27 1.27)) (justify right))
-    (uuid "6b6d27f7-15f4-55f7-9b64-f57836db835f")
+    (uuid "cf08d55b-4f25-5ae1-98e8-6ce9e5104de4")
     (property
       "Intersheetrefs"
       "${INTERSHEET_REFS}"
@@ -1181,14 +1261,14 @@
   (wire
     (pts (xy 182.88 41.91) (xy 190.5 41.91))
     (stroke (width 0) (type default))
-    (uuid "4580216a-20fa-5e5c-9ead-f1d85e944f5d"))
+    (uuid "ce9293fa-f4c6-5413-bcab-7a2f5c99161e"))
   (global_label
     "GND"
     (shape bidirectional)
     (at 190.5 41.91 0)
     (fields_autoplaced)
     (effects (font (size 1.27 1.27)) (justify left))
-    (uuid "27631def-a165-53a5-be84-43c660dc6e37")
+    (uuid "e374526a-784e-518b-bc42-94b259acf72b")
     (property
       "Intersheetrefs"
       "${INTERSHEET_REFS}"
@@ -1197,31 +1277,31 @@
   (wire
     (pts (xy 170.18 44.45) (xy 162.56 44.45))
     (stroke (width 0) (type default))
-    (uuid "a4662d34-6652-5a3e-a652-5d15e9ed806c"))
+    (uuid "b6cff078-93c6-5865-ba8e-4cdfc4f26271"))
   (global_label
     "+3V3"
     (shape bidirectional)
     (at 162.56 44.45 180)
     (fields_autoplaced)
     (effects (font (size 1.27 1.27)) (justify right))
-    (uuid "722a1f33-7382-5f67-ba11-996ab706a2e8")
+    (uuid "d9f1e208-3ac4-5d4a-8318-3ccded88749f")
     (property
       "Intersheetrefs"
       "${INTERSHEET_REFS}"
       (at 162.56 44.45 0)
       (effects (font (size 1.27 1.27)) hide)))
-  (no_connect (at 182.88 44.45) (uuid "8f851d76-6467-52c9-ae10-0edbacb289a0"))
+  (no_connect (at 182.88 44.45) (uuid "2d0a1928-603c-52e1-b2da-e7e359c58aa7"))
   (wire
     (pts (xy 170.18 46.99) (xy 162.56 46.99))
     (stroke (width 0) (type default))
-    (uuid "db8fa772-0131-5ede-a5f4-74507a2450e6"))
+    (uuid "63af2102-7a3d-59ad-b312-d754c3dbdea6"))
   (global_label
     "SCL"
     (shape bidirectional)
     (at 162.56 46.99 180)
     (fields_autoplaced)
     (effects (font (size 1.27 1.27)) (justify right))
-    (uuid "4ddbac5a-2ef6-5648-b258-4efe95ba72fe")
+    (uuid "02266745-f2d6-5eea-8cec-01d7279cf49f")
     (property
       "Intersheetrefs"
       "${INTERSHEET_REFS}"
@@ -1230,25 +1310,25 @@
   (wire
     (pts (xy 182.88 46.99) (xy 190.5 46.99))
     (stroke (width 0) (type default))
-    (uuid "2434beeb-b445-5ad9-a887-f83aaae29678"))
+    (uuid "1d9bc446-ecd2-5f96-8348-b12bf25400b5"))
   (global_label
     "SDA"
     (shape bidirectional)
     (at 190.5 46.99 0)
     (fields_autoplaced)
     (effects (font (size 1.27 1.27)) (justify left))
-    (uuid "3bfb61f0-5686-5046-adf7-02c5cbcf53ea")
+    (uuid "4a375f25-68ab-57d8-b049-c85cbbf1bd9c")
     (property
       "Intersheetrefs"
       "${INTERSHEET_REFS}"
       (at 190.5 46.99 0)
       (effects (font (size 1.27 1.27)) hide)))
-  (no_connect (at 170.18 49.53) (uuid "207dca7f-4c67-51e3-ae35-a7095c4af923"))
+  (no_connect (at 170.18 49.53) (uuid "5ecf5025-85c6-5dd1-9161-b32391cd20c0"))
   (text
     "UPDI programming (SerialUPDI / MPLAB Snap)"
     (at 150 70 0)
     (effects (font (size 1.5 1.5)) (justify left))
-    (uuid "3d5e2872-ec6a-55d3-b2c4-09846c2256c8"))
+    (uuid "5ca0e32c-41c5-5ca6-b52d-cd24bacc3cd8"))
   (symbol
     (lib_id "Connector_Generic:Conn_01x03")
     (at 175.26 85.09 0)
@@ -1256,7 +1336,7 @@
     (in_bom yes)
     (on_board yes)
     (dnp no)
-    (uuid "1cc0f7a0-36e9-574a-9692-b1682c805875")
+    (uuid "beab5a0d-b1f3-5c1f-9ae2-ab79e498d2ec")
     (property "Reference" "J2" (at 175.26 74.93 0) (effects (font (size 1.27 1.27)) (justify left)))
     (property "Value" "UPDI" (at 175.26 95.25 0) (effects (font (size 1.27 1.27)) (justify left)))
     (property
@@ -1265,22 +1345,24 @@
       (at 175.26 85.09 0)
       (effects (font (size 1.27 1.27)) hide))
     (property "Datasheet" "~" (at 175.26 85.09 0) (effects (font (size 1.27 1.27)) hide))
-    (pin "1" (uuid "498e00b6-9608-5b32-9df5-4de1c3689072"))
-    (pin "2" (uuid "8d444858-a030-58d6-ad34-bf27bd82cbe8"))
-    (pin "3" (uuid "de7ea495-f94a-52dd-9c60-f65348abdfdc"))
+    (pin "1" (uuid "b6eb3e3f-c18a-52e5-8b84-185f0a51cc45"))
+    (pin "2" (uuid "455f984d-c1d9-5314-bfad-edb00b013a6a"))
+    (pin "3" (uuid "2a55b750-63b7-55cf-8d87-76c122c33059"))
     (instances
-      (project "retropad_sms" (path "/a309cff3-1dfb-5baa-b184-d84380f3c827" (reference "J2") (unit 1)))))
+      (project
+        "retropad_nes_gb_sms"
+        (path "/c1410d28-1080-5906-b835-1fb482a4b8a0" (reference "J2") (unit 1)))))
   (wire
     (pts (xy 170.18 82.55) (xy 162.56 82.55))
     (stroke (width 0) (type default))
-    (uuid "773f01ed-7f1f-5b0e-9d10-6a267c4f0e62"))
+    (uuid "02f77480-1ffe-5051-824c-94ccd41fd7cd"))
   (global_label
     "+3V3"
     (shape bidirectional)
     (at 162.56 82.55 180)
     (fields_autoplaced)
     (effects (font (size 1.27 1.27)) (justify right))
-    (uuid "5c6a0c9e-0a4d-54fe-84bc-c9b3ca374ad4")
+    (uuid "5a8b884a-2bb9-5b6d-ade5-81be8078e796")
     (property
       "Intersheetrefs"
       "${INTERSHEET_REFS}"
@@ -1289,14 +1371,14 @@
   (wire
     (pts (xy 170.18 85.09) (xy 162.56 85.09))
     (stroke (width 0) (type default))
-    (uuid "d7b05fe2-e1fe-575d-a674-b19b2d4072a2"))
+    (uuid "5cea08c2-5ddc-5121-9d64-6c23e541399c"))
   (global_label
     "UPDI"
     (shape bidirectional)
     (at 162.56 85.09 180)
     (fields_autoplaced)
     (effects (font (size 1.27 1.27)) (justify right))
-    (uuid "7b442f2b-cc93-5c3a-bfa1-693afaaa9c73")
+    (uuid "ddd1a217-dd04-5b28-8736-908830aeb86c")
     (property
       "Intersheetrefs"
       "${INTERSHEET_REFS}"
@@ -1305,14 +1387,14 @@
   (wire
     (pts (xy 170.18 87.63) (xy 162.56 87.63))
     (stroke (width 0) (type default))
-    (uuid "bd237a29-3be8-5b4c-ba3a-3d8ade666778"))
+    (uuid "0a639595-9eb1-5829-87d4-9e2c9efc0537"))
   (global_label
     "GND"
     (shape bidirectional)
     (at 162.56 87.63 180)
     (fields_autoplaced)
     (effects (font (size 1.27 1.27)) (justify right))
-    (uuid "f8619a61-bfd1-58c3-8b8f-14061715d2c4")
+    (uuid "e972b10b-9e54-5c2e-a8ce-e074da7b1552")
     (property
       "Intersheetrefs"
       "${INTERSHEET_REFS}"
@@ -1322,7 +1404,7 @@
     "Decoupling (VDD x2, VDDIO2), I2C pull-ups, RESET pull-up"
     (at 150 110 0)
     (effects (font (size 1.5 1.5)) (justify left))
-    (uuid "85d8565f-b83b-573d-8c53-b47c9c702cc0"))
+    (uuid "9584ea72-0150-5012-84c0-36dfc9b53b46"))
   (symbol
     (lib_id "Device:C")
     (at 160.02 129.54 0)
@@ -1330,7 +1412,7 @@
     (in_bom yes)
     (on_board yes)
     (dnp no)
-    (uuid "36b144c2-7d21-58e2-aee2-b83d9fa297d8")
+    (uuid "9817c21a-7744-5734-a63d-f01d902ac476")
     (property "Reference" "C1" (at 162.56 128.27 0) (effects (font (size 1.27 1.27)) (justify left)))
     (property "Value" "100nF" (at 162.56 130.81 0) (effects (font (size 1.27 1.27)) (justify left)))
     (property
@@ -1339,14 +1421,16 @@
       (at 160.02 129.54 0)
       (effects (font (size 1.27 1.27)) hide))
     (property "Datasheet" "~" (at 160.02 129.54 0) (effects (font (size 1.27 1.27)) hide))
-    (pin "1" (uuid "12eaf052-c410-564d-bbb4-676f21e430e0"))
-    (pin "2" (uuid "8ecc1a88-c0f6-54e1-9330-efc532844ded"))
+    (pin "1" (uuid "656bc6e4-fef5-541e-8cde-d7bc1932ffe1"))
+    (pin "2" (uuid "0e14dade-6b6a-567a-a7d1-f7249b828b31"))
     (instances
-      (project "retropad_sms" (path "/a309cff3-1dfb-5baa-b184-d84380f3c827" (reference "C1") (unit 1)))))
+      (project
+        "retropad_nes_gb_sms"
+        (path "/c1410d28-1080-5906-b835-1fb482a4b8a0" (reference "C1") (unit 1)))))
   (wire
     (pts (xy 160.02 125.73) (xy 160.02 123.19))
     (stroke (width 0) (type default))
-    (uuid "8da0529a-e1ea-5bda-b013-73de82488a37"))
+    (uuid "60ea30af-db6b-5c7e-8e3b-9a6bd2385e14"))
   (symbol
     (lib_id "power:+3V3")
     (at 160.02 123.19 0)
@@ -1354,7 +1438,7 @@
     (in_bom no)
     (on_board yes)
     (dnp no)
-    (uuid "50ea2615-ec14-57e4-9c22-57985e5f6a29")
+    (uuid "849a2230-c9cb-55d2-961a-c034195847a9")
     (property
       "Reference"
       "#PWR03"
@@ -1363,15 +1447,15 @@
     (property "Value" "+3V3" (at 162.56 124.46 0) (effects (font (size 1.27 1.27)) (justify left)))
     (property "Footprint" "" (at 160.02 123.19 0) (effects (font (size 1.27 1.27)) hide))
     (property "Datasheet" "~" (at 160.02 123.19 0) (effects (font (size 1.27 1.27)) hide))
-    (pin "1" (uuid "8e2d41f4-56dc-55bd-93c8-8288e2691118"))
+    (pin "1" (uuid "1cc120f4-198e-56ab-9324-9bc04f6b5e25"))
     (instances
       (project
-        "retropad_sms"
-        (path "/a309cff3-1dfb-5baa-b184-d84380f3c827" (reference "#PWR03") (unit 1)))))
+        "retropad_nes_gb_sms"
+        (path "/c1410d28-1080-5906-b835-1fb482a4b8a0" (reference "#PWR03") (unit 1)))))
   (wire
     (pts (xy 160.02 133.35) (xy 160.02 135.89))
     (stroke (width 0) (type default))
-    (uuid "a89e64f6-ba23-5447-8f3a-c0a82ce51e9c"))
+    (uuid "c07fd112-ad49-5c0f-ae3d-3f0370ba5373"))
   (symbol
     (lib_id "power:GND")
     (at 160.02 135.89 0)
@@ -1379,7 +1463,7 @@
     (in_bom no)
     (on_board yes)
     (dnp no)
-    (uuid "ffb8ffb9-c7b9-5af2-8edc-e8afe65676ae")
+    (uuid "47b74113-429e-5a05-a47b-3ba27f1fd468")
     (property
       "Reference"
       "#PWR04"
@@ -1388,11 +1472,11 @@
     (property "Value" "GND" (at 162.56 137.16 0) (effects (font (size 1.27 1.27)) (justify left)))
     (property "Footprint" "" (at 160.02 135.89 0) (effects (font (size 1.27 1.27)) hide))
     (property "Datasheet" "~" (at 160.02 135.89 0) (effects (font (size 1.27 1.27)) hide))
-    (pin "1" (uuid "98e9b64e-b782-53a0-9aee-39a8d67cfd6e"))
+    (pin "1" (uuid "32173cf9-c621-59c2-b123-45cbb4c24baa"))
     (instances
       (project
-        "retropad_sms"
-        (path "/a309cff3-1dfb-5baa-b184-d84380f3c827" (reference "#PWR04") (unit 1)))))
+        "retropad_nes_gb_sms"
+        (path "/c1410d28-1080-5906-b835-1fb482a4b8a0" (reference "#PWR04") (unit 1)))))
   (symbol
     (lib_id "Device:C")
     (at 175.26 129.54 0)
@@ -1400,7 +1484,7 @@
     (in_bom yes)
     (on_board yes)
     (dnp no)
-    (uuid "99dcab3c-c3fa-5d48-9240-261dcee6ad09")
+    (uuid "c9c220f1-be62-5ecf-93f1-41b2eba262b1")
     (property "Reference" "C2" (at 177.8 128.27 0) (effects (font (size 1.27 1.27)) (justify left)))
     (property "Value" "100nF" (at 177.8 130.81 0) (effects (font (size 1.27 1.27)) (justify left)))
     (property
@@ -1409,14 +1493,16 @@
       (at 175.26 129.54 0)
       (effects (font (size 1.27 1.27)) hide))
     (property "Datasheet" "~" (at 175.26 129.54 0) (effects (font (size 1.27 1.27)) hide))
-    (pin "1" (uuid "26ed1a0d-f8d2-5b33-84ef-8bbd370c5c1c"))
-    (pin "2" (uuid "fb3f2ad4-29f7-5128-9aaf-627f26e32020"))
+    (pin "1" (uuid "6717b439-e27b-5752-8819-5f291e93d072"))
+    (pin "2" (uuid "0495975e-b1a1-5ce0-86e9-85af8a42b685"))
     (instances
-      (project "retropad_sms" (path "/a309cff3-1dfb-5baa-b184-d84380f3c827" (reference "C2") (unit 1)))))
+      (project
+        "retropad_nes_gb_sms"
+        (path "/c1410d28-1080-5906-b835-1fb482a4b8a0" (reference "C2") (unit 1)))))
   (wire
     (pts (xy 175.26 125.73) (xy 175.26 123.19))
     (stroke (width 0) (type default))
-    (uuid "285a9864-4db3-5322-a100-0f17c31bdaaa"))
+    (uuid "89c7b85b-e0ab-5221-bcaa-88da059d6c02"))
   (symbol
     (lib_id "power:+3V3")
     (at 175.26 123.19 0)
@@ -1424,7 +1510,7 @@
     (in_bom no)
     (on_board yes)
     (dnp no)
-    (uuid "ea1c13f4-3a0c-5aea-9cc3-74edcf2e93ea")
+    (uuid "ee677739-0d43-5242-a841-3b20705b1cef")
     (property
       "Reference"
       "#PWR05"
@@ -1433,15 +1519,15 @@
     (property "Value" "+3V3" (at 177.8 124.46 0) (effects (font (size 1.27 1.27)) (justify left)))
     (property "Footprint" "" (at 175.26 123.19 0) (effects (font (size 1.27 1.27)) hide))
     (property "Datasheet" "~" (at 175.26 123.19 0) (effects (font (size 1.27 1.27)) hide))
-    (pin "1" (uuid "42c9e47c-c02f-5d6b-9929-db728f78b05a"))
+    (pin "1" (uuid "ac77dc1a-f666-5613-9a31-fa1a67d3cf6c"))
     (instances
       (project
-        "retropad_sms"
-        (path "/a309cff3-1dfb-5baa-b184-d84380f3c827" (reference "#PWR05") (unit 1)))))
+        "retropad_nes_gb_sms"
+        (path "/c1410d28-1080-5906-b835-1fb482a4b8a0" (reference "#PWR05") (unit 1)))))
   (wire
     (pts (xy 175.26 133.35) (xy 175.26 135.89))
     (stroke (width 0) (type default))
-    (uuid "d21805a4-0e5f-51e7-af96-f6dc80c78580"))
+    (uuid "e80b3488-15c7-5eea-841f-92a50fb42a23"))
   (symbol
     (lib_id "power:GND")
     (at 175.26 135.89 0)
@@ -1449,7 +1535,7 @@
     (in_bom no)
     (on_board yes)
     (dnp no)
-    (uuid "2de47ad3-298e-5047-97ce-704c8ccfee36")
+    (uuid "f083a42d-ace8-5db2-bf78-f38634a502a7")
     (property
       "Reference"
       "#PWR06"
@@ -1458,11 +1544,11 @@
     (property "Value" "GND" (at 177.8 137.16 0) (effects (font (size 1.27 1.27)) (justify left)))
     (property "Footprint" "" (at 175.26 135.89 0) (effects (font (size 1.27 1.27)) hide))
     (property "Datasheet" "~" (at 175.26 135.89 0) (effects (font (size 1.27 1.27)) hide))
-    (pin "1" (uuid "c5e6d204-6b3f-5e71-b13c-afabbf26206b"))
+    (pin "1" (uuid "021d8106-ad0b-5514-92c5-a85925378577"))
     (instances
       (project
-        "retropad_sms"
-        (path "/a309cff3-1dfb-5baa-b184-d84380f3c827" (reference "#PWR06") (unit 1)))))
+        "retropad_nes_gb_sms"
+        (path "/c1410d28-1080-5906-b835-1fb482a4b8a0" (reference "#PWR06") (unit 1)))))
   (symbol
     (lib_id "Device:C")
     (at 190.5 129.54 0)
@@ -1470,7 +1556,7 @@
     (in_bom yes)
     (on_board yes)
     (dnp no)
-    (uuid "5ba53d13-c068-5ee4-a94e-d9769d8a4d81")
+    (uuid "0bb57123-d1bb-521b-931b-2c1ba8105acb")
     (property "Reference" "C3" (at 193.04 128.27 0) (effects (font (size 1.27 1.27)) (justify left)))
     (property "Value" "100nF" (at 193.04 130.81 0) (effects (font (size 1.27 1.27)) (justify left)))
     (property
@@ -1479,14 +1565,16 @@
       (at 190.5 129.54 0)
       (effects (font (size 1.27 1.27)) hide))
     (property "Datasheet" "~" (at 190.5 129.54 0) (effects (font (size 1.27 1.27)) hide))
-    (pin "1" (uuid "3621dc8d-4979-545a-b521-3f92e8022cec"))
-    (pin "2" (uuid "3fde79ad-901b-57ae-8f01-036e4cd3cf17"))
+    (pin "1" (uuid "e9d63e92-0add-5f7b-8931-25da668f5b6f"))
+    (pin "2" (uuid "ca8827e6-fe03-5ee6-82c6-e9389ebc7f84"))
     (instances
-      (project "retropad_sms" (path "/a309cff3-1dfb-5baa-b184-d84380f3c827" (reference "C3") (unit 1)))))
+      (project
+        "retropad_nes_gb_sms"
+        (path "/c1410d28-1080-5906-b835-1fb482a4b8a0" (reference "C3") (unit 1)))))
   (wire
     (pts (xy 190.5 125.73) (xy 190.5 123.19))
     (stroke (width 0) (type default))
-    (uuid "eace8dc8-fa76-554f-a9df-6c00d04b84ce"))
+    (uuid "e39db0bf-0dd2-58f8-a3eb-dd5abba40a2d"))
   (symbol
     (lib_id "power:+3V3")
     (at 190.5 123.19 0)
@@ -1494,7 +1582,7 @@
     (in_bom no)
     (on_board yes)
     (dnp no)
-    (uuid "b94c5391-92cc-505b-aff1-3bab677607c0")
+    (uuid "d7bf7b55-5314-56d0-b0bd-ffa9a9c4fcb8")
     (property
       "Reference"
       "#PWR07"
@@ -1503,15 +1591,15 @@
     (property "Value" "+3V3" (at 193.04 124.46 0) (effects (font (size 1.27 1.27)) (justify left)))
     (property "Footprint" "" (at 190.5 123.19 0) (effects (font (size 1.27 1.27)) hide))
     (property "Datasheet" "~" (at 190.5 123.19 0) (effects (font (size 1.27 1.27)) hide))
-    (pin "1" (uuid "001d7c25-3e5d-5f88-8530-f6219f3cb53b"))
+    (pin "1" (uuid "0024383a-508a-587a-8296-3583293ffc9c"))
     (instances
       (project
-        "retropad_sms"
-        (path "/a309cff3-1dfb-5baa-b184-d84380f3c827" (reference "#PWR07") (unit 1)))))
+        "retropad_nes_gb_sms"
+        (path "/c1410d28-1080-5906-b835-1fb482a4b8a0" (reference "#PWR07") (unit 1)))))
   (wire
     (pts (xy 190.5 133.35) (xy 190.5 135.89))
     (stroke (width 0) (type default))
-    (uuid "e7a17d0a-035a-52cc-85eb-ecc24fa8ccda"))
+    (uuid "fdf4853a-1619-5faf-9453-4de47470d80e"))
   (symbol
     (lib_id "power:GND")
     (at 190.5 135.89 0)
@@ -1519,7 +1607,7 @@
     (in_bom no)
     (on_board yes)
     (dnp no)
-    (uuid "af29b0f1-d005-5043-a4c6-88b4fc25b265")
+    (uuid "bebbcc2f-e9e2-51de-b874-b06480ab80ee")
     (property
       "Reference"
       "#PWR08"
@@ -1528,11 +1616,11 @@
     (property "Value" "GND" (at 193.04 137.16 0) (effects (font (size 1.27 1.27)) (justify left)))
     (property "Footprint" "" (at 190.5 135.89 0) (effects (font (size 1.27 1.27)) hide))
     (property "Datasheet" "~" (at 190.5 135.89 0) (effects (font (size 1.27 1.27)) hide))
-    (pin "1" (uuid "52f4773a-4593-5fc5-a046-aad0c8172856"))
+    (pin "1" (uuid "55b2295e-992b-5c22-876b-1d2b60c36d9c"))
     (instances
       (project
-        "retropad_sms"
-        (path "/a309cff3-1dfb-5baa-b184-d84380f3c827" (reference "#PWR08") (unit 1)))))
+        "retropad_nes_gb_sms"
+        (path "/c1410d28-1080-5906-b835-1fb482a4b8a0" (reference "#PWR08") (unit 1)))))
   (symbol
     (lib_id "Device:C")
     (at 204.47 129.54 0)
@@ -1540,7 +1628,7 @@
     (in_bom yes)
     (on_board yes)
     (dnp no)
-    (uuid "e6b4719f-9a0c-5a5f-8710-1e4a82c701e5")
+    (uuid "26b8b954-f2e6-5aa8-9490-39c786fbc161")
     (property "Reference" "C4" (at 207.01 128.27 0) (effects (font (size 1.27 1.27)) (justify left)))
     (property "Value" "4.7uF" (at 207.01 130.81 0) (effects (font (size 1.27 1.27)) (justify left)))
     (property
@@ -1549,14 +1637,16 @@
       (at 204.47 129.54 0)
       (effects (font (size 1.27 1.27)) hide))
     (property "Datasheet" "~" (at 204.47 129.54 0) (effects (font (size 1.27 1.27)) hide))
-    (pin "1" (uuid "4e34d4cb-dec4-532d-b583-488820238201"))
-    (pin "2" (uuid "2874cdca-d86d-58f7-8972-844efeb8a3f2"))
+    (pin "1" (uuid "e4af04ef-a73a-57d3-afa3-37146fede539"))
+    (pin "2" (uuid "33ab8f92-8197-5854-8629-2b9941b4eeaa"))
     (instances
-      (project "retropad_sms" (path "/a309cff3-1dfb-5baa-b184-d84380f3c827" (reference "C4") (unit 1)))))
+      (project
+        "retropad_nes_gb_sms"
+        (path "/c1410d28-1080-5906-b835-1fb482a4b8a0" (reference "C4") (unit 1)))))
   (wire
     (pts (xy 204.47 125.73) (xy 204.47 123.19))
     (stroke (width 0) (type default))
-    (uuid "27101140-2e24-53b1-9750-51402e629d64"))
+    (uuid "a3ff7a07-cc77-5435-9119-c82cad184d05"))
   (symbol
     (lib_id "power:+3V3")
     (at 204.47 123.19 0)
@@ -1564,7 +1654,7 @@
     (in_bom no)
     (on_board yes)
     (dnp no)
-    (uuid "156781d9-2c77-53ba-a305-9193d8dee8ae")
+    (uuid "4c38e63c-49c3-5874-aea6-4637efa275b1")
     (property
       "Reference"
       "#PWR09"
@@ -1573,15 +1663,15 @@
     (property "Value" "+3V3" (at 207.01 124.46 0) (effects (font (size 1.27 1.27)) (justify left)))
     (property "Footprint" "" (at 204.47 123.19 0) (effects (font (size 1.27 1.27)) hide))
     (property "Datasheet" "~" (at 204.47 123.19 0) (effects (font (size 1.27 1.27)) hide))
-    (pin "1" (uuid "2bec2eb6-abc0-5665-b13b-f5b1f138df18"))
+    (pin "1" (uuid "c1761a9a-6e12-5038-b3cf-7bb7a94afd34"))
     (instances
       (project
-        "retropad_sms"
-        (path "/a309cff3-1dfb-5baa-b184-d84380f3c827" (reference "#PWR09") (unit 1)))))
+        "retropad_nes_gb_sms"
+        (path "/c1410d28-1080-5906-b835-1fb482a4b8a0" (reference "#PWR09") (unit 1)))))
   (wire
     (pts (xy 204.47 133.35) (xy 204.47 135.89))
     (stroke (width 0) (type default))
-    (uuid "41472ae9-39a4-5675-a1d9-8c3accfda6f7"))
+    (uuid "cfe03728-d0b8-5984-97a6-021230ac7774"))
   (symbol
     (lib_id "power:GND")
     (at 204.47 135.89 0)
@@ -1589,7 +1679,7 @@
     (in_bom no)
     (on_board yes)
     (dnp no)
-    (uuid "cff00862-4e85-5978-8787-719d8dea103f")
+    (uuid "dab6e703-46bb-5d56-a1a7-3c0a17f3c46c")
     (property
       "Reference"
       "#PWR10"
@@ -1598,11 +1688,11 @@
     (property "Value" "GND" (at 207.01 137.16 0) (effects (font (size 1.27 1.27)) (justify left)))
     (property "Footprint" "" (at 204.47 135.89 0) (effects (font (size 1.27 1.27)) hide))
     (property "Datasheet" "~" (at 204.47 135.89 0) (effects (font (size 1.27 1.27)) hide))
-    (pin "1" (uuid "81cb8928-7c47-5622-8364-744d2ade9125"))
+    (pin "1" (uuid "0f6c79f9-abe6-5276-b76f-09568f6930e9"))
     (instances
       (project
-        "retropad_sms"
-        (path "/a309cff3-1dfb-5baa-b184-d84380f3c827" (reference "#PWR10") (unit 1)))))
+        "retropad_nes_gb_sms"
+        (path "/c1410d28-1080-5906-b835-1fb482a4b8a0" (reference "#PWR10") (unit 1)))))
   (symbol
     (lib_id "Device:R")
     (at 160.02 154.94 0)
@@ -1610,7 +1700,7 @@
     (in_bom yes)
     (on_board yes)
     (dnp no)
-    (uuid "39108935-cef3-5962-98e5-7ff22b0c6cd4")
+    (uuid "144296e0-1eaf-59db-a9fc-7d13df154581")
     (property "Reference" "R1" (at 162.56 153.67 0) (effects (font (size 1.27 1.27)) (justify left)))
     (property "Value" "4.7k" (at 162.56 156.21 0) (effects (font (size 1.27 1.27)) (justify left)))
     (property
@@ -1619,14 +1709,16 @@
       (at 160.02 154.94 0)
       (effects (font (size 1.27 1.27)) hide))
     (property "Datasheet" "~" (at 160.02 154.94 0) (effects (font (size 1.27 1.27)) hide))
-    (pin "1" (uuid "68d7e89f-56c7-55c1-b9a7-5266cf5ae37d"))
-    (pin "2" (uuid "8ebb4f50-9db5-54c5-9332-2ea6fb1305e3"))
+    (pin "1" (uuid "beb9fac7-8371-5dca-b7b3-96050990d7e9"))
+    (pin "2" (uuid "83201658-97df-566a-b43a-7383b6c3b20f"))
     (instances
-      (project "retropad_sms" (path "/a309cff3-1dfb-5baa-b184-d84380f3c827" (reference "R1") (unit 1)))))
+      (project
+        "retropad_nes_gb_sms"
+        (path "/c1410d28-1080-5906-b835-1fb482a4b8a0" (reference "R1") (unit 1)))))
   (wire
     (pts (xy 160.02 151.13) (xy 160.02 148.59))
     (stroke (width 0) (type default))
-    (uuid "7923b703-5d26-5252-9616-e6ad6d64d87c"))
+    (uuid "3fceedcc-e2a2-56ef-807e-b0b931d89806"))
   (symbol
     (lib_id "power:+3V3")
     (at 160.02 148.59 0)
@@ -1634,7 +1726,7 @@
     (in_bom no)
     (on_board yes)
     (dnp no)
-    (uuid "042d62fc-98a6-5307-ba56-56de862c7cbb")
+    (uuid "031f8d51-efa5-5881-99d5-8efa203fc840")
     (property
       "Reference"
       "#PWR11"
@@ -1643,22 +1735,22 @@
     (property "Value" "+3V3" (at 162.56 149.86 0) (effects (font (size 1.27 1.27)) (justify left)))
     (property "Footprint" "" (at 160.02 148.59 0) (effects (font (size 1.27 1.27)) hide))
     (property "Datasheet" "~" (at 160.02 148.59 0) (effects (font (size 1.27 1.27)) hide))
-    (pin "1" (uuid "4589f206-3311-5a9e-9843-468602324eac"))
+    (pin "1" (uuid "81ec483a-0059-54d7-b574-94be40e71ebc"))
     (instances
       (project
-        "retropad_sms"
-        (path "/a309cff3-1dfb-5baa-b184-d84380f3c827" (reference "#PWR11") (unit 1)))))
+        "retropad_nes_gb_sms"
+        (path "/c1410d28-1080-5906-b835-1fb482a4b8a0" (reference "#PWR11") (unit 1)))))
   (wire
     (pts (xy 160.02 158.75) (xy 160.02 161.29))
     (stroke (width 0) (type default))
-    (uuid "283bb02f-99fa-55b4-8a4d-6f77804fdd18"))
+    (uuid "03a1779b-ff9c-53df-ab3c-129bb41fe6fd"))
   (global_label
     "SCL"
     (shape bidirectional)
     (at 160.02 161.29 270)
     (fields_autoplaced)
     (effects (font (size 1.27 1.27)) (justify right))
-    (uuid "6d301867-35fe-54c8-b7f5-643bbd769f19")
+    (uuid "5fe1ddb2-95c7-5948-9a37-aced6c799f45")
     (property
       "Intersheetrefs"
       "${INTERSHEET_REFS}"
@@ -1671,7 +1763,7 @@
     (in_bom yes)
     (on_board yes)
     (dnp no)
-    (uuid "84940f06-816a-5fa9-82f8-872db0e7789e")
+    (uuid "c7e09f92-880b-50ea-b245-0a53366f9d63")
     (property "Reference" "R2" (at 177.8 153.67 0) (effects (font (size 1.27 1.27)) (justify left)))
     (property "Value" "4.7k" (at 177.8 156.21 0) (effects (font (size 1.27 1.27)) (justify left)))
     (property
@@ -1680,14 +1772,16 @@
       (at 175.26 154.94 0)
       (effects (font (size 1.27 1.27)) hide))
     (property "Datasheet" "~" (at 175.26 154.94 0) (effects (font (size 1.27 1.27)) hide))
-    (pin "1" (uuid "65e00bcd-2172-5cd6-974e-f821e40df62a"))
-    (pin "2" (uuid "940cad3d-70cc-50d7-a3c4-35629fea7e5f"))
+    (pin "1" (uuid "ecaaa6b4-7e5e-50cb-ba9f-92c30ceb5a15"))
+    (pin "2" (uuid "6d7ab5aa-b942-53e8-b160-76d82d42e17f"))
     (instances
-      (project "retropad_sms" (path "/a309cff3-1dfb-5baa-b184-d84380f3c827" (reference "R2") (unit 1)))))
+      (project
+        "retropad_nes_gb_sms"
+        (path "/c1410d28-1080-5906-b835-1fb482a4b8a0" (reference "R2") (unit 1)))))
   (wire
     (pts (xy 175.26 151.13) (xy 175.26 148.59))
     (stroke (width 0) (type default))
-    (uuid "e50b11ff-0182-570f-a1fa-a971482b6dbc"))
+    (uuid "7edabb43-a376-5766-879e-352c02da34f6"))
   (symbol
     (lib_id "power:+3V3")
     (at 175.26 148.59 0)
@@ -1695,7 +1789,7 @@
     (in_bom no)
     (on_board yes)
     (dnp no)
-    (uuid "ba8ef261-9a2f-57b2-95b3-866233263e4f")
+    (uuid "2f6a3e64-2891-528e-97ef-67a3f55e3efe")
     (property
       "Reference"
       "#PWR12"
@@ -1704,22 +1798,22 @@
     (property "Value" "+3V3" (at 177.8 149.86 0) (effects (font (size 1.27 1.27)) (justify left)))
     (property "Footprint" "" (at 175.26 148.59 0) (effects (font (size 1.27 1.27)) hide))
     (property "Datasheet" "~" (at 175.26 148.59 0) (effects (font (size 1.27 1.27)) hide))
-    (pin "1" (uuid "6b29f3d6-77b6-5af0-9318-858e4673cfcd"))
+    (pin "1" (uuid "47415088-bd7c-5599-934a-364e29772f9d"))
     (instances
       (project
-        "retropad_sms"
-        (path "/a309cff3-1dfb-5baa-b184-d84380f3c827" (reference "#PWR12") (unit 1)))))
+        "retropad_nes_gb_sms"
+        (path "/c1410d28-1080-5906-b835-1fb482a4b8a0" (reference "#PWR12") (unit 1)))))
   (wire
     (pts (xy 175.26 158.75) (xy 175.26 161.29))
     (stroke (width 0) (type default))
-    (uuid "25cc6e77-3972-5b18-a98f-8b1847673325"))
+    (uuid "67a6ca46-cc0f-582a-9109-3dfeccd2b0d1"))
   (global_label
     "SDA"
     (shape bidirectional)
     (at 175.26 161.29 270)
     (fields_autoplaced)
     (effects (font (size 1.27 1.27)) (justify right))
-    (uuid "df292b96-0fc5-5667-b9e9-8ea21a028472")
+    (uuid "2bd44bc2-1221-58c4-a896-94fac9d87e1b")
     (property
       "Intersheetrefs"
       "${INTERSHEET_REFS}"
@@ -1732,7 +1826,7 @@
     (in_bom yes)
     (on_board yes)
     (dnp no)
-    (uuid "cb4a6e10-f759-541d-b57c-c007a574a065")
+    (uuid "ebf1b94c-2a7f-572c-9f66-7068d0aa9f78")
     (property "Reference" "R3" (at 193.04 153.67 0) (effects (font (size 1.27 1.27)) (justify left)))
     (property "Value" "10k" (at 193.04 156.21 0) (effects (font (size 1.27 1.27)) (justify left)))
     (property
@@ -1741,14 +1835,16 @@
       (at 190.5 154.94 0)
       (effects (font (size 1.27 1.27)) hide))
     (property "Datasheet" "~" (at 190.5 154.94 0) (effects (font (size 1.27 1.27)) hide))
-    (pin "1" (uuid "80a724a5-5fae-57f1-b431-f759f2b76058"))
-    (pin "2" (uuid "a318aba3-2b39-5515-b0fe-00596d146f65"))
+    (pin "1" (uuid "deb62bfe-9608-5ced-afb9-3a26ca1e2a1d"))
+    (pin "2" (uuid "3ace847e-45c2-510c-97cd-71e6b609b0c2"))
     (instances
-      (project "retropad_sms" (path "/a309cff3-1dfb-5baa-b184-d84380f3c827" (reference "R3") (unit 1)))))
+      (project
+        "retropad_nes_gb_sms"
+        (path "/c1410d28-1080-5906-b835-1fb482a4b8a0" (reference "R3") (unit 1)))))
   (wire
     (pts (xy 190.5 151.13) (xy 190.5 148.59))
     (stroke (width 0) (type default))
-    (uuid "8654567a-cf0e-56ee-9edb-671c27b2deaf"))
+    (uuid "35c79aaa-4675-5e08-98cd-4e09b426ced6"))
   (symbol
     (lib_id "power:+3V3")
     (at 190.5 148.59 0)
@@ -1756,7 +1852,7 @@
     (in_bom no)
     (on_board yes)
     (dnp no)
-    (uuid "d7324505-88c2-5cc1-9fdc-99acb9674f09")
+    (uuid "0276c4ee-6e5e-5cfb-881a-6143828ba6d7")
     (property
       "Reference"
       "#PWR13"
@@ -1765,281 +1861,142 @@
     (property "Value" "+3V3" (at 193.04 149.86 0) (effects (font (size 1.27 1.27)) (justify left)))
     (property "Footprint" "" (at 190.5 148.59 0) (effects (font (size 1.27 1.27)) hide))
     (property "Datasheet" "~" (at 190.5 148.59 0) (effects (font (size 1.27 1.27)) hide))
-    (pin "1" (uuid "f4615e9f-c933-5a02-a0ec-7caa9ab25a3c"))
+    (pin "1" (uuid "8bfc7ed2-261b-5d9c-beb1-3f9cc7bd6c54"))
     (instances
       (project
-        "retropad_sms"
-        (path "/a309cff3-1dfb-5baa-b184-d84380f3c827" (reference "#PWR13") (unit 1)))))
+        "retropad_nes_gb_sms"
+        (path "/c1410d28-1080-5906-b835-1fb482a4b8a0" (reference "#PWR13") (unit 1)))))
   (wire
     (pts (xy 190.5 158.75) (xy 190.5 161.29))
     (stroke (width 0) (type default))
-    (uuid "d9210ac1-29f6-5ce5-85c9-5a47eacbc02e"))
+    (uuid "0fbc9d16-6ee5-5da5-9d14-c761b2130860"))
   (global_label
     "RESET"
     (shape bidirectional)
     (at 190.5 161.29 270)
     (fields_autoplaced)
     (effects (font (size 1.27 1.27)) (justify right))
-    (uuid "b5a47369-c235-5837-9cb2-6488b142a62e")
+    (uuid "7f3ab5e2-75b3-5e8a-a248-b79f4986f24c")
     (property
       "Intersheetrefs"
       "${INTERSHEET_REFS}"
       (at 190.5 161.29 0)
       (effects (font (size 1.27 1.27)) hide)))
   (text
-    "Console ID straps: 0R to GND = bit set. Master System / Game Gear = ID 4 (fit R8; R6, R7, R9 DNP)"
+    "Console ID straps: 0R to GND = bit set. NES / Game Boy / Master System: console set by slide switch SW_ID (NES = ID0, GB = ID1, SMS = ID2)"
     (at 150 172 0)
     (effects (font (size 1.5 1.5)) (justify left))
-    (uuid "e7dcc1d7-97fb-5c13-8ef0-c381345e5209"))
+    (uuid "a295ced2-62f3-51ef-9f7f-a8164f16ae32"))
   (symbol
-    (lib_id "Device:R")
-    (at 160.02 190.5 0)
-    (unit 1)
-    (in_bom no)
-    (on_board yes)
-    (dnp yes)
-    (uuid "729f675e-d64b-5af6-bda5-f2f38acb4ee2")
-    (property "Reference" "R6" (at 162.56 189.23 0) (effects (font (size 1.27 1.27)) (justify left)))
-    (property "Value" "DNP" (at 162.56 191.77 0) (effects (font (size 1.27 1.27)) (justify left)))
-    (property
-      "Footprint"
-      "Resistor_SMD:R_0805_2012Metric_Pad1.20x1.40mm_HandSolder"
-      (at 160.02 190.5 0)
-      (effects (font (size 1.27 1.27)) hide))
-    (property "Datasheet" "~" (at 160.02 190.5 0) (effects (font (size 1.27 1.27)) hide))
-    (pin "1" (uuid "72cfa6a8-e1ca-59d2-a048-94dfdb279fce"))
-    (pin "2" (uuid "256f40ab-58de-5287-b5cc-b685e43d5c8f"))
-    (instances
-      (project "retropad_sms" (path "/a309cff3-1dfb-5baa-b184-d84380f3c827" (reference "R6") (unit 1)))))
-  (wire
-    (pts (xy 160.02 186.69) (xy 160.02 184.15))
-    (stroke (width 0) (type default))
-    (uuid "9757344c-ae5d-57d5-a799-cb6c0b1c40b0"))
-  (global_label
-    "ID0"
-    (shape bidirectional)
-    (at 160.02 184.15 90)
-    (fields_autoplaced)
-    (effects (font (size 1.27 1.27)) (justify left))
-    (uuid "7e252db5-051b-5162-960a-221b9dd4d67b")
-    (property
-      "Intersheetrefs"
-      "${INTERSHEET_REFS}"
-      (at 160.02 184.15 0)
-      (effects (font (size 1.27 1.27)) hide)))
-  (wire
-    (pts (xy 160.02 194.31) (xy 160.02 196.85))
-    (stroke (width 0) (type default))
-    (uuid "f26bb8a5-6259-56e8-a299-e75aeae7719b"))
-  (symbol
-    (lib_id "power:GND")
-    (at 160.02 196.85 0)
-    (unit 1)
-    (in_bom no)
-    (on_board yes)
-    (dnp no)
-    (uuid "953378c3-fef3-5c2c-90cf-f4ca12603614")
-    (property
-      "Reference"
-      "#PWR14"
-      (at 162.56 195.58 0)
-      (effects (font (size 1.27 1.27)) (justify left) hide))
-    (property "Value" "GND" (at 162.56 198.12 0) (effects (font (size 1.27 1.27)) (justify left)))
-    (property "Footprint" "" (at 160.02 196.85 0) (effects (font (size 1.27 1.27)) hide))
-    (property "Datasheet" "~" (at 160.02 196.85 0) (effects (font (size 1.27 1.27)) hide))
-    (pin "1" (uuid "fbe01f05-0351-5217-8784-c7b613566559"))
-    (instances
-      (project
-        "retropad_sms"
-        (path "/a309cff3-1dfb-5baa-b184-d84380f3c827" (reference "#PWR14") (unit 1)))))
-  (symbol
-    (lib_id "Device:R")
-    (at 175.26 190.5 0)
-    (unit 1)
-    (in_bom no)
-    (on_board yes)
-    (dnp yes)
-    (uuid "1d6400d0-122c-5664-98a3-69546db99894")
-    (property "Reference" "R7" (at 177.8 189.23 0) (effects (font (size 1.27 1.27)) (justify left)))
-    (property "Value" "DNP" (at 177.8 191.77 0) (effects (font (size 1.27 1.27)) (justify left)))
-    (property
-      "Footprint"
-      "Resistor_SMD:R_0805_2012Metric_Pad1.20x1.40mm_HandSolder"
-      (at 175.26 190.5 0)
-      (effects (font (size 1.27 1.27)) hide))
-    (property "Datasheet" "~" (at 175.26 190.5 0) (effects (font (size 1.27 1.27)) hide))
-    (pin "1" (uuid "4fd8c9dc-9afd-5e70-9f50-a2499b548590"))
-    (pin "2" (uuid "ff722d49-5045-5600-beee-4658d9d4c041"))
-    (instances
-      (project "retropad_sms" (path "/a309cff3-1dfb-5baa-b184-d84380f3c827" (reference "R7") (unit 1)))))
-  (wire
-    (pts (xy 175.26 186.69) (xy 175.26 184.15))
-    (stroke (width 0) (type default))
-    (uuid "21ce6db3-7f17-5c87-a245-b364648571a4"))
-  (global_label
-    "ID1"
-    (shape bidirectional)
-    (at 175.26 184.15 90)
-    (fields_autoplaced)
-    (effects (font (size 1.27 1.27)) (justify left))
-    (uuid "c3cb92e3-0f10-5e03-89b6-9748a76cd5aa")
-    (property
-      "Intersheetrefs"
-      "${INTERSHEET_REFS}"
-      (at 175.26 184.15 0)
-      (effects (font (size 1.27 1.27)) hide)))
-  (wire
-    (pts (xy 175.26 194.31) (xy 175.26 196.85))
-    (stroke (width 0) (type default))
-    (uuid "e123a00a-dbeb-5989-9166-b76ff8be7a21"))
-  (symbol
-    (lib_id "power:GND")
-    (at 175.26 196.85 0)
-    (unit 1)
-    (in_bom no)
-    (on_board yes)
-    (dnp no)
-    (uuid "1e5e6d0b-8827-5a36-9056-136862c6eac0")
-    (property
-      "Reference"
-      "#PWR15"
-      (at 177.8 195.58 0)
-      (effects (font (size 1.27 1.27)) (justify left) hide))
-    (property "Value" "GND" (at 177.8 198.12 0) (effects (font (size 1.27 1.27)) (justify left)))
-    (property "Footprint" "" (at 175.26 196.85 0) (effects (font (size 1.27 1.27)) hide))
-    (property "Datasheet" "~" (at 175.26 196.85 0) (effects (font (size 1.27 1.27)) hide))
-    (pin "1" (uuid "2f167a4c-e3bc-5652-aed4-1c51c410b36a"))
-    (instances
-      (project
-        "retropad_sms"
-        (path "/a309cff3-1dfb-5baa-b184-d84380f3c827" (reference "#PWR15") (unit 1)))))
-  (symbol
-    (lib_id "Device:R")
-    (at 190.5 190.5 0)
+    (lib_id "Switch:SW_SP3T")
+    (at 180.34 190.5 0)
     (unit 1)
     (in_bom yes)
     (on_board yes)
     (dnp no)
-    (uuid "048dd5e0-ac72-524a-af1e-10f92052e95d")
-    (property "Reference" "R8" (at 193.04 189.23 0) (effects (font (size 1.27 1.27)) (justify left)))
-    (property "Value" "0R" (at 193.04 191.77 0) (effects (font (size 1.27 1.27)) (justify left)))
+    (uuid "8b4e67e4-1ef0-5006-a4a2-8d112ca416cd")
+    (property
+      "Reference"
+      "SW_ID"
+      (at 182.88 189.23 0)
+      (effects (font (size 1.27 1.27)) (justify left)))
+    (property
+      "Value"
+      "PCM13SMTR"
+      (at 182.88 191.77 0)
+      (effects (font (size 1.27 1.27)) (justify left)))
     (property
       "Footprint"
-      "Resistor_SMD:R_0805_2012Metric_Pad1.20x1.40mm_HandSolder"
-      (at 190.5 190.5 0)
+      "Button_Switch_SMD:SW_SP3T_PCM13"
+      (at 180.34 190.5 0)
       (effects (font (size 1.27 1.27)) hide))
-    (property "Datasheet" "~" (at 190.5 190.5 0) (effects (font (size 1.27 1.27)) hide))
-    (pin "1" (uuid "d2cffd6d-bc7f-5b8f-a4cc-7c3e2d738461"))
-    (pin "2" (uuid "08f7318f-5896-5d9e-8af7-eeb643770845"))
+    (property "Datasheet" "~" (at 180.34 190.5 0) (effects (font (size 1.27 1.27)) hide))
+    (pin "1" (uuid "b3b65bc9-c620-5936-95ba-aa8a18cdc871"))
+    (pin "2" (uuid "444c7a63-1eac-505c-af0c-b34addf35e9a"))
+    (pin "3" (uuid "2a7ca567-0159-52b6-b4a0-b1ebcd048c2c"))
+    (pin "4" (uuid "f007bcb3-5e27-55e2-aed3-c5f3f8b49bf0"))
     (instances
-      (project "retropad_sms" (path "/a309cff3-1dfb-5baa-b184-d84380f3c827" (reference "R8") (unit 1)))))
+      (project
+        "retropad_nes_gb_sms"
+        (path "/c1410d28-1080-5906-b835-1fb482a4b8a0" (reference "SW_ID") (unit 1)))))
   (wire
-    (pts (xy 190.5 186.69) (xy 190.5 184.15))
+    (pts (xy 185.42 187.96) (xy 190.5 187.96))
     (stroke (width 0) (type default))
-    (uuid "61724f1a-f6ee-51ce-a1cf-8f8db9449f92"))
+    (uuid "448a0b69-4192-5e62-b082-f3b00c9d82d2"))
+  (global_label
+    "ID0"
+    (shape bidirectional)
+    (at 190.5 187.96 0)
+    (fields_autoplaced)
+    (effects (font (size 1.27 1.27)) (justify left))
+    (uuid "41ecadf3-39ea-5514-bf22-a734a4eddf73")
+    (property
+      "Intersheetrefs"
+      "${INTERSHEET_REFS}"
+      (at 190.5 187.96 0)
+      (effects (font (size 1.27 1.27)) hide)))
+  (wire
+    (pts (xy 185.42 190.5) (xy 190.5 190.5))
+    (stroke (width 0) (type default))
+    (uuid "95a8bd3e-b92d-5ec9-8da6-9736d2b31f49"))
+  (global_label
+    "ID1"
+    (shape bidirectional)
+    (at 190.5 190.5 0)
+    (fields_autoplaced)
+    (effects (font (size 1.27 1.27)) (justify left))
+    (uuid "c32ff525-6bdc-5c0a-bb3f-104f0111339a")
+    (property
+      "Intersheetrefs"
+      "${INTERSHEET_REFS}"
+      (at 190.5 190.5 0)
+      (effects (font (size 1.27 1.27)) hide)))
+  (wire
+    (pts (xy 175.26 190.5) (xy 170.18 190.5))
+    (stroke (width 0) (type default))
+    (uuid "42669055-055c-552e-a3f1-597c90bf3add"))
+  (symbol
+    (lib_id "power:GND")
+    (at 170.18 190.5 270)
+    (unit 1)
+    (in_bom no)
+    (on_board yes)
+    (dnp no)
+    (uuid "beb8bc53-d9b7-56e6-b8c3-716dfefe2906")
+    (property
+      "Reference"
+      "#PWR14"
+      (at 172.72 189.23 0)
+      (effects (font (size 1.27 1.27)) (justify left) hide))
+    (property "Value" "GND" (at 172.72 191.77 0) (effects (font (size 1.27 1.27)) (justify left)))
+    (property "Footprint" "" (at 170.18 190.5 0) (effects (font (size 1.27 1.27)) hide))
+    (property "Datasheet" "~" (at 170.18 190.5 0) (effects (font (size 1.27 1.27)) hide))
+    (pin "1" (uuid "168d79bb-6945-5111-b62c-c5fe8886e855"))
+    (instances
+      (project
+        "retropad_nes_gb_sms"
+        (path "/c1410d28-1080-5906-b835-1fb482a4b8a0" (reference "#PWR14") (unit 1)))))
+  (wire
+    (pts (xy 185.42 193.04) (xy 190.5 193.04))
+    (stroke (width 0) (type default))
+    (uuid "fbdfa964-1284-59df-8ee8-f3a0fa2e4ee5"))
   (global_label
     "ID2"
     (shape bidirectional)
-    (at 190.5 184.15 90)
+    (at 190.5 193.04 0)
     (fields_autoplaced)
     (effects (font (size 1.27 1.27)) (justify left))
-    (uuid "8cb6ad55-a93d-5ec0-8e72-ab58d2b6854e")
+    (uuid "4925d52f-74b6-5499-b8a2-0ef6db6063a7")
     (property
       "Intersheetrefs"
       "${INTERSHEET_REFS}"
-      (at 190.5 184.15 0)
+      (at 190.5 193.04 0)
       (effects (font (size 1.27 1.27)) hide)))
-  (wire
-    (pts (xy 190.5 194.31) (xy 190.5 196.85))
-    (stroke (width 0) (type default))
-    (uuid "d9f6a587-0a16-5c67-b857-da2e2a9368f8"))
-  (symbol
-    (lib_id "power:GND")
-    (at 190.5 196.85 0)
-    (unit 1)
-    (in_bom no)
-    (on_board yes)
-    (dnp no)
-    (uuid "ccd4040d-2bdf-57b0-b0d7-05769e29dd95")
-    (property
-      "Reference"
-      "#PWR16"
-      (at 193.04 195.58 0)
-      (effects (font (size 1.27 1.27)) (justify left) hide))
-    (property "Value" "GND" (at 193.04 198.12 0) (effects (font (size 1.27 1.27)) (justify left)))
-    (property "Footprint" "" (at 190.5 196.85 0) (effects (font (size 1.27 1.27)) hide))
-    (property "Datasheet" "~" (at 190.5 196.85 0) (effects (font (size 1.27 1.27)) hide))
-    (pin "1" (uuid "aa18d54e-fd1a-52f6-b562-18a73444e113"))
-    (instances
-      (project
-        "retropad_sms"
-        (path "/a309cff3-1dfb-5baa-b184-d84380f3c827" (reference "#PWR16") (unit 1)))))
-  (symbol
-    (lib_id "Device:R")
-    (at 204.47 190.5 0)
-    (unit 1)
-    (in_bom no)
-    (on_board yes)
-    (dnp yes)
-    (uuid "4daf8652-7029-5257-b4a3-f67ef33db2f7")
-    (property "Reference" "R9" (at 207.01 189.23 0) (effects (font (size 1.27 1.27)) (justify left)))
-    (property "Value" "DNP" (at 207.01 191.77 0) (effects (font (size 1.27 1.27)) (justify left)))
-    (property
-      "Footprint"
-      "Resistor_SMD:R_0805_2012Metric_Pad1.20x1.40mm_HandSolder"
-      (at 204.47 190.5 0)
-      (effects (font (size 1.27 1.27)) hide))
-    (property "Datasheet" "~" (at 204.47 190.5 0) (effects (font (size 1.27 1.27)) hide))
-    (pin "1" (uuid "29561980-4d60-5a2d-babf-1937a34e451c"))
-    (pin "2" (uuid "646c1cd1-deb2-514e-b315-51e624abb9e8"))
-    (instances
-      (project "retropad_sms" (path "/a309cff3-1dfb-5baa-b184-d84380f3c827" (reference "R9") (unit 1)))))
-  (wire
-    (pts (xy 204.47 186.69) (xy 204.47 184.15))
-    (stroke (width 0) (type default))
-    (uuid "adf62daf-c2d3-540f-b754-ef4ad1e28d1e"))
-  (global_label
-    "ID3"
-    (shape bidirectional)
-    (at 204.47 184.15 90)
-    (fields_autoplaced)
-    (effects (font (size 1.27 1.27)) (justify left))
-    (uuid "3db2c436-3955-5473-9246-c449639461ea")
-    (property
-      "Intersheetrefs"
-      "${INTERSHEET_REFS}"
-      (at 204.47 184.15 0)
-      (effects (font (size 1.27 1.27)) hide)))
-  (wire
-    (pts (xy 204.47 194.31) (xy 204.47 196.85))
-    (stroke (width 0) (type default))
-    (uuid "594d7b6c-072f-5117-a29b-7ab381a3286c"))
-  (symbol
-    (lib_id "power:GND")
-    (at 204.47 196.85 0)
-    (unit 1)
-    (in_bom no)
-    (on_board yes)
-    (dnp no)
-    (uuid "09b160d7-cacd-571c-bf89-c685898494ba")
-    (property
-      "Reference"
-      "#PWR17"
-      (at 207.01 195.58 0)
-      (effects (font (size 1.27 1.27)) (justify left) hide))
-    (property "Value" "GND" (at 207.01 198.12 0) (effects (font (size 1.27 1.27)) (justify left)))
-    (property "Footprint" "" (at 204.47 196.85 0) (effects (font (size 1.27 1.27)) hide))
-    (property "Datasheet" "~" (at 204.47 196.85 0) (effects (font (size 1.27 1.27)) hide))
-    (pin "1" (uuid "7038d88b-a8f3-5a1f-beef-32f90a36445f"))
-    (instances
-      (project
-        "retropad_sms"
-        (path "/a309cff3-1dfb-5baa-b184-d84380f3c827" (reference "#PWR17") (unit 1)))))
   (text
     "Mounting holes (M3, 96 mm apart)"
     (at 150 210 0)
     (effects (font (size 1.5 1.5)) (justify left))
-    (uuid "da4f4ab9-28d9-5e2a-95c6-b5e5aca1b8b7"))
+    (uuid "e92d3fe0-d564-53cd-9961-77599bda08f9"))
   (symbol
     (lib_id "Mechanical:MountingHole")
     (at 160.02 219.71 0)
@@ -2047,7 +2004,7 @@
     (in_bom yes)
     (on_board yes)
     (dnp no)
-    (uuid "13d83c27-02ae-5826-8902-6eae14861c74")
+    (uuid "ac72f267-03de-5ddd-a212-a427fa766f75")
     (property "Reference" "H1" (at 162.56 218.44 0) (effects (font (size 1.27 1.27)) (justify left)))
     (property "Value" "M3" (at 162.56 220.98 0) (effects (font (size 1.27 1.27)) (justify left)))
     (property
@@ -2057,7 +2014,9 @@
       (effects (font (size 1.27 1.27)) hide))
     (property "Datasheet" "~" (at 160.02 219.71 0) (effects (font (size 1.27 1.27)) hide))
     (instances
-      (project "retropad_sms" (path "/a309cff3-1dfb-5baa-b184-d84380f3c827" (reference "H1") (unit 1)))))
+      (project
+        "retropad_nes_gb_sms"
+        (path "/c1410d28-1080-5906-b835-1fb482a4b8a0" (reference "H1") (unit 1)))))
   (symbol
     (lib_id "Mechanical:MountingHole")
     (at 175.26 219.71 0)
@@ -2065,7 +2024,7 @@
     (in_bom yes)
     (on_board yes)
     (dnp no)
-    (uuid "770bf3d7-c283-56cd-a15b-914e395baa9e")
+    (uuid "d20596af-3723-5c12-9971-fc8b1dee6edc")
     (property "Reference" "H2" (at 177.8 218.44 0) (effects (font (size 1.27 1.27)) (justify left)))
     (property "Value" "M3" (at 177.8 220.98 0) (effects (font (size 1.27 1.27)) (justify left)))
     (property
@@ -2075,12 +2034,14 @@
       (effects (font (size 1.27 1.27)) hide))
     (property "Datasheet" "~" (at 175.26 219.71 0) (effects (font (size 1.27 1.27)) hide))
     (instances
-      (project "retropad_sms" (path "/a309cff3-1dfb-5baa-b184-d84380f3c827" (reference "H2") (unit 1)))))
+      (project
+        "retropad_nes_gb_sms"
+        (path "/c1410d28-1080-5906-b835-1fb482a4b8a0" (reference "H2") (unit 1)))))
   (text
     "Buttons — one MCU pin each, switch to GND (internal pull-up); slot table in firmware_avrdd/pinmap.h"
     (at 260 25 0)
     (effects (font (size 1.5 1.5)) (justify left))
-    (uuid "e633a816-9943-50b6-8c27-ecbf9b967927"))
+    (uuid "a81fe6f6-af3c-5954-99f7-885a9133c5cc"))
   (symbol
     (lib_id "RetroPad:SW_Push_4pin")
     (at 299.72 39.37 0)
@@ -2088,7 +2049,7 @@
     (in_bom yes)
     (on_board yes)
     (dnp no)
-    (uuid "8c49616a-7e15-59dd-bf44-1e85df8369fd")
+    (uuid "27c83392-e752-5c2e-93de-448861f1dab0")
     (property "Reference" "SW1" (at 297.18 34.29 0) (effects (font (size 1.27 1.27)) (justify left)))
     (property "Value" "UP" (at 297.18 44.45 0) (effects (font (size 1.27 1.27)) (justify left)))
     (property
@@ -2097,16 +2058,18 @@
       (at 299.72 39.37 0)
       (effects (font (size 1.27 1.27)) hide))
     (property "Datasheet" "~" (at 299.72 39.37 0) (effects (font (size 1.27 1.27)) hide))
-    (pin "1" (uuid "78e30159-b2cb-5dd0-ae59-dcfb9e442c6e"))
-    (pin "2" (uuid "4961902c-8d18-5985-b38d-9952cab73a24"))
-    (pin "3" (uuid "360190c1-d03a-50c7-9bf1-2ca23bbafb49"))
-    (pin "4" (uuid "7066ea6a-8362-57a1-867b-ea6e068072d7"))
+    (pin "1" (uuid "3905f601-c4dc-5928-98c5-96de847b7c92"))
+    (pin "2" (uuid "9444bf64-c47a-5fbc-bb92-9c8dc85b8109"))
+    (pin "3" (uuid "44fd4a44-6988-5f06-8e4e-ef263b4bf98e"))
+    (pin "4" (uuid "590b713f-321e-5355-a106-fc4c962e4043"))
     (instances
-      (project "retropad_sms" (path "/a309cff3-1dfb-5baa-b184-d84380f3c827" (reference "SW1") (unit 1)))))
+      (project
+        "retropad_nes_gb_sms"
+        (path "/c1410d28-1080-5906-b835-1fb482a4b8a0" (reference "SW1") (unit 1)))))
   (wire
     (pts (xy 294.64 36.83) (xy 292.1 36.83))
     (stroke (width 0) (type default))
-    (uuid "3db9985a-4837-5f2a-8bb2-f56718882e94"))
+    (uuid "2cf8f141-d793-516d-9aba-d2c57f94618d"))
   (symbol
     (lib_id "power:GND")
     (at 292.1 36.83 270)
@@ -2114,24 +2077,24 @@
     (in_bom no)
     (on_board yes)
     (dnp no)
-    (uuid "f9d84b41-d09e-5422-a2f7-f060a2fbb0cd")
+    (uuid "5b1890df-ed0d-5cdc-981d-cf7cdadf3dbb")
     (property
       "Reference"
-      "#PWR18"
+      "#PWR15"
       (at 294.64 35.56 0)
       (effects (font (size 1.27 1.27)) (justify left) hide))
     (property "Value" "GND" (at 294.64 38.1 0) (effects (font (size 1.27 1.27)) (justify left)))
     (property "Footprint" "" (at 292.1 36.83 0) (effects (font (size 1.27 1.27)) hide))
     (property "Datasheet" "~" (at 292.1 36.83 0) (effects (font (size 1.27 1.27)) hide))
-    (pin "1" (uuid "a0e09047-771b-5074-a5ea-1ae32dcb2283"))
+    (pin "1" (uuid "87125c1b-9421-58cf-9b1d-2455c737fdba"))
     (instances
       (project
-        "retropad_sms"
-        (path "/a309cff3-1dfb-5baa-b184-d84380f3c827" (reference "#PWR18") (unit 1)))))
+        "retropad_nes_gb_sms"
+        (path "/c1410d28-1080-5906-b835-1fb482a4b8a0" (reference "#PWR15") (unit 1)))))
   (wire
     (pts (xy 304.8 36.83) (xy 307.34 36.83))
     (stroke (width 0) (type default))
-    (uuid "1fe0763c-45f1-5c14-b2ff-cde09f6bc452"))
+    (uuid "0e503cf4-ad96-5055-b0bc-bc2e230974ec"))
   (symbol
     (lib_id "power:GND")
     (at 307.34 36.83 90)
@@ -2139,31 +2102,31 @@
     (in_bom no)
     (on_board yes)
     (dnp no)
-    (uuid "879386bd-4669-5868-ab73-02afc56c05b8")
+    (uuid "8e99e5d2-d573-5ae5-b5a9-792b34a8c35b")
     (property
       "Reference"
-      "#PWR19"
+      "#PWR16"
       (at 309.88 35.56 0)
       (effects (font (size 1.27 1.27)) (justify left) hide))
     (property "Value" "GND" (at 309.88 38.1 0) (effects (font (size 1.27 1.27)) (justify left)))
     (property "Footprint" "" (at 307.34 36.83 0) (effects (font (size 1.27 1.27)) hide))
     (property "Datasheet" "~" (at 307.34 36.83 0) (effects (font (size 1.27 1.27)) hide))
-    (pin "1" (uuid "eec35496-76d0-5fb7-bfad-b443920ebcb0"))
+    (pin "1" (uuid "da63c1e1-be75-5d9b-a566-9282d32ebf52"))
     (instances
       (project
-        "retropad_sms"
-        (path "/a309cff3-1dfb-5baa-b184-d84380f3c827" (reference "#PWR19") (unit 1)))))
+        "retropad_nes_gb_sms"
+        (path "/c1410d28-1080-5906-b835-1fb482a4b8a0" (reference "#PWR16") (unit 1)))))
   (wire
     (pts (xy 304.8 41.91) (xy 307.34 41.91))
     (stroke (width 0) (type default))
-    (uuid "754a0356-c2ac-5fad-a1a9-a74e4c47cdcf"))
+    (uuid "382d4269-0d84-5f8f-b683-a972d484c1a6"))
   (global_label
     "K_UP"
     (shape bidirectional)
     (at 307.34 41.91 0)
     (fields_autoplaced)
     (effects (font (size 1.27 1.27)) (justify left))
-    (uuid "d6142117-8df1-501a-9047-aa22ad60b7ea")
+    (uuid "867b4daa-f035-5a5d-a1cb-4ba097863206")
     (property
       "Intersheetrefs"
       "${INTERSHEET_REFS}"
@@ -2172,14 +2135,14 @@
   (wire
     (pts (xy 294.64 41.91) (xy 292.1 41.91))
     (stroke (width 0) (type default))
-    (uuid "f3269a38-3d71-5c51-ad0d-9c73bddd9b18"))
+    (uuid "1017aab1-ef67-52da-81b3-ee8adaa3b880"))
   (global_label
     "K_UP"
     (shape bidirectional)
     (at 292.1 41.91 180)
     (fields_autoplaced)
     (effects (font (size 1.27 1.27)) (justify right))
-    (uuid "19ec857d-8281-5f47-9983-0a13f31cf854")
+    (uuid "7b47087a-be5b-56a8-b972-c4f48a842096")
     (property
       "Intersheetrefs"
       "${INTERSHEET_REFS}"
@@ -2189,7 +2152,7 @@
     "UP"
     (at 320.04 38.1 0)
     (effects (font (size 1.27 1.27)) (justify left))
-    (uuid "16359736-b06f-5ffc-9928-0b75b5f798e9"))
+    (uuid "77961d6c-fe81-544a-9917-4dff3afe5726"))
   (symbol
     (lib_id "RetroPad:SW_Push_4pin")
     (at 299.72 54.61 0)
@@ -2197,7 +2160,7 @@
     (in_bom yes)
     (on_board yes)
     (dnp no)
-    (uuid "5c8fa7f9-4983-57a0-9106-7438b93c9491")
+    (uuid "25840279-e32c-5286-ae09-570c440c220c")
     (property "Reference" "SW2" (at 297.18 49.53 0) (effects (font (size 1.27 1.27)) (justify left)))
     (property "Value" "DOWN" (at 297.18 59.69 0) (effects (font (size 1.27 1.27)) (justify left)))
     (property
@@ -2206,16 +2169,18 @@
       (at 299.72 54.61 0)
       (effects (font (size 1.27 1.27)) hide))
     (property "Datasheet" "~" (at 299.72 54.61 0) (effects (font (size 1.27 1.27)) hide))
-    (pin "1" (uuid "c09ccf68-9744-5e3e-b548-c14f1cebdd2a"))
-    (pin "2" (uuid "b2e6db2c-bb25-52d0-9971-50951269239c"))
-    (pin "3" (uuid "a8b7b04b-f558-5b2e-83b6-63c51a3845a7"))
-    (pin "4" (uuid "faa27d96-0b70-57dc-bf03-b8139e319b3f"))
+    (pin "1" (uuid "610044dd-07fe-5f06-8314-0bead554170f"))
+    (pin "2" (uuid "a1523bb3-bb5b-5f5d-a6c0-c8ce15e5de2b"))
+    (pin "3" (uuid "11814ad8-5393-516d-b04e-0f4057ee561b"))
+    (pin "4" (uuid "389dbab2-20ef-5b12-b5bb-5e5d36610fa0"))
     (instances
-      (project "retropad_sms" (path "/a309cff3-1dfb-5baa-b184-d84380f3c827" (reference "SW2") (unit 1)))))
+      (project
+        "retropad_nes_gb_sms"
+        (path "/c1410d28-1080-5906-b835-1fb482a4b8a0" (reference "SW2") (unit 1)))))
   (wire
     (pts (xy 294.64 52.07) (xy 292.1 52.07))
     (stroke (width 0) (type default))
-    (uuid "101da28d-e66f-5845-b66e-fbc8f2a0b9e0"))
+    (uuid "6ea7ef40-9aba-5494-ba8a-11bc589c4123"))
   (symbol
     (lib_id "power:GND")
     (at 292.1 52.07 270)
@@ -2223,24 +2188,24 @@
     (in_bom no)
     (on_board yes)
     (dnp no)
-    (uuid "5bbc6b21-20e4-5bd5-b881-e507859c664b")
+    (uuid "009709a0-1e1b-558b-8f0a-c18ee1d2c0ae")
     (property
       "Reference"
-      "#PWR20"
+      "#PWR17"
       (at 294.64 50.8 0)
       (effects (font (size 1.27 1.27)) (justify left) hide))
     (property "Value" "GND" (at 294.64 53.34 0) (effects (font (size 1.27 1.27)) (justify left)))
     (property "Footprint" "" (at 292.1 52.07 0) (effects (font (size 1.27 1.27)) hide))
     (property "Datasheet" "~" (at 292.1 52.07 0) (effects (font (size 1.27 1.27)) hide))
-    (pin "1" (uuid "4064c69a-303c-5343-b68f-ab0fe2a02c09"))
+    (pin "1" (uuid "b5e8635c-1ea5-5f82-bf85-4c1105be0412"))
     (instances
       (project
-        "retropad_sms"
-        (path "/a309cff3-1dfb-5baa-b184-d84380f3c827" (reference "#PWR20") (unit 1)))))
+        "retropad_nes_gb_sms"
+        (path "/c1410d28-1080-5906-b835-1fb482a4b8a0" (reference "#PWR17") (unit 1)))))
   (wire
     (pts (xy 304.8 52.07) (xy 307.34 52.07))
     (stroke (width 0) (type default))
-    (uuid "3c37d653-d3c1-5f51-a95f-f38fa9edb2cd"))
+    (uuid "230244e4-7784-5c77-8004-0d753551812a"))
   (symbol
     (lib_id "power:GND")
     (at 307.34 52.07 90)
@@ -2248,31 +2213,31 @@
     (in_bom no)
     (on_board yes)
     (dnp no)
-    (uuid "3b33e556-3630-5426-aed9-045046fd74fd")
+    (uuid "1190359b-8462-5241-b505-3af4e47fb560")
     (property
       "Reference"
-      "#PWR21"
+      "#PWR18"
       (at 309.88 50.8 0)
       (effects (font (size 1.27 1.27)) (justify left) hide))
     (property "Value" "GND" (at 309.88 53.34 0) (effects (font (size 1.27 1.27)) (justify left)))
     (property "Footprint" "" (at 307.34 52.07 0) (effects (font (size 1.27 1.27)) hide))
     (property "Datasheet" "~" (at 307.34 52.07 0) (effects (font (size 1.27 1.27)) hide))
-    (pin "1" (uuid "7768a337-1777-5b18-8686-b48440cd486d"))
+    (pin "1" (uuid "ee5717cc-6b92-5228-8c6c-b675015fffe6"))
     (instances
       (project
-        "retropad_sms"
-        (path "/a309cff3-1dfb-5baa-b184-d84380f3c827" (reference "#PWR21") (unit 1)))))
+        "retropad_nes_gb_sms"
+        (path "/c1410d28-1080-5906-b835-1fb482a4b8a0" (reference "#PWR18") (unit 1)))))
   (wire
     (pts (xy 304.8 57.15) (xy 307.34 57.15))
     (stroke (width 0) (type default))
-    (uuid "54cbc1e3-4ee2-5ebe-a18b-b235faec201a"))
+    (uuid "30f6fb3d-a691-5e19-8367-1a87b45c737f"))
   (global_label
     "K_DOWN"
     (shape bidirectional)
     (at 307.34 57.15 0)
     (fields_autoplaced)
     (effects (font (size 1.27 1.27)) (justify left))
-    (uuid "3a2cd3d0-d8b0-5612-8905-fa9a3c412ad7")
+    (uuid "e794b6c5-1ba2-5f42-ae63-69a1858fb44d")
     (property
       "Intersheetrefs"
       "${INTERSHEET_REFS}"
@@ -2281,14 +2246,14 @@
   (wire
     (pts (xy 294.64 57.15) (xy 292.1 57.15))
     (stroke (width 0) (type default))
-    (uuid "239718dd-30af-5566-afaa-605af586680e"))
+    (uuid "6252a971-bb14-5bb4-ba4d-4c1a2df56afb"))
   (global_label
     "K_DOWN"
     (shape bidirectional)
     (at 292.1 57.15 180)
     (fields_autoplaced)
     (effects (font (size 1.27 1.27)) (justify right))
-    (uuid "8d3a5f37-4854-5c41-b517-3d66404e126d")
+    (uuid "24bd8fa1-50dc-583d-af75-dc490617ff5f")
     (property
       "Intersheetrefs"
       "${INTERSHEET_REFS}"
@@ -2298,7 +2263,7 @@
     "DOWN"
     (at 320.04 53.34 0)
     (effects (font (size 1.27 1.27)) (justify left))
-    (uuid "5cdb072d-9ae9-5650-90a0-74657b2d8e65"))
+    (uuid "8988ff23-c62e-5534-b1d8-48858db52e34"))
   (symbol
     (lib_id "RetroPad:SW_Push_4pin")
     (at 299.72 69.85 0)
@@ -2306,7 +2271,7 @@
     (in_bom yes)
     (on_board yes)
     (dnp no)
-    (uuid "695b86af-4c87-5598-8810-4e795e780f9b")
+    (uuid "3d87d13c-73d2-599d-a3a8-7278d9b50851")
     (property "Reference" "SW3" (at 297.18 64.77 0) (effects (font (size 1.27 1.27)) (justify left)))
     (property "Value" "LEFT" (at 297.18 74.93 0) (effects (font (size 1.27 1.27)) (justify left)))
     (property
@@ -2315,16 +2280,18 @@
       (at 299.72 69.85 0)
       (effects (font (size 1.27 1.27)) hide))
     (property "Datasheet" "~" (at 299.72 69.85 0) (effects (font (size 1.27 1.27)) hide))
-    (pin "1" (uuid "c227bdad-b34e-50d5-b135-b3f6324fa858"))
-    (pin "2" (uuid "25367756-f1a5-5af4-ae48-872a856ef7be"))
-    (pin "3" (uuid "2ab0702a-9091-5528-9760-b29b592cb3d2"))
-    (pin "4" (uuid "af101eb7-df3c-5d72-b206-9820bdc8aff9"))
+    (pin "1" (uuid "fd0f9096-c185-5dd9-96e9-7767cb700749"))
+    (pin "2" (uuid "33eb0d9e-2848-597c-a31f-4d92556ddf05"))
+    (pin "3" (uuid "0b9f25ee-e57d-52c7-8a10-bca6f3f427af"))
+    (pin "4" (uuid "8ffa199b-cb1c-594e-8546-a267e89bf3b0"))
     (instances
-      (project "retropad_sms" (path "/a309cff3-1dfb-5baa-b184-d84380f3c827" (reference "SW3") (unit 1)))))
+      (project
+        "retropad_nes_gb_sms"
+        (path "/c1410d28-1080-5906-b835-1fb482a4b8a0" (reference "SW3") (unit 1)))))
   (wire
     (pts (xy 294.64 67.31) (xy 292.1 67.31))
     (stroke (width 0) (type default))
-    (uuid "70b5a1c2-ade5-57f8-8b27-9948390d590d"))
+    (uuid "9db4e547-0b45-5970-86a2-497e47988d8d"))
   (symbol
     (lib_id "power:GND")
     (at 292.1 67.31 270)
@@ -2332,24 +2299,24 @@
     (in_bom no)
     (on_board yes)
     (dnp no)
-    (uuid "8e9fe49b-7904-5f30-9a09-3750d4b6eb14")
+    (uuid "5f049b00-d2e9-5225-a9cd-0285066ed88f")
     (property
       "Reference"
-      "#PWR22"
+      "#PWR19"
       (at 294.64 66.04 0)
       (effects (font (size 1.27 1.27)) (justify left) hide))
     (property "Value" "GND" (at 294.64 68.58 0) (effects (font (size 1.27 1.27)) (justify left)))
     (property "Footprint" "" (at 292.1 67.31 0) (effects (font (size 1.27 1.27)) hide))
     (property "Datasheet" "~" (at 292.1 67.31 0) (effects (font (size 1.27 1.27)) hide))
-    (pin "1" (uuid "07dc8f3b-5272-5f3e-90b9-ded170117042"))
+    (pin "1" (uuid "81b74d16-647b-537d-9acc-9854ef5f3eb1"))
     (instances
       (project
-        "retropad_sms"
-        (path "/a309cff3-1dfb-5baa-b184-d84380f3c827" (reference "#PWR22") (unit 1)))))
+        "retropad_nes_gb_sms"
+        (path "/c1410d28-1080-5906-b835-1fb482a4b8a0" (reference "#PWR19") (unit 1)))))
   (wire
     (pts (xy 304.8 67.31) (xy 307.34 67.31))
     (stroke (width 0) (type default))
-    (uuid "1deed099-389d-5c65-83a8-8c26e9185c54"))
+    (uuid "20882900-989b-513b-9cc1-aef1586c8fb1"))
   (symbol
     (lib_id "power:GND")
     (at 307.34 67.31 90)
@@ -2357,31 +2324,31 @@
     (in_bom no)
     (on_board yes)
     (dnp no)
-    (uuid "827d22aa-bab3-5109-98a4-2e20f959ac83")
+    (uuid "51827b1e-8293-5f0b-88e6-dbc90b83d05a")
     (property
       "Reference"
-      "#PWR23"
+      "#PWR20"
       (at 309.88 66.04 0)
       (effects (font (size 1.27 1.27)) (justify left) hide))
     (property "Value" "GND" (at 309.88 68.58 0) (effects (font (size 1.27 1.27)) (justify left)))
     (property "Footprint" "" (at 307.34 67.31 0) (effects (font (size 1.27 1.27)) hide))
     (property "Datasheet" "~" (at 307.34 67.31 0) (effects (font (size 1.27 1.27)) hide))
-    (pin "1" (uuid "357f3c64-d71b-5a50-94b5-15ee3f57f2d7"))
+    (pin "1" (uuid "154c8373-7a59-5a19-a20d-93ed23f050c5"))
     (instances
       (project
-        "retropad_sms"
-        (path "/a309cff3-1dfb-5baa-b184-d84380f3c827" (reference "#PWR23") (unit 1)))))
+        "retropad_nes_gb_sms"
+        (path "/c1410d28-1080-5906-b835-1fb482a4b8a0" (reference "#PWR20") (unit 1)))))
   (wire
     (pts (xy 304.8 72.39) (xy 307.34 72.39))
     (stroke (width 0) (type default))
-    (uuid "f59d6a4c-a525-5b31-8ae0-3991cf116b08"))
+    (uuid "b30ea843-3acf-571b-987b-f6b055f29550"))
   (global_label
     "K_LEFT"
     (shape bidirectional)
     (at 307.34 72.39 0)
     (fields_autoplaced)
     (effects (font (size 1.27 1.27)) (justify left))
-    (uuid "13b82bb4-7258-507d-bab7-e9d80c024871")
+    (uuid "f57547dc-512d-52c5-be9f-6c2fe0a5d485")
     (property
       "Intersheetrefs"
       "${INTERSHEET_REFS}"
@@ -2390,14 +2357,14 @@
   (wire
     (pts (xy 294.64 72.39) (xy 292.1 72.39))
     (stroke (width 0) (type default))
-    (uuid "0e84fa44-8e72-5ef2-9795-c4bd69b8c54b"))
+    (uuid "6e2dfa76-9191-5a50-a8d4-e06528833f80"))
   (global_label
     "K_LEFT"
     (shape bidirectional)
     (at 292.1 72.39 180)
     (fields_autoplaced)
     (effects (font (size 1.27 1.27)) (justify right))
-    (uuid "d455a89a-642f-52f3-9204-d0fc34e73a82")
+    (uuid "2b7d6669-6244-5b28-832b-13745c4f99f2")
     (property
       "Intersheetrefs"
       "${INTERSHEET_REFS}"
@@ -2407,7 +2374,7 @@
     "LEFT"
     (at 320.04 68.58 0)
     (effects (font (size 1.27 1.27)) (justify left))
-    (uuid "7a8d43f4-55c1-5032-a355-985fbbaa71f1"))
+    (uuid "1a1d17c5-2994-556f-81a5-afdb26f60f7b"))
   (symbol
     (lib_id "RetroPad:SW_Push_4pin")
     (at 299.72 85.09 0)
@@ -2415,7 +2382,7 @@
     (in_bom yes)
     (on_board yes)
     (dnp no)
-    (uuid "6c8dbb15-11ad-5171-8218-9778da50e9cb")
+    (uuid "f46b329a-2f88-5d74-a16d-9786b01363a2")
     (property "Reference" "SW4" (at 297.18 80.01 0) (effects (font (size 1.27 1.27)) (justify left)))
     (property "Value" "RIGHT" (at 297.18 90.17 0) (effects (font (size 1.27 1.27)) (justify left)))
     (property
@@ -2424,16 +2391,18 @@
       (at 299.72 85.09 0)
       (effects (font (size 1.27 1.27)) hide))
     (property "Datasheet" "~" (at 299.72 85.09 0) (effects (font (size 1.27 1.27)) hide))
-    (pin "1" (uuid "8a84f5e3-2503-5e54-8fda-bf67c1f85815"))
-    (pin "2" (uuid "5ab384b0-52fa-5dc8-8b7f-41436839f591"))
-    (pin "3" (uuid "e0ac6e5f-924e-5177-87df-3702fee40505"))
-    (pin "4" (uuid "97b3e796-09d8-5ef4-af9d-d682d1abad18"))
+    (pin "1" (uuid "7949c18b-a254-52c3-aee1-ebbd23a3d724"))
+    (pin "2" (uuid "bb484099-7a99-5aca-995b-e08d3976e486"))
+    (pin "3" (uuid "24098d32-f475-57ae-afb9-bc8ba099675c"))
+    (pin "4" (uuid "44b71cf0-073b-5f7a-a561-6b506f16af84"))
     (instances
-      (project "retropad_sms" (path "/a309cff3-1dfb-5baa-b184-d84380f3c827" (reference "SW4") (unit 1)))))
+      (project
+        "retropad_nes_gb_sms"
+        (path "/c1410d28-1080-5906-b835-1fb482a4b8a0" (reference "SW4") (unit 1)))))
   (wire
     (pts (xy 294.64 82.55) (xy 292.1 82.55))
     (stroke (width 0) (type default))
-    (uuid "2c9d20ae-c2e5-5830-929c-4345c112052f"))
+    (uuid "7dc3cf96-e47a-57aa-a4c8-34880c6cf9fe"))
   (symbol
     (lib_id "power:GND")
     (at 292.1 82.55 270)
@@ -2441,24 +2410,24 @@
     (in_bom no)
     (on_board yes)
     (dnp no)
-    (uuid "2805ba07-0552-5ef4-a91a-583ae817ddc6")
+    (uuid "2c7d34cd-3c54-59e3-b3b3-718ac3e891e7")
     (property
       "Reference"
-      "#PWR24"
+      "#PWR21"
       (at 294.64 81.28 0)
       (effects (font (size 1.27 1.27)) (justify left) hide))
     (property "Value" "GND" (at 294.64 83.82 0) (effects (font (size 1.27 1.27)) (justify left)))
     (property "Footprint" "" (at 292.1 82.55 0) (effects (font (size 1.27 1.27)) hide))
     (property "Datasheet" "~" (at 292.1 82.55 0) (effects (font (size 1.27 1.27)) hide))
-    (pin "1" (uuid "8aa72aee-83f1-50d2-9cef-b95a9720a54a"))
+    (pin "1" (uuid "fe3e0d4a-3661-59fe-830d-203bfc6c8744"))
     (instances
       (project
-        "retropad_sms"
-        (path "/a309cff3-1dfb-5baa-b184-d84380f3c827" (reference "#PWR24") (unit 1)))))
+        "retropad_nes_gb_sms"
+        (path "/c1410d28-1080-5906-b835-1fb482a4b8a0" (reference "#PWR21") (unit 1)))))
   (wire
     (pts (xy 304.8 82.55) (xy 307.34 82.55))
     (stroke (width 0) (type default))
-    (uuid "a2b08a7a-4988-5aaa-98e9-d2458de0fad1"))
+    (uuid "6cb86a16-0b87-560e-b711-6a4f3edb0663"))
   (symbol
     (lib_id "power:GND")
     (at 307.34 82.55 90)
@@ -2466,31 +2435,31 @@
     (in_bom no)
     (on_board yes)
     (dnp no)
-    (uuid "fcd441c3-0e50-58b4-b2bd-304fd97ca306")
+    (uuid "d7d610c8-3afb-5b06-8237-65d180b1537a")
     (property
       "Reference"
-      "#PWR25"
+      "#PWR22"
       (at 309.88 81.28 0)
       (effects (font (size 1.27 1.27)) (justify left) hide))
     (property "Value" "GND" (at 309.88 83.82 0) (effects (font (size 1.27 1.27)) (justify left)))
     (property "Footprint" "" (at 307.34 82.55 0) (effects (font (size 1.27 1.27)) hide))
     (property "Datasheet" "~" (at 307.34 82.55 0) (effects (font (size 1.27 1.27)) hide))
-    (pin "1" (uuid "0abb5c48-db25-5e35-bd9d-ac34a4c9b5a2"))
+    (pin "1" (uuid "944859eb-9c4a-5c7f-ab5f-128541f78485"))
     (instances
       (project
-        "retropad_sms"
-        (path "/a309cff3-1dfb-5baa-b184-d84380f3c827" (reference "#PWR25") (unit 1)))))
+        "retropad_nes_gb_sms"
+        (path "/c1410d28-1080-5906-b835-1fb482a4b8a0" (reference "#PWR22") (unit 1)))))
   (wire
     (pts (xy 304.8 87.63) (xy 307.34 87.63))
     (stroke (width 0) (type default))
-    (uuid "dd9fd332-e9b0-546f-85da-c9535cdd4c93"))
+    (uuid "8936f6f8-0242-564b-9d99-319e2ba445c4"))
   (global_label
     "K_RIGHT"
     (shape bidirectional)
     (at 307.34 87.63 0)
     (fields_autoplaced)
     (effects (font (size 1.27 1.27)) (justify left))
-    (uuid "2e443a90-4ef9-5b71-98fe-8eca9eed4394")
+    (uuid "0f3b10d0-6a2d-5911-8e7b-75b8af230955")
     (property
       "Intersheetrefs"
       "${INTERSHEET_REFS}"
@@ -2499,14 +2468,14 @@
   (wire
     (pts (xy 294.64 87.63) (xy 292.1 87.63))
     (stroke (width 0) (type default))
-    (uuid "821264a8-4be5-5a25-a38f-7c57534d7293"))
+    (uuid "e56a1b2d-d276-5b5e-974a-4770f94a811b"))
   (global_label
     "K_RIGHT"
     (shape bidirectional)
     (at 292.1 87.63 180)
     (fields_autoplaced)
     (effects (font (size 1.27 1.27)) (justify right))
-    (uuid "75706bdd-73df-5368-92f9-a71e529c11d2")
+    (uuid "29600a7f-943f-507f-b476-607007f77513")
     (property
       "Intersheetrefs"
       "${INTERSHEET_REFS}"
@@ -2516,7 +2485,7 @@
     "RIGHT"
     (at 320.04 83.82 0)
     (effects (font (size 1.27 1.27)) (justify left))
-    (uuid "4b674673-b4e0-5db1-badc-a84e6e6b4d43"))
+    (uuid "825766c2-214e-5456-a4a9-d15e99c1fb1c"))
   (symbol
     (lib_id "RetroPad:SW_Push_4pin")
     (at 299.72 100.33 0)
@@ -2524,25 +2493,27 @@
     (in_bom yes)
     (on_board yes)
     (dnp no)
-    (uuid "fae6753b-3dc0-5876-b5eb-83564e3890a0")
+    (uuid "d35691d4-b148-5e34-9d45-e5285f69e468")
     (property "Reference" "SW5" (at 297.18 95.25 0) (effects (font (size 1.27 1.27)) (justify left)))
-    (property "Value" "1" (at 297.18 105.41 0) (effects (font (size 1.27 1.27)) (justify left)))
+    (property "Value" "B" (at 297.18 105.41 0) (effects (font (size 1.27 1.27)) (justify left)))
     (property
       "Footprint"
       "RetroPad:SW_PUSH-12mm_4pin"
       (at 299.72 100.33 0)
       (effects (font (size 1.27 1.27)) hide))
     (property "Datasheet" "~" (at 299.72 100.33 0) (effects (font (size 1.27 1.27)) hide))
-    (pin "1" (uuid "aa6ad3b1-1c7a-5cfc-96c4-2dadb269e9a6"))
-    (pin "2" (uuid "e4908b0d-0aba-5809-8c9e-30c7df240230"))
-    (pin "3" (uuid "98f36fef-7e78-54df-92cc-a6a0324eed7f"))
-    (pin "4" (uuid "f3931cb1-7def-5357-909a-8f68508da786"))
+    (pin "1" (uuid "5e60bdeb-eec8-5f4e-8848-1fee398f4e1f"))
+    (pin "2" (uuid "c7252d08-2749-518a-bd17-15184ff6e2fe"))
+    (pin "3" (uuid "a48b7482-1aba-5a36-b73e-8f79d24965a8"))
+    (pin "4" (uuid "7223e954-43ec-5265-b7d2-09a6a4141abe"))
     (instances
-      (project "retropad_sms" (path "/a309cff3-1dfb-5baa-b184-d84380f3c827" (reference "SW5") (unit 1)))))
+      (project
+        "retropad_nes_gb_sms"
+        (path "/c1410d28-1080-5906-b835-1fb482a4b8a0" (reference "SW5") (unit 1)))))
   (wire
     (pts (xy 294.64 97.79) (xy 292.1 97.79))
     (stroke (width 0) (type default))
-    (uuid "faf281b6-fbf7-52eb-aafc-6d9c0b57b493"))
+    (uuid "13b546db-c872-5d99-87f5-0f278e4645fe"))
   (symbol
     (lib_id "power:GND")
     (at 292.1 97.79 270)
@@ -2550,24 +2521,24 @@
     (in_bom no)
     (on_board yes)
     (dnp no)
-    (uuid "4f96e9f6-550e-5595-8e48-57a6f44952aa")
+    (uuid "8d50fd23-e8ef-5d2a-b786-edd196ed4ba7")
     (property
       "Reference"
-      "#PWR26"
+      "#PWR23"
       (at 294.64 96.52 0)
       (effects (font (size 1.27 1.27)) (justify left) hide))
     (property "Value" "GND" (at 294.64 99.06 0) (effects (font (size 1.27 1.27)) (justify left)))
     (property "Footprint" "" (at 292.1 97.79 0) (effects (font (size 1.27 1.27)) hide))
     (property "Datasheet" "~" (at 292.1 97.79 0) (effects (font (size 1.27 1.27)) hide))
-    (pin "1" (uuid "c4990ab6-a0b9-511a-93c6-92dda8c2e068"))
+    (pin "1" (uuid "f9cf32aa-1b86-5f02-b290-16006b9900d7"))
     (instances
       (project
-        "retropad_sms"
-        (path "/a309cff3-1dfb-5baa-b184-d84380f3c827" (reference "#PWR26") (unit 1)))))
+        "retropad_nes_gb_sms"
+        (path "/c1410d28-1080-5906-b835-1fb482a4b8a0" (reference "#PWR23") (unit 1)))))
   (wire
     (pts (xy 304.8 97.79) (xy 307.34 97.79))
     (stroke (width 0) (type default))
-    (uuid "6e7badc4-08a6-5783-bdaf-f3934064116b"))
+    (uuid "2a7a851d-2394-591c-8794-22f0ef34f2d8"))
   (symbol
     (lib_id "power:GND")
     (at 307.34 97.79 90)
@@ -2575,31 +2546,31 @@
     (in_bom no)
     (on_board yes)
     (dnp no)
-    (uuid "10924c58-ff74-5c77-a1c5-8043cb5cf1a1")
+    (uuid "052c2052-d55d-5c4c-8934-70581bcc7ee7")
     (property
       "Reference"
-      "#PWR27"
+      "#PWR24"
       (at 309.88 96.52 0)
       (effects (font (size 1.27 1.27)) (justify left) hide))
     (property "Value" "GND" (at 309.88 99.06 0) (effects (font (size 1.27 1.27)) (justify left)))
     (property "Footprint" "" (at 307.34 97.79 0) (effects (font (size 1.27 1.27)) hide))
     (property "Datasheet" "~" (at 307.34 97.79 0) (effects (font (size 1.27 1.27)) hide))
-    (pin "1" (uuid "ed927aee-29bd-53bc-ae5c-3affc1157d6d"))
+    (pin "1" (uuid "fadc3aad-441a-5e61-af96-1d35c510710e"))
     (instances
       (project
-        "retropad_sms"
-        (path "/a309cff3-1dfb-5baa-b184-d84380f3c827" (reference "#PWR27") (unit 1)))))
+        "retropad_nes_gb_sms"
+        (path "/c1410d28-1080-5906-b835-1fb482a4b8a0" (reference "#PWR24") (unit 1)))))
   (wire
     (pts (xy 304.8 102.87) (xy 307.34 102.87))
     (stroke (width 0) (type default))
-    (uuid "c238f82a-cb98-53cf-a22a-2f04c173f25d"))
+    (uuid "f6e8e657-bc7b-5286-98f9-572f7833ea54"))
   (global_label
-    "K_1"
+    "K_B"
     (shape bidirectional)
     (at 307.34 102.87 0)
     (fields_autoplaced)
     (effects (font (size 1.27 1.27)) (justify left))
-    (uuid "baf031b5-5190-505c-89ac-436911e95446")
+    (uuid "7ccc7445-60b6-5713-8f42-94acabe9f0d1")
     (property
       "Intersheetrefs"
       "${INTERSHEET_REFS}"
@@ -2608,24 +2579,24 @@
   (wire
     (pts (xy 294.64 102.87) (xy 292.1 102.87))
     (stroke (width 0) (type default))
-    (uuid "b42ee9fd-81d6-557d-9e6f-20c2e64385d2"))
+    (uuid "2eba6ff1-0773-5097-add3-0be7f0e4a6b5"))
   (global_label
-    "K_1"
+    "K_B"
     (shape bidirectional)
     (at 292.1 102.87 180)
     (fields_autoplaced)
     (effects (font (size 1.27 1.27)) (justify right))
-    (uuid "76d08562-50d8-5f57-b964-70dc77622e0b")
+    (uuid "4ebe9950-fce7-5e81-918c-097c712dcb6c")
     (property
       "Intersheetrefs"
       "${INTERSHEET_REFS}"
       (at 292.1 102.87 0)
       (effects (font (size 1.27 1.27)) hide)))
   (text
-    "1"
+    "B"
     (at 320.04 99.06 0)
     (effects (font (size 1.27 1.27)) (justify left))
-    (uuid "c4fbcfaa-ed15-52f3-97c3-c36636e4d3c5"))
+    (uuid "e7c7a6f4-3fc8-5f49-9de1-7e6baaab41cd"))
   (symbol
     (lib_id "RetroPad:SW_Push_4pin")
     (at 299.72 115.57 0)
@@ -2633,25 +2604,27 @@
     (in_bom yes)
     (on_board yes)
     (dnp no)
-    (uuid "4302ce48-23a3-5c2d-96eb-c8e6f8d3e879")
+    (uuid "2611e605-8ffd-55d4-9221-678a10f8ea47")
     (property "Reference" "SW6" (at 297.18 110.49 0) (effects (font (size 1.27 1.27)) (justify left)))
-    (property "Value" "2" (at 297.18 120.65 0) (effects (font (size 1.27 1.27)) (justify left)))
+    (property "Value" "A" (at 297.18 120.65 0) (effects (font (size 1.27 1.27)) (justify left)))
     (property
       "Footprint"
       "RetroPad:SW_PUSH-12mm_4pin"
       (at 299.72 115.57 0)
       (effects (font (size 1.27 1.27)) hide))
     (property "Datasheet" "~" (at 299.72 115.57 0) (effects (font (size 1.27 1.27)) hide))
-    (pin "1" (uuid "561bca2c-328d-59ff-9fbc-bdac31c18699"))
-    (pin "2" (uuid "16bc747c-9327-565a-ac0c-c2f129d67116"))
-    (pin "3" (uuid "9974744a-ed67-56f5-b6b7-1c5d2763af19"))
-    (pin "4" (uuid "90cae82f-48f4-5ba7-ac29-763f5f496a8e"))
+    (pin "1" (uuid "2632d683-d2ce-5e6a-af7f-6965a9acbc87"))
+    (pin "2" (uuid "34df4a9b-dce5-53c6-9c1d-9bf85610b9c4"))
+    (pin "3" (uuid "293cd10d-97b9-5693-889b-5bff65144d80"))
+    (pin "4" (uuid "a36c4d16-ea68-57be-a27d-9784a3468f78"))
     (instances
-      (project "retropad_sms" (path "/a309cff3-1dfb-5baa-b184-d84380f3c827" (reference "SW6") (unit 1)))))
+      (project
+        "retropad_nes_gb_sms"
+        (path "/c1410d28-1080-5906-b835-1fb482a4b8a0" (reference "SW6") (unit 1)))))
   (wire
     (pts (xy 294.64 113.03) (xy 292.1 113.03))
     (stroke (width 0) (type default))
-    (uuid "15608e3b-9b3a-5157-92a5-24e10971d656"))
+    (uuid "088f0e9e-689e-5a2e-bbd8-0dd4478a8347"))
   (symbol
     (lib_id "power:GND")
     (at 292.1 113.03 270)
@@ -2659,24 +2632,24 @@
     (in_bom no)
     (on_board yes)
     (dnp no)
-    (uuid "c4b82c19-18da-52fa-ba03-af12ba16ede3")
+    (uuid "019c5275-f6fa-5116-84c7-9ccec0507ad9")
     (property
       "Reference"
-      "#PWR28"
+      "#PWR25"
       (at 294.64 111.76 0)
       (effects (font (size 1.27 1.27)) (justify left) hide))
     (property "Value" "GND" (at 294.64 114.3 0) (effects (font (size 1.27 1.27)) (justify left)))
     (property "Footprint" "" (at 292.1 113.03 0) (effects (font (size 1.27 1.27)) hide))
     (property "Datasheet" "~" (at 292.1 113.03 0) (effects (font (size 1.27 1.27)) hide))
-    (pin "1" (uuid "03589271-4f46-58e6-a393-6d0e5028c68a"))
+    (pin "1" (uuid "15f8eb66-4bc8-5a97-9c5c-acf9502772e9"))
     (instances
       (project
-        "retropad_sms"
-        (path "/a309cff3-1dfb-5baa-b184-d84380f3c827" (reference "#PWR28") (unit 1)))))
+        "retropad_nes_gb_sms"
+        (path "/c1410d28-1080-5906-b835-1fb482a4b8a0" (reference "#PWR25") (unit 1)))))
   (wire
     (pts (xy 304.8 113.03) (xy 307.34 113.03))
     (stroke (width 0) (type default))
-    (uuid "7cc273e1-15fd-57e4-9582-40918bc7bba3"))
+    (uuid "b839614b-84c9-582e-80f7-0c47a210c838"))
   (symbol
     (lib_id "power:GND")
     (at 307.34 113.03 90)
@@ -2684,31 +2657,31 @@
     (in_bom no)
     (on_board yes)
     (dnp no)
-    (uuid "93afd0b0-af2a-5ec7-ab42-003c5d62e1c1")
+    (uuid "4e41ef70-2aa1-5073-81c6-6414af315dbe")
     (property
       "Reference"
-      "#PWR29"
+      "#PWR26"
       (at 309.88 111.76 0)
       (effects (font (size 1.27 1.27)) (justify left) hide))
     (property "Value" "GND" (at 309.88 114.3 0) (effects (font (size 1.27 1.27)) (justify left)))
     (property "Footprint" "" (at 307.34 113.03 0) (effects (font (size 1.27 1.27)) hide))
     (property "Datasheet" "~" (at 307.34 113.03 0) (effects (font (size 1.27 1.27)) hide))
-    (pin "1" (uuid "b71f467f-695e-5846-9193-d7d735d54e9e"))
+    (pin "1" (uuid "ab5a4824-a794-594b-81fc-b5806e1923da"))
     (instances
       (project
-        "retropad_sms"
-        (path "/a309cff3-1dfb-5baa-b184-d84380f3c827" (reference "#PWR29") (unit 1)))))
+        "retropad_nes_gb_sms"
+        (path "/c1410d28-1080-5906-b835-1fb482a4b8a0" (reference "#PWR26") (unit 1)))))
   (wire
     (pts (xy 304.8 118.11) (xy 307.34 118.11))
     (stroke (width 0) (type default))
-    (uuid "d8d5e96b-3d55-5985-af2c-d3f655bdefd3"))
+    (uuid "817b69fd-8fa1-502e-8454-82241bdbf5f6"))
   (global_label
-    "K_2"
+    "K_A"
     (shape bidirectional)
     (at 307.34 118.11 0)
     (fields_autoplaced)
     (effects (font (size 1.27 1.27)) (justify left))
-    (uuid "323fa6dc-b1f8-539d-a333-04ca2ca94a03")
+    (uuid "0010a8b8-cbb1-5356-be11-e725c987e688")
     (property
       "Intersheetrefs"
       "${INTERSHEET_REFS}"
@@ -2717,24 +2690,24 @@
   (wire
     (pts (xy 294.64 118.11) (xy 292.1 118.11))
     (stroke (width 0) (type default))
-    (uuid "d16149eb-9474-538e-bb4f-11321ff16e6b"))
+    (uuid "3623dd07-0053-55f6-bfcf-760c4d677e7b"))
   (global_label
-    "K_2"
+    "K_A"
     (shape bidirectional)
     (at 292.1 118.11 180)
     (fields_autoplaced)
     (effects (font (size 1.27 1.27)) (justify right))
-    (uuid "92a2f9d4-cc8d-5733-a7e2-8b816e350017")
+    (uuid "8fd88be6-48ef-5b43-a096-5fcf6a4580af")
     (property
       "Intersheetrefs"
       "${INTERSHEET_REFS}"
       (at 292.1 118.11 0)
       (effects (font (size 1.27 1.27)) hide)))
   (text
-    "2"
+    "A"
     (at 320.04 114.3 0)
     (effects (font (size 1.27 1.27)) (justify left))
-    (uuid "48e87fca-fc3a-5939-981a-6425ca0d3c03"))
+    (uuid "796a03df-d853-52d4-acf7-7da0cb76acb6"))
   (symbol
     (lib_id "RetroPad:SW_Push_4pin")
     (at 299.72 130.81 0)
@@ -2742,25 +2715,27 @@
     (in_bom yes)
     (on_board yes)
     (dnp no)
-    (uuid "05d2a387-5fef-5cc9-902a-c439f07e272d")
+    (uuid "31218d47-d9bc-5560-9fe8-3f8c0627bc7b")
     (property "Reference" "SW7" (at 297.18 125.73 0) (effects (font (size 1.27 1.27)) (justify left)))
-    (property "Value" "START" (at 297.18 135.89 0) (effects (font (size 1.27 1.27)) (justify left)))
+    (property "Value" "SELECT" (at 297.18 135.89 0) (effects (font (size 1.27 1.27)) (justify left)))
     (property
       "Footprint"
       "RetroPad:SW_PUSH_6mm_4pin"
       (at 299.72 130.81 0)
       (effects (font (size 1.27 1.27)) hide))
     (property "Datasheet" "~" (at 299.72 130.81 0) (effects (font (size 1.27 1.27)) hide))
-    (pin "1" (uuid "d692f728-790a-5625-8b2e-2c18e20ed02f"))
-    (pin "2" (uuid "aee2d181-fc11-5874-93af-879a715ab8dc"))
-    (pin "3" (uuid "f6908413-944a-57bd-b702-c64ff9b26e9a"))
-    (pin "4" (uuid "ce4f5365-eac8-5f4e-ba48-39a46ae1d78c"))
+    (pin "1" (uuid "78dc8fb5-6e45-5416-ba94-7407ba80b437"))
+    (pin "2" (uuid "5bd16cb7-d487-5c70-95d0-bc0a682dc4f4"))
+    (pin "3" (uuid "2c86072a-5d7f-53d0-9c88-7a3db9719fbd"))
+    (pin "4" (uuid "36764938-b97c-579b-8af1-3343f20a844e"))
     (instances
-      (project "retropad_sms" (path "/a309cff3-1dfb-5baa-b184-d84380f3c827" (reference "SW7") (unit 1)))))
+      (project
+        "retropad_nes_gb_sms"
+        (path "/c1410d28-1080-5906-b835-1fb482a4b8a0" (reference "SW7") (unit 1)))))
   (wire
     (pts (xy 294.64 128.27) (xy 292.1 128.27))
     (stroke (width 0) (type default))
-    (uuid "13260854-71c5-515c-8cfb-88688443603b"))
+    (uuid "45db4091-8331-5d7e-8952-30cf53bef1c6"))
   (symbol
     (lib_id "power:GND")
     (at 292.1 128.27 270)
@@ -2768,24 +2743,24 @@
     (in_bom no)
     (on_board yes)
     (dnp no)
-    (uuid "75bf8089-3249-5332-9669-ff83f56250b3")
+    (uuid "d3b0df0a-b5e5-5658-8756-50be37b924ea")
     (property
       "Reference"
-      "#PWR30"
+      "#PWR27"
       (at 294.64 127 0)
       (effects (font (size 1.27 1.27)) (justify left) hide))
     (property "Value" "GND" (at 294.64 129.54 0) (effects (font (size 1.27 1.27)) (justify left)))
     (property "Footprint" "" (at 292.1 128.27 0) (effects (font (size 1.27 1.27)) hide))
     (property "Datasheet" "~" (at 292.1 128.27 0) (effects (font (size 1.27 1.27)) hide))
-    (pin "1" (uuid "4e279d0e-7976-53e5-97cc-bb798299a8f6"))
+    (pin "1" (uuid "8cbaed1b-517b-532d-b380-3dd8e814246b"))
     (instances
       (project
-        "retropad_sms"
-        (path "/a309cff3-1dfb-5baa-b184-d84380f3c827" (reference "#PWR30") (unit 1)))))
+        "retropad_nes_gb_sms"
+        (path "/c1410d28-1080-5906-b835-1fb482a4b8a0" (reference "#PWR27") (unit 1)))))
   (wire
     (pts (xy 304.8 128.27) (xy 307.34 128.27))
     (stroke (width 0) (type default))
-    (uuid "3791b808-2959-5f53-bf0b-ef0efc8e5069"))
+    (uuid "29b63bc1-4230-51b0-a383-bd46321afc8c"))
   (symbol
     (lib_id "power:GND")
     (at 307.34 128.27 90)
@@ -2793,31 +2768,31 @@
     (in_bom no)
     (on_board yes)
     (dnp no)
-    (uuid "32a71ab7-6692-5a9f-a110-91abbf60851b")
+    (uuid "21cb4ad0-3ea3-5652-b4f7-58d1cb46acae")
     (property
       "Reference"
-      "#PWR31"
+      "#PWR28"
       (at 309.88 127 0)
       (effects (font (size 1.27 1.27)) (justify left) hide))
     (property "Value" "GND" (at 309.88 129.54 0) (effects (font (size 1.27 1.27)) (justify left)))
     (property "Footprint" "" (at 307.34 128.27 0) (effects (font (size 1.27 1.27)) hide))
     (property "Datasheet" "~" (at 307.34 128.27 0) (effects (font (size 1.27 1.27)) hide))
-    (pin "1" (uuid "d93c703c-399f-5bb1-b8f0-5269250b0f7f"))
+    (pin "1" (uuid "4749c2bf-96c5-5cea-a9bf-a5ffb2f3c18b"))
     (instances
       (project
-        "retropad_sms"
-        (path "/a309cff3-1dfb-5baa-b184-d84380f3c827" (reference "#PWR31") (unit 1)))))
+        "retropad_nes_gb_sms"
+        (path "/c1410d28-1080-5906-b835-1fb482a4b8a0" (reference "#PWR28") (unit 1)))))
   (wire
     (pts (xy 304.8 133.35) (xy 307.34 133.35))
     (stroke (width 0) (type default))
-    (uuid "59b7f579-d3b4-508c-a2e0-4eec90d23dc8"))
+    (uuid "8dfa64f7-a259-57d8-b318-c6d698a2e9d9"))
   (global_label
-    "K_START"
+    "K_SELECT"
     (shape bidirectional)
     (at 307.34 133.35 0)
     (fields_autoplaced)
     (effects (font (size 1.27 1.27)) (justify left))
-    (uuid "60b2bcf0-a3cc-507c-b6f1-8f290e5e08c1")
+    (uuid "65387eb6-4f57-54d5-a651-7ff35d8e2061")
     (property
       "Intersheetrefs"
       "${INTERSHEET_REFS}"
@@ -2826,24 +2801,24 @@
   (wire
     (pts (xy 294.64 133.35) (xy 292.1 133.35))
     (stroke (width 0) (type default))
-    (uuid "e3feedda-8c82-563c-8bfa-92ff8b469563"))
+    (uuid "6d312ed5-d159-58aa-a69d-742f2438f213"))
   (global_label
-    "K_START"
+    "K_SELECT"
     (shape bidirectional)
     (at 292.1 133.35 180)
     (fields_autoplaced)
     (effects (font (size 1.27 1.27)) (justify right))
-    (uuid "eab5818f-e783-5b17-8a08-b7aa275b4321")
+    (uuid "afafa05f-f45b-536d-86fb-e93d23f05a72")
     (property
       "Intersheetrefs"
       "${INTERSHEET_REFS}"
       (at 292.1 133.35 0)
       (effects (font (size 1.27 1.27)) hide)))
   (text
-    "START"
+    "SELECT"
     (at 320.04 129.54 0)
     (effects (font (size 1.27 1.27)) (justify left))
-    (uuid "60aba359-cdf2-5e1d-841a-ea7cbd056c0f"))
+    (uuid "1e64dc0f-9c4e-5f1e-9743-88f018408d92"))
   (symbol
     (lib_id "RetroPad:SW_Push_4pin")
     (at 299.72 146.05 0)
@@ -2851,25 +2826,27 @@
     (in_bom yes)
     (on_board yes)
     (dnp no)
-    (uuid "eca5db9d-2833-51ea-9255-9aa24e1e193b")
+    (uuid "50eb29eb-c4a6-5482-9372-b302b4b85c46")
     (property "Reference" "SW8" (at 297.18 140.97 0) (effects (font (size 1.27 1.27)) (justify left)))
-    (property "Value" "MENU" (at 297.18 151.13 0) (effects (font (size 1.27 1.27)) (justify left)))
+    (property "Value" "START" (at 297.18 151.13 0) (effects (font (size 1.27 1.27)) (justify left)))
     (property
       "Footprint"
       "RetroPad:SW_PUSH_6mm_4pin"
       (at 299.72 146.05 0)
       (effects (font (size 1.27 1.27)) hide))
     (property "Datasheet" "~" (at 299.72 146.05 0) (effects (font (size 1.27 1.27)) hide))
-    (pin "1" (uuid "1db0d369-b426-5434-a371-651f6c482bb5"))
-    (pin "2" (uuid "ca571921-3e7b-5992-a8e6-93a0518f9ac1"))
-    (pin "3" (uuid "db52a086-011c-54b6-9835-1446617b25e9"))
-    (pin "4" (uuid "8b2ceb33-9f72-52af-81e5-7c34764eab59"))
+    (pin "1" (uuid "8ec88fc6-0bd8-5c85-9618-71039016a413"))
+    (pin "2" (uuid "d771bcb2-2193-5986-8a7e-3b3f3bc96b80"))
+    (pin "3" (uuid "4378a99e-52f7-52f2-bf0b-ac21e2c25698"))
+    (pin "4" (uuid "881a96c4-c3d3-5ecd-abfb-5646acb6aa5b"))
     (instances
-      (project "retropad_sms" (path "/a309cff3-1dfb-5baa-b184-d84380f3c827" (reference "SW8") (unit 1)))))
+      (project
+        "retropad_nes_gb_sms"
+        (path "/c1410d28-1080-5906-b835-1fb482a4b8a0" (reference "SW8") (unit 1)))))
   (wire
     (pts (xy 294.64 143.51) (xy 292.1 143.51))
     (stroke (width 0) (type default))
-    (uuid "37281760-8c0e-5a7c-bcd0-2b20117ef812"))
+    (uuid "5c5d7345-aa6e-541d-a321-ac5ed925fdb5"))
   (symbol
     (lib_id "power:GND")
     (at 292.1 143.51 270)
@@ -2877,24 +2854,24 @@
     (in_bom no)
     (on_board yes)
     (dnp no)
-    (uuid "5ee1c115-156e-5e1c-8f5d-146c303830d1")
+    (uuid "4473a187-944b-5bb6-a0e3-68c40f9a7c75")
     (property
       "Reference"
-      "#PWR32"
+      "#PWR29"
       (at 294.64 142.24 0)
       (effects (font (size 1.27 1.27)) (justify left) hide))
     (property "Value" "GND" (at 294.64 144.78 0) (effects (font (size 1.27 1.27)) (justify left)))
     (property "Footprint" "" (at 292.1 143.51 0) (effects (font (size 1.27 1.27)) hide))
     (property "Datasheet" "~" (at 292.1 143.51 0) (effects (font (size 1.27 1.27)) hide))
-    (pin "1" (uuid "f0ad2ae5-185c-5d26-b85f-eca5b0cbadc6"))
+    (pin "1" (uuid "1075b397-5fcb-56d0-8827-f0d6e48eccb6"))
     (instances
       (project
-        "retropad_sms"
-        (path "/a309cff3-1dfb-5baa-b184-d84380f3c827" (reference "#PWR32") (unit 1)))))
+        "retropad_nes_gb_sms"
+        (path "/c1410d28-1080-5906-b835-1fb482a4b8a0" (reference "#PWR29") (unit 1)))))
   (wire
     (pts (xy 304.8 143.51) (xy 307.34 143.51))
     (stroke (width 0) (type default))
-    (uuid "b59ca1ac-8a0b-5f64-a6b0-4def58488ff9"))
+    (uuid "a3dbf1b8-0d6b-56b4-9ff7-d2b3c0df620e"))
   (symbol
     (lib_id "power:GND")
     (at 307.34 143.51 90)
@@ -2902,31 +2879,31 @@
     (in_bom no)
     (on_board yes)
     (dnp no)
-    (uuid "0fcc5cf4-7bb8-5c40-aa92-c92905297782")
+    (uuid "30ab3744-fec9-5365-a269-bafd9cdf5bc4")
     (property
       "Reference"
-      "#PWR33"
+      "#PWR30"
       (at 309.88 142.24 0)
       (effects (font (size 1.27 1.27)) (justify left) hide))
     (property "Value" "GND" (at 309.88 144.78 0) (effects (font (size 1.27 1.27)) (justify left)))
     (property "Footprint" "" (at 307.34 143.51 0) (effects (font (size 1.27 1.27)) hide))
     (property "Datasheet" "~" (at 307.34 143.51 0) (effects (font (size 1.27 1.27)) hide))
-    (pin "1" (uuid "a661784c-fc00-5b68-8372-13253ea55993"))
+    (pin "1" (uuid "1e8b5f2d-ece9-549c-a3a0-f9244b5e8885"))
     (instances
       (project
-        "retropad_sms"
-        (path "/a309cff3-1dfb-5baa-b184-d84380f3c827" (reference "#PWR33") (unit 1)))))
+        "retropad_nes_gb_sms"
+        (path "/c1410d28-1080-5906-b835-1fb482a4b8a0" (reference "#PWR30") (unit 1)))))
   (wire
     (pts (xy 304.8 148.59) (xy 307.34 148.59))
     (stroke (width 0) (type default))
-    (uuid "d2cbb780-6688-5d23-804b-8a03e1cd9faf"))
+    (uuid "df206893-4289-572b-8959-40ce45c764b1"))
   (global_label
-    "K_MENU"
+    "K_START"
     (shape bidirectional)
     (at 307.34 148.59 0)
     (fields_autoplaced)
     (effects (font (size 1.27 1.27)) (justify left))
-    (uuid "4c0ede5c-6167-5fb1-8482-0fdd4bd728cb")
+    (uuid "0c894378-b3a3-59b1-ba8f-d7f8f548335a")
     (property
       "Intersheetrefs"
       "${INTERSHEET_REFS}"
@@ -2935,22 +2912,133 @@
   (wire
     (pts (xy 294.64 148.59) (xy 292.1 148.59))
     (stroke (width 0) (type default))
-    (uuid "ae23b5f6-fbae-5882-97bd-839d4d1ceb50"))
+    (uuid "9df6242e-3ed7-5fb4-8085-15c0297b162a"))
   (global_label
-    "K_MENU"
+    "K_START"
     (shape bidirectional)
     (at 292.1 148.59 180)
     (fields_autoplaced)
     (effects (font (size 1.27 1.27)) (justify right))
-    (uuid "1e6946c5-d733-5df4-9060-7df714d7070d")
+    (uuid "86c5efea-5c0e-51d3-9c9f-782e7246114f")
     (property
       "Intersheetrefs"
       "${INTERSHEET_REFS}"
       (at 292.1 148.59 0)
       (effects (font (size 1.27 1.27)) hide)))
   (text
-    "MENU"
+    "START"
     (at 320.04 144.78 0)
     (effects (font (size 1.27 1.27)) (justify left))
-    (uuid "69443d6b-23ad-5148-86c0-421cb714fa3b"))
+    (uuid "261ac21a-c7c7-5ac7-ad6d-3fc18db1ccd2"))
+  (symbol
+    (lib_id "RetroPad:SW_Push_4pin")
+    (at 299.72 161.29 0)
+    (unit 1)
+    (in_bom yes)
+    (on_board yes)
+    (dnp no)
+    (uuid "648467f2-a0f3-5f11-84cf-6a9205dabe9b")
+    (property "Reference" "SW9" (at 297.18 156.21 0) (effects (font (size 1.27 1.27)) (justify left)))
+    (property "Value" "MENU" (at 297.18 166.37 0) (effects (font (size 1.27 1.27)) (justify left)))
+    (property
+      "Footprint"
+      "RetroPad:SW_PUSH_6mm_4pin"
+      (at 299.72 161.29 0)
+      (effects (font (size 1.27 1.27)) hide))
+    (property "Datasheet" "~" (at 299.72 161.29 0) (effects (font (size 1.27 1.27)) hide))
+    (pin "1" (uuid "a9a3c43b-83ac-52d3-9d9c-65e0843751e3"))
+    (pin "2" (uuid "b4c3ce99-dcee-5724-97aa-67cfdffcbf4e"))
+    (pin "3" (uuid "54435fa1-9ac4-5883-8b8c-221d231e0599"))
+    (pin "4" (uuid "8ea48256-f658-5d55-8fa3-8d0cf3335fa3"))
+    (instances
+      (project
+        "retropad_nes_gb_sms"
+        (path "/c1410d28-1080-5906-b835-1fb482a4b8a0" (reference "SW9") (unit 1)))))
+  (wire
+    (pts (xy 294.64 158.75) (xy 292.1 158.75))
+    (stroke (width 0) (type default))
+    (uuid "d1a40b57-a6cf-5426-80ab-90b917b79849"))
+  (symbol
+    (lib_id "power:GND")
+    (at 292.1 158.75 270)
+    (unit 1)
+    (in_bom no)
+    (on_board yes)
+    (dnp no)
+    (uuid "28fcac6a-3578-5fd6-bdea-1824de40deba")
+    (property
+      "Reference"
+      "#PWR31"
+      (at 294.64 157.48 0)
+      (effects (font (size 1.27 1.27)) (justify left) hide))
+    (property "Value" "GND" (at 294.64 160.02 0) (effects (font (size 1.27 1.27)) (justify left)))
+    (property "Footprint" "" (at 292.1 158.75 0) (effects (font (size 1.27 1.27)) hide))
+    (property "Datasheet" "~" (at 292.1 158.75 0) (effects (font (size 1.27 1.27)) hide))
+    (pin "1" (uuid "e9d4544d-7adc-5d0f-8416-9e8ac6473689"))
+    (instances
+      (project
+        "retropad_nes_gb_sms"
+        (path "/c1410d28-1080-5906-b835-1fb482a4b8a0" (reference "#PWR31") (unit 1)))))
+  (wire
+    (pts (xy 304.8 158.75) (xy 307.34 158.75))
+    (stroke (width 0) (type default))
+    (uuid "dd620077-9906-59bd-a567-d0903a5470fa"))
+  (symbol
+    (lib_id "power:GND")
+    (at 307.34 158.75 90)
+    (unit 1)
+    (in_bom no)
+    (on_board yes)
+    (dnp no)
+    (uuid "86271ee0-2386-50f7-9b6f-4ad36c13e0ec")
+    (property
+      "Reference"
+      "#PWR32"
+      (at 309.88 157.48 0)
+      (effects (font (size 1.27 1.27)) (justify left) hide))
+    (property "Value" "GND" (at 309.88 160.02 0) (effects (font (size 1.27 1.27)) (justify left)))
+    (property "Footprint" "" (at 307.34 158.75 0) (effects (font (size 1.27 1.27)) hide))
+    (property "Datasheet" "~" (at 307.34 158.75 0) (effects (font (size 1.27 1.27)) hide))
+    (pin "1" (uuid "e39f43be-4f44-5b12-8ae5-37d3ff8cb7d1"))
+    (instances
+      (project
+        "retropad_nes_gb_sms"
+        (path "/c1410d28-1080-5906-b835-1fb482a4b8a0" (reference "#PWR32") (unit 1)))))
+  (wire
+    (pts (xy 304.8 163.83) (xy 307.34 163.83))
+    (stroke (width 0) (type default))
+    (uuid "c4ef903d-9809-56ee-95c1-fc6667a43df7"))
+  (global_label
+    "K_MENU"
+    (shape bidirectional)
+    (at 307.34 163.83 0)
+    (fields_autoplaced)
+    (effects (font (size 1.27 1.27)) (justify left))
+    (uuid "2441e9eb-df90-5194-a79b-0def39ed5331")
+    (property
+      "Intersheetrefs"
+      "${INTERSHEET_REFS}"
+      (at 307.34 163.83 0)
+      (effects (font (size 1.27 1.27)) hide)))
+  (wire
+    (pts (xy 294.64 163.83) (xy 292.1 163.83))
+    (stroke (width 0) (type default))
+    (uuid "361dafe0-8815-5c1d-b441-b6ba693c852b"))
+  (global_label
+    "K_MENU"
+    (shape bidirectional)
+    (at 292.1 163.83 180)
+    (fields_autoplaced)
+    (effects (font (size 1.27 1.27)) (justify right))
+    (uuid "cd5eaac2-42b8-598e-95b7-b1a9c29b9791")
+    (property
+      "Intersheetrefs"
+      "${INTERSHEET_REFS}"
+      (at 292.1 163.83 0)
+      (effects (font (size 1.27 1.27)) hide)))
+  (text
+    "MENU"
+    (at 320.04 160.02 0)
+    (effects (font (size 1.27 1.27)) (justify left))
+    (uuid "1d422662-9339-5dc4-8681-bf4317c325b9"))
   (sheet_instances (path "/" (page "1"))))

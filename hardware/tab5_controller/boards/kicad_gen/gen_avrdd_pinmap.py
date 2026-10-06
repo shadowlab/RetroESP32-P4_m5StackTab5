@@ -27,7 +27,7 @@ def main():
     for name, (cid, title) in layout.CONSOLES.items():
         by_id[cid] = (name, title, layout.avrdd_slots(name))
     for cid, name in layout.ALIASES.items():
-        title = "no board of its own, mapped as %s" % layout.CONSOLES[name][1]
+        title = "same slots as the %s board" % layout.CONSOLES[name][1]
         by_id.setdefault(cid, (name, title, layout.avrdd_slots(name)))
 
     lines = [

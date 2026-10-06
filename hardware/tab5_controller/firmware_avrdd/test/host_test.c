@@ -145,8 +145,8 @@ int main(void)
     s_console = RP_CONSOLE_SMS;
     PORTC.IN = PORTD.IN = PORTF.IN = 0xFF;
     press(&PORTD, 5, 1);                                /* slot 4 = button 1 (B bit) */
-    press(&PORTD, 7, 1);                                /* slot 6 = START */
-    check("SMS PD5 -> 1 (B), PD7 -> START", buttons_sample(),
+    press(&PORTC, 0, 1);                                /* slot 7 = START (Pause) */
+    check("SMS PD5 -> 1 (B), PC0 -> START", buttons_sample(),
           RP_BIT(RP_BTN_B) | RP_BIT(RP_BTN_START));
     PORTA.IN = 0xFF & (uint8_t)~((1 << 0) | (1 << 6));  /* ID0 + ID2 -> console 5 */
     check("Genesis console id from straps", read_console_id(), RP_CONSOLE_GENESIS);
@@ -157,6 +157,23 @@ int main(void)
     press(&PORTC, 3, 1);                                /* slot 10 = MODE (SELECT bit) */
     check("Genesis PD6 -> X, PC2 -> Z, PC3 -> MODE", buttons_sample(),
           RP_BIT(RP_BTN_X) | RP_BIT(RP_BTN_Z) | RP_BIT(RP_BTN_SELECT));
+
+    printf("console-select switch: the ID is re-read while running\n");
+    set_console(RP_CONSOLE_NES);
+    check("one reading of a new ID is not enough", console_id_step(RP_CONSOLE_SMS), 0);
+    check("  console unchanged", s_console, RP_CONSOLE_NES);
+    check("second equal reading switches", console_id_step(RP_CONSOLE_SMS), 1);
+    check("  console now SMS", s_console, RP_CONSOLE_SMS);
+    host_read(RP_REG_INFO, v, 8);
+    check("  info block reports SMS to the Tab5", v[RP_INFO_CONSOLE_ID], RP_CONSOLE_SMS);
+    check("switch passing GB on its way back: no change", console_id_step(RP_CONSOLE_GB), 0);
+    check("  back at SMS resets the candidate", console_id_step(RP_CONSOLE_SMS), 0);
+    check("  console still SMS", s_console, RP_CONSOLE_SMS);
+    PORTA.IN = 0xFF & (uint8_t)~(1 << 1);               /* switch now grounds ID1 only */
+    check("strap read after a move: Game Boy", read_console_id(), RP_CONSOLE_GB);
+    PORTA.IN = 0xFF & (uint8_t)~(1 << 0);               /* back to ID0 */
+    check("previously grounded pin gets its pull-up back", read_console_id(), RP_CONSOLE_NES);
+    check("  ID1 pull-up re-enabled", PORTA.PIN1CTRL & PORT_PULLUPEN_bm, PORT_PULLUPEN_bm);
 
     printf("unknown console id falls back to the generic order, never all-UP\n");
     s_console = RP_CONSOLE_NEOGEO;

@@ -171,10 +171,10 @@ to set that bit. With no straps fitted the ID is 0, which means Generic.
 | ID | Console | ID3 PA7 | ID2 PA6 | ID1 PA1 | ID0 PA0 |
 |---|---|---|---|---|---|
 | 0 | Generic | – | – | – | – |
-| 1 | NES / Game Boy (one shared board) | – | – | – | ● |
-| 2 | Game Boy / Color (no separate board; mapped as ID 1) | – | – | ● | – |
+| 1 | NES (NES / GB / SMS board, switch) | – | – | – | ● |
+| 2 | Game Boy / Color (NES / GB / SMS board, switch) | – | – | ● | – |
 | 3 | SNES | – | – | ● | ● |
-| 4 | Master System / Game Gear | – | ● | – | – |
+| 4 | Master System / Game Gear (NES / GB / SMS board, switch) | – | ● | – | – |
 | 5 | Genesis / Mega Drive | – | ● | – | ● |
 | 6 | PC Engine | – | ● | ● | – |
 | 7 | Atari 2600 | – | ● | ● | ● |
@@ -203,10 +203,10 @@ in-game menu.
 
 | ID | Console | Buttons (label → bit) | Notes |
 |---|---|---|---|
-| 1 | NES / Game Boy | D-pad, B→`B`, A→`A`, SELECT, START | One board serves both consoles |
-| 2 | Game Boy | Same as ID 1 | Reserved; the shared board reports ID 1 |
+| 1 | NES | D-pad, B→`B`, A→`A`, SELECT, START | One board with a slide switch serves NES, Game Boy and Master System |
+| 2 | Game Boy | Same as ID 1 | NES / GB / SMS board, switch on GB |
 | 3 | SNES | D-pad, A, B, X, Y, L, R, SELECT, START | |
-| 4 | SMS / GG | D-pad, 1→`B`, 2→`A`, START (Pause) | |
+| 4 | SMS / GG | D-pad, 1→`B`, 2→`A`, START (Pause) | NES / GB / SMS board, switch on SMS; SELECT unused |
 | 5 | Genesis | D-pad, A→`A`, B→`B`, C→`C`, X→`X`, Y→`Y`, Z→`Z`, START, MODE→`SELECT` | A/B/C are remapped for the core. With this board attached, port 1 is a 6-button pad and the Genesis app passes X/Y/Z/MODE through. Holding MODE when the board connects keeps it 3-button. |
 | 6 | PC Engine | D-pad, II→`B`, I→`A`, SELECT, RUN→`START` | |
 | 7 | Atari 2600 | Joystick→D-pad, FIRE→`A`, GAME SELECT→`SELECT`, GAME RESET→`START`, paddle→AN0 | |
@@ -317,8 +317,8 @@ make flash PORT=/dev/ttyUSB0       # SerialUPDI: USB-serial adapter + resistor
 ## 7. Status and open items
 
 * **Console boards:** [`boards/`](boards/README.md) has routed, DRC-clean KiCad projects
-  (schematic + PCB, AVR32DD28) for SNES, NES / Game Boy, Genesis and Master System / Game
-  Gear. Each was checked against the firmware's pin map. Check the 2×5 header orientation
+  (schematic + PCB, AVR32DD28) for SNES, Genesis, and NES / Game Boy / Master System (one board
+  with a console-select switch). Each was checked against the firmware's pin map. Check the 2×5 header orientation
   before ordering.
 * **Firmware:** builds to about 1.5 KB and passes a host test that replays the driver's I2C
   traffic. It has not yet run on real hardware.
