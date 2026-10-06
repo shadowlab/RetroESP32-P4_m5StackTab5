@@ -292,7 +292,8 @@ def build_core(b):
 
     # Console-select switch: SP3T slide (C&K PCM13), common (pad 3) to GND, one
     # throw per ID line. Front side at the bottom edge, lever out through the
-    # case's bottom wall. Positions labelled in pad order 1, 2, 4.
+    # case's bottom wall. PCM13SMTR datasheet: POS.1 (lever left) closes 1-3,
+    # POS.2 2-3, POS.3 3-4, so the labels read in pad order 1, 2, 4.
     if CFG.id_switch:
         y0 = WALL + 2.2                      # mounting tabs 0.37 mm inside the edge (rule: 0.3)
         sw = b.place("Button_Switch_SMD", "SW_SP3T_PCM13", "SW_ID", "PCM13SMTR", 64.0, y0, 0.0)

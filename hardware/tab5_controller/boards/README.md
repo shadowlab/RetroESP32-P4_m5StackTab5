@@ -85,9 +85,18 @@ switches the button map and jumps the launcher to that console's games.
 
 * The switch sits on the front at the bottom edge, centred under SELECT/START, with its lever
   about 1.2 mm past the board edge. The case's bottom wall needs a slot for it.
-* The silkscreen labels the positions NES, GB, SMS in pad order 1, 2, 4. **Check against the
-  PCM13 datasheet which lever position closes which pad** before ordering, and swap the labels
-  in `layout.ID_SWITCH` if needed. KiCad's `SW_SP3T` symbol puts the common on pin 3.
+* Positions, checked against C&K's PCM13SMTR datasheet (common = pin 3), seen from the front
+  with the lever at the bottom edge:
+
+  | Lever | Datasheet | Closes | ID line | Console |
+  |---|---|---|---|---|
+  | left | POS.1 | 1–3 | ID0 | NES (1) |
+  | centre | POS.2 | 2–3 | ID1 | Game Boy (2) |
+  | right | POS.3 | 3–4 | ID2 | Master System (4) |
+
+  The silkscreen reads NES, GB, SMS left to right to match. The footprint's land pattern
+  (signal pads at 1.5 / 3.0 / 1.5 mm, 0.7 mm wide; locating holes 5.0 mm apart) matches the
+  datasheet's PC mounting drawing.
 * The board's buttons serve all three consoles: Master System 1 / 2 are B / A and its START is
   START (Pause); SELECT does nothing there.
 

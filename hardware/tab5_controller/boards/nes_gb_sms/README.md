@@ -9,9 +9,8 @@ the button map and the launcher jumps to that console's games.
 
 * **Master System:** button 1 is B, button 2 is A, START is START (Pause). SELECT does nothing.
 * **Switch:** C&K PCM13SMTR, SP3T. Its common goes to GND and each position grounds one ID
-  line (NES = ID0, GB = ID1, SMS = ID2), so the board has no ID straps. See
-  [Console-select switch](../README.md#console-select-switch) for the open check on which
-  lever position is which.
+  line (NES = ID0, GB = ID1, SMS = ID2), so the board has no ID straps. Lever left = NES, centre = Game Boy, right = Master System,
+  checked against the datasheet (see [Console-select switch](../README.md#console-select-switch)).
 
 The coordinate conventions, case outline and markings are the same as on the
 [SNES board](../snes/README.md). The d-pad uses the SNES board's positions so all boards feel
