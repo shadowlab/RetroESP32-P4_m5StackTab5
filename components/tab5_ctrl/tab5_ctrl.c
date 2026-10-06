@@ -270,7 +270,7 @@ const char *tab5_ctrl_console_name(rp_console_t console)
 {
     static const char *const names[RP_CONSOLE_COUNT] = {
         [RP_CONSOLE_GENERIC]  = "Generic",
-        [RP_CONSOLE_NES]      = "NES",
+        [RP_CONSOLE_NES]      = "NES / Game Boy",
         [RP_CONSOLE_GB]       = "Game Boy",
         [RP_CONSOLE_SNES]     = "SNES",
         [RP_CONSOLE_SMS]      = "Master System",

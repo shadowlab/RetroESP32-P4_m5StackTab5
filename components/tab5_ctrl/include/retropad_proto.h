@@ -47,8 +47,8 @@
 /* ── Console IDs (4-bit strap value on the board) ───────────────────────── */
 typedef enum {
     RP_CONSOLE_GENERIC   = 0,   /* no straps fitted */
-    RP_CONSOLE_NES       = 1,
-    RP_CONSOLE_GB        = 2,   /* Game Boy / Color */
+    RP_CONSOLE_NES       = 1,   /* the shared NES / Game Boy board */
+    RP_CONSOLE_GB        = 2,   /* Game Boy / Color; mapped the same as NES */
     RP_CONSOLE_SNES      = 3,
     RP_CONSOLE_SMS       = 4,   /* Master System / Game Gear */
     RP_CONSOLE_GENESIS   = 5,
