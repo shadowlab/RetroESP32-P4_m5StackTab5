@@ -25,8 +25,8 @@ Every KiCad project:
 
 The SNES layout follows the user's reference drawing. The NES / Game Boy, Genesis (6-button)
 and SMS/GG layouts follow each console's own pad, scaled the same way. X/Y/Z/MODE on the
-Genesis board reach games once the Genesis core's 6-button support
-(https://github.com/shadowlab/RetroESP32-P4_m5StackTab5/pull/4) is merged. The NES / Game Boy board puts
+Genesis board reach games through the Genesis core's 6-button support (`components/gwenesis`,
+merged from https://github.com/shadowlab/RetroESP32-P4_m5StackTab5/pull/4). The NES / Game Boy board puts
 A 4 mm above B, between the NES pad's level buttons and the Game Boy's diagonal.
 
 ## How the boards are made

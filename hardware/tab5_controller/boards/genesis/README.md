@@ -20,11 +20,10 @@ Based on the 6-button pad (MK-1653):
 * **START:** in the SNES board's START position.
 * **MENU:** centred above MODE/START.
 
-> **Emulator support:** 6-button support for the Genesis core (gwenesis) is in
-> https://github.com/shadowlab/RetroESP32-P4_m5StackTab5/pull/4. With that change, port 1 acts
-> as a 6-button pad while this board is attached, and X/Y/Z/MODE reach games. Holding MODE
-> when the board connects keeps it in 3-button mode, as on the real pad. Without #4, the
-> board works as a 3-button pad (A/B/C/START) and X/Y/Z/MODE are ignored.
+> **Emulator support:** the Genesis core (gwenesis) has 6-button pad support, merged from
+> https://github.com/shadowlab/RetroESP32-P4_m5StackTab5/pull/4. Port 1 acts as a 6-button
+> pad while this board is attached, and X/Y/Z/MODE reach games. Holding MODE when the board
+> connects keeps it in 3-button mode, as on the real pad.
 
 | Button | RetroPad bit | x | y | Switch | Rotation |
 |---|---|---|---|---|---|
