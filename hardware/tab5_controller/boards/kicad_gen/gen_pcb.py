@@ -275,11 +275,14 @@ def build_core(b):
     passive("R3", "10k", 57.6, 54.3, "+3V3", "RESET", 90.0)
 
     # Console-ID straps: 0R to GND = bit set (internal pull-ups read at boot)
+    # Each strap gets its own label centred under it. One mirrored string would read
+    # in the wrong order from the back, where the parts appear right to left.
     for i, (ref, sig, fitted) in enumerate(CFG.straps):
-        r = passive(ref, "0R" if fitted else "DNP", 81.0 + i * 3.0, 41.0, sig, "GND", 90.0)
+        x = 81.0 + i * 3.0
+        r = passive(ref, "0R" if fitted else "DNP", x, 41.0, sig, "GND", 90.0)
         if not fitted:
             r.SetExcludedFromBOM(True)
-    b.text(pcbnew.B_SilkS, 85.5, 37.8, "ID0 ID1 ID2 ID3", 0.8, mirror=True)
+        b.text(pcbnew.B_SilkS, x, 37.8, sig, 0.8, mirror=True)
 
     place_header(b, HEADER_PINS)
 
