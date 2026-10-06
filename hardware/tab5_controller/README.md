@@ -171,8 +171,8 @@ to set that bit. With no straps fitted the ID is 0, which means Generic.
 | ID | Console | ID3 PA7 | ID2 PA6 | ID1 PA1 | ID0 PA0 |
 |---|---|---|---|---|---|
 | 0 | Generic | – | – | – | – |
-| 1 | NES | – | – | – | ● |
-| 2 | Game Boy / Color | – | – | ● | – |
+| 1 | NES / Game Boy (one shared board) | – | – | – | ● |
+| 2 | Game Boy / Color (no separate board; mapped as ID 1) | – | – | ● | – |
 | 3 | SNES | – | – | ● | ● |
 | 4 | Master System / Game Gear | – | ● | – | – |
 | 5 | Genesis / Mega Drive | – | ● | – | ● |
@@ -203,8 +203,8 @@ in-game menu.
 
 | ID | Console | Buttons (label → bit) | Notes |
 |---|---|---|---|
-| 1 | NES | D-pad, B→`B`, A→`A`, SELECT, START | |
-| 2 | Game Boy | Same as NES | |
+| 1 | NES / Game Boy | D-pad, B→`B`, A→`A`, SELECT, START | One board serves both consoles |
+| 2 | Game Boy | Same as ID 1 | Reserved; the shared board reports ID 1 |
 | 3 | SNES | D-pad, A, B, X, Y, L, R, SELECT, START | |
 | 4 | SMS / GG | D-pad, 1→`B`, 2→`A`, START (Pause) | |
 | 5 | Genesis | D-pad, A→`A`, B→`B`, C→`C`, START, MODE→`SELECT` | The host remaps these for the 3-button core |
