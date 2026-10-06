@@ -4623,6 +4623,52 @@
 //}#pragma endregion Browser
 
 //{#pragma region Launcher
+  /*
+   * Tab5 controller boards: each RetroPad board reports which console it is
+   * for. When one is plugged in, or its console-select switch moves, the
+   * launcher opens that console's ROM list. Only changes while the launcher
+   * runs count, so returning from a game still lands where you left off.
+   */
+  static int console_step(rp_console_t console) {
+    switch (console) {
+      case RP_CONSOLE_NES:     return 3;
+      case RP_CONSOLE_GB:      return 4;
+      case RP_CONSOLE_SMS:     return 6;
+      case RP_CONSOLE_COLECO:  return 8;
+      case RP_CONSOLE_A7800:   return 9;
+      case RP_CONSOLE_SPECTRUM:return 10;
+      case RP_CONSOLE_A2600:   return 11;
+      case RP_CONSOLE_LYNX:    return 12;
+      case RP_CONSOLE_PCE:     return 13;
+      case RP_CONSOLE_A5200:   return 14;
+      case RP_CONSOLE_SNES:    return 15;
+      case RP_CONSOLE_GENESIS: return 16;
+      case RP_CONSOLE_NEOGEO:  return 17;
+      default:                 return -1;   /* generic, stock keyboard, none */
+    }
+  }
+
+  static bool controller_board_changed(void) {
+    static bool primed = false;
+    static int last = -1;
+    tab5_ctrl_info_t info;
+    tab5_ctrl_get_info(&info);
+    int now = (info.present && info.retropad) ? (int)info.console : -1;
+    if (!primed) {            /* whatever is attached at start-up is the baseline */
+      primed = true;
+      last = now;
+      return false;
+    }
+    if (now == last) return false;
+    last = now;
+    int step = console_step((rp_console_t)now);
+    if (now < 0 || step < 0 || LAUNCHER) return false;
+    if (BROWSER) leave_browser();
+    STEP = step;
+    enter_browser();
+    return true;
+  }
+
   static void launcher() {
 
   static uint16_t last_wizard_vid = 0, last_wizard_pid = 0;
@@ -4630,6 +4676,8 @@
   //{#pragma region Gamepad
     while (true) {
       odroid_input_gamepad_read(&gamepad);
+
+      if (controller_board_changed()) continue;
 
       /* Auto-map wizard: trigger when a new unknown USB controller is plugged in */
       {

@@ -7,7 +7,8 @@
  * One task owns the I2C device. While a board is attached it polls every
  * CONFIG_TAB5_CTRL_POLL_MS; after repeated I2C errors the board is treated as
  * unplugged and the port is re-probed once a second, so a different console
- * board can be swapped in without rebooting.
+ * board can be swapped in without rebooting. The console id is re-read every
+ * ID_RECHECK_MS, so a board with a console-select switch can change it live.
  */
 
 #include "tab5_ctrl.h"
@@ -26,6 +27,7 @@
 #define I2C_FREQ_HZ         400000
 #define FAIL_LIMIT          5       /* consecutive errors before "unplugged" */
 #define REPROBE_MS          1000
+#define ID_RECHECK_MS       250     /* console-select switch: re-read the console id */
 #define KB_KEYS             70      /* stock keyboard: 5 rows x 14 columns */
 
 static const char *TAG = "tab5_ctrl";
@@ -131,6 +133,22 @@ static esp_err_t poll_retropad(void)
     return ESP_OK;
 }
 
+/* A board with a console-select switch changes its id while attached. */
+static esp_err_t recheck_console(void)
+{
+    uint8_t id[2];      /* RP_INFO_CONSOLE_ID, RP_INFO_ANALOG_COUNT */
+    esp_err_t err = reg_read(RP_REG_INFO + RP_INFO_CONSOLE_ID, id, sizeof(id));
+    if (err != ESP_OK) return err;
+    if (id[0] >= RP_CONSOLE_KEYBOARD || id[0] == s_info.console) return ESP_OK;
+
+    portENTER_CRITICAL(&s_lock);
+    s_info.console      = (rp_console_t)id[0];
+    s_info.analog_count = id[1];
+    portEXIT_CRITICAL(&s_lock);
+    ESP_LOGI(TAG, "RetroPad console switched to %s", tab5_ctrl_console_name(s_info.console));
+    return ESP_OK;
+}
+
 static esp_err_t poll_keyboard(void)
 {
     uint8_t n = 0;
@@ -157,6 +175,7 @@ static esp_err_t poll_keyboard(void)
 static void poll_task(void *arg)
 {
     int fails = 0;
+    int id_ms = 0;
     bool attached = probe();
 
     for (;;) {
@@ -168,6 +187,11 @@ static void poll_task(void *arg)
         }
 
         esp_err_t err = s_info.retropad ? poll_retropad() : poll_keyboard();
+        if (err == ESP_OK && s_info.retropad &&
+            (id_ms += CONFIG_TAB5_CTRL_POLL_MS) >= ID_RECHECK_MS) {
+            id_ms = 0;
+            err = recheck_console();
+        }
         if (err == ESP_OK) {
             fails = 0;
         } else if (++fails >= FAIL_LIMIT) {
@@ -270,7 +294,7 @@ const char *tab5_ctrl_console_name(rp_console_t console)
 {
     static const char *const names[RP_CONSOLE_COUNT] = {
         [RP_CONSOLE_GENERIC]  = "Generic",
-        [RP_CONSOLE_NES]      = "NES / Game Boy",
+        [RP_CONSOLE_NES]      = "NES",
         [RP_CONSOLE_GB]       = "Game Boy",
         [RP_CONSOLE_SNES]     = "SNES",
         [RP_CONSOLE_SMS]      = "Master System",
