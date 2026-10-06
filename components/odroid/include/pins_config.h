@@ -2,10 +2,6 @@
 
 #include "sdkconfig.h"
 
-#if defined(CONFIG_HDMI_OUTPUT) && defined(CONFIG_BOARD_M5STACK_TAB5)
-#error "CONFIG_HDMI_OUTPUT and CONFIG_BOARD_M5STACK_TAB5 are mutually exclusive"
-#endif
-
 /* LCD Resolution: logical (legacy 480x800 portrait) UI space.  On the Tab5 the
  * physical panel is 720x1280; odroid_display / st7701_lcd scale this space by
  * 1.5x onto it (see tab5_board.h for the native geometry). */

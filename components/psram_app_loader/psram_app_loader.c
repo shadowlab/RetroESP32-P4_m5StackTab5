@@ -367,8 +367,7 @@ static int svc_touch_read(int *x, int *y)
  * odroid_input_gamepad_read() refreshes odroid_paddle_adc_raw once the handle
  * exists, so apps that poll input each frame get fresh readings.
  *
- * On the HDMI build no paddle is wired and the read path is compiled out, so
- * the value simply stays -1. */
+ * Where no paddle is wired the value simply stays -1. */
 static int svc_paddle_read(void)
 {
     static bool inited = false;
