@@ -111,7 +111,6 @@ Included:
 3. Build the merged firmware image and flash it to address **`0`** using the [web esptool](https://espressif.github.io/esptool-js/)
    (prebuilt images are no longer kept in the repository):
    - **`RetroESP32_P4_v1.bin`** — handheld / LCD build (`build_all.ps1`)
-   - **`RetroESP32_P4_HDMI_v1.bin`** — HDMI build (`build_all_hdmi.bat`)
 4. Insert the SD card.
 5. Connect a USB controller (or use the built-in console frame).
 6. **NeoGeo only:** run the included Python script once to generate the sprite-cache files (script is in the SD-card folder).
