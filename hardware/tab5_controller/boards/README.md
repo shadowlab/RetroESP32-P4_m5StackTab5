@@ -13,8 +13,7 @@ goes. Every board:
 | Board | Console ID | Buttons | Layout | KiCad project |
 |---|---|---|---|---|
 | [SNES](snes/README.md) | 3 | D-pad, A B X Y, L R (side edges), SELECT START, MENU | [svg](snes/layout.svg) | [`snes/kicad`](snes/kicad) |
-| [NES](nes/README.md) | 1 | D-pad, B A, SELECT START, MENU | [svg](nes/layout.svg) | [`nes/kicad`](nes/kicad) |
-| [Game Boy](gb/README.md) | 2 | D-pad, B A (diagonal), SELECT START, MENU | [svg](gb/layout.svg) | [`gb/kicad`](gb/kicad) |
+| [NES / Game Boy](nes_gb/README.md) | 1 | D-pad, B A (A raised 4 mm), SELECT START, MENU | [svg](nes_gb/layout.svg) | [`nes_gb/kicad`](nes_gb/kicad) |
 | [Genesis / Mega Drive 6-button](genesis/README.md) | 5 | D-pad, X Y Z over A B C, MODE START, MENU | [svg](genesis/layout.svg) | [`genesis/kicad`](genesis/kicad) |
 | [Master System / Game Gear](sms/README.md) | 4 | D-pad, 1 2, START, MENU | [svg](sms/layout.svg) | [`sms/kicad`](sms/kicad) |
 
@@ -24,10 +23,11 @@ Every KiCad project:
   warnings remain);
 * has a schematic that matches its PCB net for net (`check_netlist.py`).
 
-The SNES layout follows the user's reference drawing. The NES, Game Boy, Genesis (6-button)
+The SNES layout follows the user's reference drawing. The NES / Game Boy, Genesis (6-button)
 and SMS/GG layouts follow each console's own pad, scaled the same way. X/Y/Z/MODE on the
 Genesis board reach games once the Genesis core's 6-button support
-(https://github.com/shadowlab/RetroESP32-P4_m5StackTab5/pull/4) is merged.
+(https://github.com/shadowlab/RetroESP32-P4_m5StackTab5/pull/4) is merged. The NES / Game Boy board puts
+A 4 mm above B, between the NES pad's level buttons and the Game Boy's diagonal.
 
 ## How the boards are made
 
@@ -54,7 +54,7 @@ curl -LO https://github.com/freerouting/freerouting/releases/download/v1.9.0/fre
 
 cd kicad_gen
 export FREEROUTING_JAR=$PWD/../freerouting-1.9.0.jar
-for c in snes nes gb genesis sms; do
+for c in snes nes_gb genesis sms; do
   python3 gen_pcb.py $c --route      # FR_PASSES=300 for more router passes
   python3 gen_sch.py $c
   python3 check_netlist.py $c        # must report 0 differences
@@ -66,10 +66,8 @@ python3 gen_avrdd_pinmap.py          # after changing a layout's buttons
 Freerouting 1.9 runs single-threaded on purpose. In testing, 2.1's multi-threaded optimiser
 reported "0 unrouted" but wrote a session with nets missing.
 
-The Game Boy board is the exception: 1.9 stalls with UPDI unrouted on it, so it was routed with
-Freerouting 2.1, still single-threaded (`FREEROUTING_JAR=freerouting-2.1.0.jar`). DRC and
-`check_netlist.py` confirm that board is complete. Whichever router you use, check the DRC
-report for 0 unconnected pads.
+Check the DRC report for 0 unconnected pads after every route: if 1.9 stalls with a net
+unrouted, re-run with `FR_PASSES=300`.
 
 BOMs list the orderable switches and Tab5 header (Manufacturer / MPN / DigiKey columns, from `PARTS` in
 `kicad_gen/gen_pcb.py`):

@@ -87,30 +87,22 @@ def _rrect(r):
     return ("rrect", CASE_W / 2, KEY_H / 2, 144 * _S / 2, 62 * _S / 2, r)
 
 
-def nes():
-    """NES pad: d-pad, SELECT/START pills, B and A side by side."""
+def nes_gb():
+    """NES / Game Boy: d-pad, flat SELECT/START, B and A with A raised 4 mm.
+
+    The slant sits between the NES pad's level A/B and the Game Boy's diagonal,
+    so one board serves both consoles (the host maps them the same way).
+    """
     cx, cy = CASE_W / 2, KEY_H / 2
     fx = cx + 41 * _S
     # 12 mm switches turned 90 deg so their pins run vertically and the pads of
     # the two neighbouring switches stay clear of each other
     return _dpad() + [
-        ("B",      "RP_BTN_B",      fx - 8.0, cy - 2.0, 12, 90),
-        ("A",      "RP_BTN_A",      fx + 8.0, cy - 2.0, 12, 90),
+        ("B",      "RP_BTN_B",      fx - 8.0, cy - 4.0, 12, 90),
+        ("A",      "RP_BTN_A",      fx + 8.0, cy, 12, 90),
         ("SELECT", "RP_BTN_SELECT", cx - 7.5 * _S, cy - 6 * _S, 6, 0),
         ("START",  "RP_BTN_START",  cx + 7.5 * _S, cy - 6 * _S, 6, 0),
-    ] + _menu(), _rrect(4.0)
-
-
-def gb():
-    """Game Boy: B low-left / A high-right on a diagonal, SELECT/START flat."""
-    cx, cy = CASE_W / 2, KEY_H / 2
-    fx = cx + 41 * _S
-    return _dpad() + [
-        ("B",      "RP_BTN_B",      fx - 7.5, cy - 4.0, 12, 90),
-        ("A",      "RP_BTN_A",      fx + 7.5, cy + 4.0, 12, 90),
-        ("SELECT", "RP_BTN_SELECT", cx - 7.5 * _S, cy - 6 * _S, 6, 0),
-        ("START",  "RP_BTN_START",  cx + 7.5 * _S, cy - 6 * _S, 6, 0),
-    ] + _menu(), _rrect(10.0)
+    ] + _menu(), _rrect(6.0)
 
 
 def genesis():
@@ -145,7 +137,7 @@ def sms():
     ] + _menu(), _rrect(4.0)
 
 
-BOARDS = {"snes": snes, "nes": nes, "gb": gb, "genesis": genesis, "sms": sms}
+BOARDS = {"snes": snes, "nes_gb": nes_gb, "genesis": genesis, "sms": sms}
 
 # Every board uses an AVR32DD28 (SOIC-28) with 13 button slots, one MCU pin
 # each (switch to GND, internal pull-up). A console's buttons fill the slots in
@@ -165,12 +157,15 @@ def avrdd_slots(name):
 
 # Console id (retropad_proto.h rp_console_t) and the name printed on each board
 CONSOLES = {
-    "nes":     (1, "NES"),
-    "gb":      (2, "Game Boy"),
+    "nes_gb":  (1, "NES / Game Boy"),
     "snes":    (3, "SNES"),
     "sms":     (4, "Master System / Game Gear"),
     "genesis": (5, "Genesis / Mega Drive 6-button"),
 }
+
+# Console IDs with no board of their own that read a board's slots the same way:
+# ID 2 (Game Boy) is mapped like the shared NES / Game Boy board.
+ALIASES = {2: "nes_gb"}
 
 
 def _xf(b, pts):

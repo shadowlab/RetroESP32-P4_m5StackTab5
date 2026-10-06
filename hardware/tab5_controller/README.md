@@ -317,7 +317,7 @@ make flash PORT=/dev/ttyUSB0       # SerialUPDI: USB-serial adapter + resistor
 ## 7. Status and open items
 
 * **Console boards:** [`boards/`](boards/README.md) has routed, DRC-clean KiCad projects
-  (schematic + PCB, AVR32DD28) for SNES, NES, Game Boy, Genesis and Master System / Game
+  (schematic + PCB, AVR32DD28) for SNES, NES / Game Boy, Genesis and Master System / Game
   Gear. Each was checked against the firmware's pin map. Check the 2×5 header orientation
   before ordering.
 * **Firmware:** builds to about 1.5 KB and passes a host test that replays the driver's I2C

@@ -115,7 +115,7 @@ int main(void)
     check("UP released", mask, RP_BIT(RP_BTN_A) | RP_BIT(RP_BTN_R));
 
     printf("NES, Game Boy, Master System and Genesis boards (same firmware, map chosen by the ID straps)\n");
-    PORTA.IN = 0xFF & (uint8_t)~0x01;                   /* ID0 only -> console 1 */
+    PORTA.IN = 0xFF & (uint8_t)~0x01;                   /* ID0 only -> console 1 (NES / GB) */
     check("NES console id from straps", read_console_id(), RP_CONSOLE_NES);
     s_console = RP_CONSOLE_NES;
     PORTC.IN = PORTD.IN = PORTF.IN = 0xFF;
