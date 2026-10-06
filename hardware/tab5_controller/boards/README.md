@@ -66,6 +66,11 @@ python3 gen_avrdd_pinmap.py          # after changing a layout's buttons
 Freerouting 1.9 runs single-threaded on purpose. In testing, 2.1's multi-threaded optimiser
 reported "0 unrouted" but wrote a session with nets missing.
 
+The Game Boy board is the exception: 1.9 stalls with UPDI unrouted on it, so it was routed with
+Freerouting 2.1, still single-threaded (`FREEROUTING_JAR=freerouting-2.1.0.jar`). DRC and
+`check_netlist.py` confirm that board is complete. Whichever router you use, check the DRC
+report for 0 unconnected pads.
+
 BOMs list the orderable switches and Tab5 header (Manufacturer / MPN / DigiKey columns, from `PARTS` in
 `kicad_gen/gen_pcb.py`):
 

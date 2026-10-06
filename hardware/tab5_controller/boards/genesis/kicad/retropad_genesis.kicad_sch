@@ -1205,22 +1205,7 @@
         "retropad_genesis"
         (path "/503e878f-950d-5df8-bd02-9cb70e12f7f1" (reference "J1") (unit 1)))))
   (no_connect (at 170.18 39.37) (uuid "bf0f25de-8df3-5196-8efa-90f3f1fb01c4"))
-  (wire
-    (pts (xy 182.88 49.53) (xy 190.5 49.53))
-    (stroke (width 0) (type default))
-    (uuid "93bdcc39-00e1-5f3b-a3b6-7f44015b044a"))
-  (global_label
-    "G9_UPDI"
-    (shape bidirectional)
-    (at 190.5 49.53 0)
-    (fields_autoplaced)
-    (effects (font (size 1.27 1.27)) (justify left))
-    (uuid "538e705e-17f8-5741-b176-7bca13fdcc57")
-    (property
-      "Intersheetrefs"
-      "${INTERSHEET_REFS}"
-      (at 190.5 49.53 0)
-      (effects (font (size 1.27 1.27)) hide)))
+  (no_connect (at 182.88 49.53) (uuid "894597ef-18ca-51f0-b7ff-b4175592153e"))
   (wire
     (pts (xy 182.88 39.37) (xy 190.5 39.37))
     (stroke (width 0) (type default))
@@ -2134,65 +2119,6 @@
       (project
         "retropad_genesis"
         (path "/503e878f-950d-5df8-bd02-9cb70e12f7f1" (reference "#PWR17") (unit 1)))))
-  (text
-    "R11 (DNP): UPDI to J1 pin 10 / G9 — experimental in-system programming from the Tab5"
-    (at 150 200 0)
-    (effects (font (size 1.27 1.27)) (justify left))
-    (uuid "ad340e46-1fee-5baf-9ae0-e6ca18c1ac1c"))
-  (symbol
-    (lib_id "Device:R")
-    (at 234.95 190.5 0)
-    (unit 1)
-    (in_bom no)
-    (on_board yes)
-    (dnp yes)
-    (uuid "ff9cbec4-9261-5306-998a-ba5b422148d2")
-    (property "Reference" "R11" (at 237.49 189.23 0) (effects (font (size 1.27 1.27)) (justify left)))
-    (property "Value" "DNP" (at 237.49 191.77 0) (effects (font (size 1.27 1.27)) (justify left)))
-    (property
-      "Footprint"
-      "Resistor_SMD:R_0603_1608Metric"
-      (at 234.95 190.5 0)
-      (effects (font (size 1.27 1.27)) hide))
-    (property "Datasheet" "~" (at 234.95 190.5 0) (effects (font (size 1.27 1.27)) hide))
-    (pin "1" (uuid "3f441d26-112f-5842-acf9-1023a348ccac"))
-    (pin "2" (uuid "02d1c2fb-3ebb-51c3-95b1-74fd79f31a2d"))
-    (instances
-      (project
-        "retropad_genesis"
-        (path "/503e878f-950d-5df8-bd02-9cb70e12f7f1" (reference "R11") (unit 1)))))
-  (wire
-    (pts (xy 234.95 186.69) (xy 234.95 184.15))
-    (stroke (width 0) (type default))
-    (uuid "be400c71-57b8-5654-bdc5-53ea7c9edc78"))
-  (global_label
-    "UPDI"
-    (shape bidirectional)
-    (at 234.95 184.15 90)
-    (fields_autoplaced)
-    (effects (font (size 1.27 1.27)) (justify left))
-    (uuid "e22869ee-0206-538f-9cec-e743fb66b8b1")
-    (property
-      "Intersheetrefs"
-      "${INTERSHEET_REFS}"
-      (at 234.95 184.15 0)
-      (effects (font (size 1.27 1.27)) hide)))
-  (wire
-    (pts (xy 234.95 194.31) (xy 234.95 196.85))
-    (stroke (width 0) (type default))
-    (uuid "f3e9b842-82a3-5cb3-b38e-906432ffb92e"))
-  (global_label
-    "G9_UPDI"
-    (shape bidirectional)
-    (at 234.95 196.85 270)
-    (fields_autoplaced)
-    (effects (font (size 1.27 1.27)) (justify right))
-    (uuid "424234d6-3993-57a5-bde9-ce7c685d96e0")
-    (property
-      "Intersheetrefs"
-      "${INTERSHEET_REFS}"
-      (at 234.95 196.85 0)
-      (effects (font (size 1.27 1.27)) hide)))
   (text
     "Mounting holes (M3, 96 mm apart)"
     (at 150 210 0)

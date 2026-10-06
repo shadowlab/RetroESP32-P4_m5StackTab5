@@ -1126,22 +1126,7 @@
     (instances
       (project "retropad_sms" (path "/a309cff3-1dfb-5baa-b184-d84380f3c827" (reference "J1") (unit 1)))))
   (no_connect (at 170.18 39.37) (uuid "8464cad8-7555-583d-b086-22b54f6a6d24"))
-  (wire
-    (pts (xy 182.88 49.53) (xy 190.5 49.53))
-    (stroke (width 0) (type default))
-    (uuid "4b56f763-ec4d-5c4c-943c-fe5530041e14"))
-  (global_label
-    "G9_UPDI"
-    (shape bidirectional)
-    (at 190.5 49.53 0)
-    (fields_autoplaced)
-    (effects (font (size 1.27 1.27)) (justify left))
-    (uuid "d26a6769-442c-569d-b182-7a9f60195e61")
-    (property
-      "Intersheetrefs"
-      "${INTERSHEET_REFS}"
-      (at 190.5 49.53 0)
-      (effects (font (size 1.27 1.27)) hide)))
+  (no_connect (at 182.88 49.53) (uuid "4f23873a-bb45-5283-bcbe-85520396e1a1"))
   (wire
     (pts (xy 182.88 39.37) (xy 190.5 39.37))
     (stroke (width 0) (type default))
@@ -2031,63 +2016,6 @@
       (project
         "retropad_sms"
         (path "/a309cff3-1dfb-5baa-b184-d84380f3c827" (reference "#PWR17") (unit 1)))))
-  (text
-    "R11 (DNP): UPDI to J1 pin 10 / G9 — experimental in-system programming from the Tab5"
-    (at 150 200 0)
-    (effects (font (size 1.27 1.27)) (justify left))
-    (uuid "60e26fda-c3ba-57ed-8aa7-8eae73da8aad"))
-  (symbol
-    (lib_id "Device:R")
-    (at 234.95 190.5 0)
-    (unit 1)
-    (in_bom no)
-    (on_board yes)
-    (dnp yes)
-    (uuid "34e67956-dcfd-553e-bc6b-97cc9bd93230")
-    (property "Reference" "R11" (at 237.49 189.23 0) (effects (font (size 1.27 1.27)) (justify left)))
-    (property "Value" "DNP" (at 237.49 191.77 0) (effects (font (size 1.27 1.27)) (justify left)))
-    (property
-      "Footprint"
-      "Resistor_SMD:R_0603_1608Metric"
-      (at 234.95 190.5 0)
-      (effects (font (size 1.27 1.27)) hide))
-    (property "Datasheet" "~" (at 234.95 190.5 0) (effects (font (size 1.27 1.27)) hide))
-    (pin "1" (uuid "4b7eabaf-1444-5cc3-9217-e2c56e756cd3"))
-    (pin "2" (uuid "671760b6-2a54-5da9-afad-33f36c8cc3fb"))
-    (instances
-      (project "retropad_sms" (path "/a309cff3-1dfb-5baa-b184-d84380f3c827" (reference "R11") (unit 1)))))
-  (wire
-    (pts (xy 234.95 186.69) (xy 234.95 184.15))
-    (stroke (width 0) (type default))
-    (uuid "771f6ca1-35d2-5e11-9771-1b2fdf7e3513"))
-  (global_label
-    "UPDI"
-    (shape bidirectional)
-    (at 234.95 184.15 90)
-    (fields_autoplaced)
-    (effects (font (size 1.27 1.27)) (justify left))
-    (uuid "a4a01699-f3f9-592d-8f7b-d3531eb33d88")
-    (property
-      "Intersheetrefs"
-      "${INTERSHEET_REFS}"
-      (at 234.95 184.15 0)
-      (effects (font (size 1.27 1.27)) hide)))
-  (wire
-    (pts (xy 234.95 194.31) (xy 234.95 196.85))
-    (stroke (width 0) (type default))
-    (uuid "ee0be79d-7b3c-5644-80b3-d0152ed32ce6"))
-  (global_label
-    "G9_UPDI"
-    (shape bidirectional)
-    (at 234.95 196.85 270)
-    (fields_autoplaced)
-    (effects (font (size 1.27 1.27)) (justify right))
-    (uuid "9890e984-a352-57f8-925b-7a389daf3053")
-    (property
-      "Intersheetrefs"
-      "${INTERSHEET_REFS}"
-      (at 234.95 196.85 0)
-      (effects (font (size 1.27 1.27)) hide)))
   (text
     "Mounting holes (M3, 96 mm apart)"
     (at 150 210 0)

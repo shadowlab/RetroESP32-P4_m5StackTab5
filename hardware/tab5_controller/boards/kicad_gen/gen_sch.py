@@ -338,9 +338,6 @@ def build():
     sh.text("Console ID straps: 0R to GND = bit set. " + pcb.CFG.strap_note(), 150, 172, 1.5)
     for i, (ref, _sig, _fit) in enumerate(pcb.CFG.straps):
         place(ref, 160 + i * 15, 190)
-    sh.text("R11 (DNP): UPDI to J1 pin 10 / G9 — experimental in-system programming from the Tab5",
-            150, 200, 1.27)
-    place("R11", 235, 190)
     sh.text("Mounting holes (M3, 96 mm apart)", 150, 210, 1.5)
     place("H1", 160, 220)
     place("H2", 175, 220)

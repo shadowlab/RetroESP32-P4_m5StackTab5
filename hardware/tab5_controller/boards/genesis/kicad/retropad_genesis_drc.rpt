@@ -1,7 +1,7 @@
 ** Drc report for /home/user/RetroESP32-P4_m5StackTab5/hardware/tab5_controller/boards/genesis/kicad/retropad_genesis.kicad_pcb **
-** Created on 2026-10-06 00:25:07 **
+** Created on 2026-10-06 00:36:33 **
 
-** Found 78 DRC violations **
+** Found 77 DRC violations **
 [silk_overlap]: Silkscreen overlap
     Rule: board setup constraints silk; Severity: warning
     @(140.0000 mm, 86.5000 mm): PCB Text 'RetroPad GENESIS rev 0.1' on B.Silkscreen
@@ -16,82 +16,10 @@
     @(85.4300 mm, 93.0000 mm): Reference 'R2'
 [silk_over_copper]: Silkscreen clipped by solder mask
     Local override; Severity: warning
-    @(125.5000 mm, 102.2000 mm): PCB Text 'ID0 ID1 ID2 ID3' on B.Silkscreen
-[silk_over_copper]: Silkscreen clipped by solder mask
-    Local override; Severity: warning
     @(140.0000 mm, 86.5000 mm): PCB Text 'RetroPad GENESIS rev 0.1' on B.Silkscreen
 [silk_over_copper]: Silkscreen clipped by solder mask
     Local override; Severity: warning
-    @(120.6000 mm, 132.6500 mm): Line on F.Silkscreen
-[silk_over_copper]: Silkscreen clipped by solder mask
-    Local override; Severity: warning
-    @(125.6000 mm, 132.6500 mm): Line on F.Silkscreen
-[silk_over_copper]: Silkscreen clipped by solder mask
-    Local override; Severity: warning
-    @(130.1800 mm, 132.6500 mm): Line on F.Silkscreen
-[silk_over_copper]: Silkscreen clipped by solder mask
-    Local override; Severity: warning
-    @(117.8800 mm, 120.3500 mm): Line on F.Silkscreen
-[silk_over_copper]: Silkscreen clipped by solder mask
-    Local override; Severity: warning
-    @(122.4600 mm, 120.3500 mm): Line on F.Silkscreen
-[silk_over_copper]: Silkscreen clipped by solder mask
-    Local override; Severity: warning
-    @(127.4600 mm, 120.3500 mm): Line on F.Silkscreen
-[silk_over_copper]: Silkscreen clipped by solder mask
-    Local override; Severity: warning
-    @(134.6000 mm, 114.6500 mm): Line on F.Silkscreen
-[silk_over_copper]: Silkscreen clipped by solder mask
-    Local override; Severity: warning
-    @(139.6000 mm, 114.6500 mm): Line on F.Silkscreen
-[silk_over_copper]: Silkscreen clipped by solder mask
-    Local override; Severity: warning
-    @(144.1800 mm, 114.6500 mm): Line on F.Silkscreen
-[silk_over_copper]: Silkscreen clipped by solder mask
-    Local override; Severity: warning
-    @(131.8800 mm, 102.3500 mm): Line on F.Silkscreen
-[silk_over_copper]: Silkscreen clipped by solder mask
-    Local override; Severity: warning
-    @(136.4600 mm, 102.3500 mm): Line on F.Silkscreen
-[silk_over_copper]: Silkscreen clipped by solder mask
-    Local override; Severity: warning
-    @(141.4600 mm, 102.3500 mm): Line on F.Silkscreen
-[silk_over_copper]: Silkscreen clipped by solder mask
-    Local override; Severity: warning
-    @(148.6000 mm, 129.6500 mm): Line on F.Silkscreen
-[silk_over_copper]: Silkscreen clipped by solder mask
-    Local override; Severity: warning
-    @(153.6000 mm, 129.6500 mm): Line on F.Silkscreen
-[silk_over_copper]: Silkscreen clipped by solder mask
-    Local override; Severity: warning
-    @(158.1800 mm, 129.6500 mm): Line on F.Silkscreen
-[silk_over_copper]: Silkscreen clipped by solder mask
-    Local override; Severity: warning
-    @(145.8800 mm, 117.3500 mm): Line on F.Silkscreen
-[silk_over_copper]: Silkscreen clipped by solder mask
-    Local override; Severity: warning
-    @(150.4600 mm, 117.3500 mm): Line on F.Silkscreen
-[silk_over_copper]: Silkscreen clipped by solder mask
-    Local override; Severity: warning
-    @(155.4600 mm, 117.3500 mm): Line on F.Silkscreen
-[silk_over_copper]: Silkscreen clipped by solder mask
-    Local override; Severity: warning
-    @(148.6000 mm, 113.1500 mm): Line on F.Silkscreen
-[silk_over_copper]: Silkscreen clipped by solder mask
-    Local override; Severity: warning
-    @(153.6000 mm, 113.1500 mm): Line on F.Silkscreen
-[silk_over_copper]: Silkscreen clipped by solder mask
-    Local override; Severity: warning
-    @(158.1800 mm, 113.1500 mm): Line on F.Silkscreen
-[silk_over_copper]: Silkscreen clipped by solder mask
-    Local override; Severity: warning
-    @(145.8800 mm, 100.8500 mm): Line on F.Silkscreen
-[silk_over_copper]: Silkscreen clipped by solder mask
-    Local override; Severity: warning
-    @(150.4600 mm, 100.8500 mm): Line on F.Silkscreen
-[silk_over_copper]: Silkscreen clipped by solder mask
-    Local override; Severity: warning
-    @(155.4600 mm, 100.8500 mm): Line on F.Silkscreen
+    @(125.5000 mm, 102.2000 mm): PCB Text 'ID0 ID1 ID2 ID3' on B.Silkscreen
 [silk_over_copper]: Silkscreen clipped by solder mask
     Local override; Severity: warning
     @(120.6000 mm, 116.1500 mm): Line on F.Silkscreen
@@ -112,6 +40,60 @@
     @(127.4600 mm, 103.8500 mm): Line on F.Silkscreen
 [silk_over_copper]: Silkscreen clipped by solder mask
     Local override; Severity: warning
+    @(148.6000 mm, 129.6500 mm): Line on F.Silkscreen
+[silk_over_copper]: Silkscreen clipped by solder mask
+    Local override; Severity: warning
+    @(153.6000 mm, 129.6500 mm): Line on F.Silkscreen
+[silk_over_copper]: Silkscreen clipped by solder mask
+    Local override; Severity: warning
+    @(158.1800 mm, 129.6500 mm): Line on F.Silkscreen
+[silk_over_copper]: Silkscreen clipped by solder mask
+    Local override; Severity: warning
+    @(145.8800 mm, 117.3500 mm): Line on F.Silkscreen
+[silk_over_copper]: Silkscreen clipped by solder mask
+    Local override; Severity: warning
+    @(150.4600 mm, 117.3500 mm): Line on F.Silkscreen
+[silk_over_copper]: Silkscreen clipped by solder mask
+    Local override; Severity: warning
+    @(155.4600 mm, 117.3500 mm): Line on F.Silkscreen
+[silk_over_copper]: Silkscreen clipped by solder mask
+    Local override; Severity: warning
+    @(134.6000 mm, 114.6500 mm): Line on F.Silkscreen
+[silk_over_copper]: Silkscreen clipped by solder mask
+    Local override; Severity: warning
+    @(139.6000 mm, 114.6500 mm): Line on F.Silkscreen
+[silk_over_copper]: Silkscreen clipped by solder mask
+    Local override; Severity: warning
+    @(144.1800 mm, 114.6500 mm): Line on F.Silkscreen
+[silk_over_copper]: Silkscreen clipped by solder mask
+    Local override; Severity: warning
+    @(131.8800 mm, 102.3500 mm): Line on F.Silkscreen
+[silk_over_copper]: Silkscreen clipped by solder mask
+    Local override; Severity: warning
+    @(136.4600 mm, 102.3500 mm): Line on F.Silkscreen
+[silk_over_copper]: Silkscreen clipped by solder mask
+    Local override; Severity: warning
+    @(141.4600 mm, 102.3500 mm): Line on F.Silkscreen
+[silk_over_copper]: Silkscreen clipped by solder mask
+    Local override; Severity: warning
+    @(120.6000 mm, 132.6500 mm): Line on F.Silkscreen
+[silk_over_copper]: Silkscreen clipped by solder mask
+    Local override; Severity: warning
+    @(125.6000 mm, 132.6500 mm): Line on F.Silkscreen
+[silk_over_copper]: Silkscreen clipped by solder mask
+    Local override; Severity: warning
+    @(130.1800 mm, 132.6500 mm): Line on F.Silkscreen
+[silk_over_copper]: Silkscreen clipped by solder mask
+    Local override; Severity: warning
+    @(117.8800 mm, 120.3500 mm): Line on F.Silkscreen
+[silk_over_copper]: Silkscreen clipped by solder mask
+    Local override; Severity: warning
+    @(122.4600 mm, 120.3500 mm): Line on F.Silkscreen
+[silk_over_copper]: Silkscreen clipped by solder mask
+    Local override; Severity: warning
+    @(127.4600 mm, 120.3500 mm): Line on F.Silkscreen
+[silk_over_copper]: Silkscreen clipped by solder mask
+    Local override; Severity: warning
     @(134.6000 mm, 131.1500 mm): Line on F.Silkscreen
 [silk_over_copper]: Silkscreen clipped by solder mask
     Local override; Severity: warning
@@ -130,22 +112,34 @@
     @(141.4600 mm, 118.8500 mm): Line on F.Silkscreen
 [silk_over_copper]: Silkscreen clipped by solder mask
     Local override; Severity: warning
+    @(148.6000 mm, 113.1500 mm): Line on F.Silkscreen
+[silk_over_copper]: Silkscreen clipped by solder mask
+    Local override; Severity: warning
+    @(153.6000 mm, 113.1500 mm): Line on F.Silkscreen
+[silk_over_copper]: Silkscreen clipped by solder mask
+    Local override; Severity: warning
+    @(158.1800 mm, 113.1500 mm): Line on F.Silkscreen
+[silk_over_copper]: Silkscreen clipped by solder mask
+    Local override; Severity: warning
+    @(145.8800 mm, 100.8500 mm): Line on F.Silkscreen
+[silk_over_copper]: Silkscreen clipped by solder mask
+    Local override; Severity: warning
+    @(150.4600 mm, 100.8500 mm): Line on F.Silkscreen
+[silk_over_copper]: Silkscreen clipped by solder mask
+    Local override; Severity: warning
+    @(155.4600 mm, 100.8500 mm): Line on F.Silkscreen
+[silk_over_copper]: Silkscreen clipped by solder mask
+    Local override; Severity: warning
     @(85.4300 mm, 93.0000 mm): Reference 'R2'
 [lib_footprint_issues]: The current configuration does not include the library 'Button_Switch_THT'.
     Local override; Severity: warning
-    @(121.5300 mm, 132.7500 mm): Footprint SW5
+    @(66.7200 mm, 99.5000 mm): Footprint SW1
 [lib_footprint_issues]: The current configuration does not include the library 'Button_Switch_THT'.
     Local override; Severity: warning
-    @(93.8859 mm, 119.6871 mm): Footprint SW11
-[lib_footprint_issues]: The current configuration does not include the library 'Connector_PinHeader_2.54mm'.
-    Local override; Severity: warning
-    @(60.9200 mm, 90.0800 mm): Footprint J1
+    @(54.2200 mm, 111.7500 mm): Footprint SW3
 [lib_footprint_issues]: The current configuration does not include the library 'Button_Switch_THT'.
     Local override; Severity: warning
-    @(135.5300 mm, 114.7500 mm): Footprint SW8
-[lib_footprint_issues]: The current configuration does not include the library 'MountingHole'.
-    Local override; Severity: warning
-    @(152.0000 mm, 95.0000 mm): Footprint H2
+    @(121.5300 mm, 116.2500 mm): Footprint SW6
 [lib_footprint_issues]: The current configuration does not include the library 'Button_Switch_THT'.
     Local override; Severity: warning
     @(79.2200 mm, 111.7500 mm): Footprint SW4
@@ -154,43 +148,61 @@
     @(149.5300 mm, 129.7500 mm): Footprint SW9
 [lib_footprint_issues]: The current configuration does not include the library 'Button_Switch_THT'.
     Local override; Severity: warning
-    @(149.5300 mm, 113.2500 mm): Footprint SW10
+    @(135.5300 mm, 114.7500 mm): Footprint SW8
 [lib_footprint_issues]: The current configuration does not include the library 'Button_Switch_THT'.
     Local override; Severity: warning
-    @(66.7200 mm, 99.5000 mm): Footprint SW1
+    @(121.5300 mm, 132.7500 mm): Footprint SW5
 [lib_footprint_issues]: The current configuration does not include the library 'Button_Switch_THT'.
     Local override; Severity: warning
-    @(106.3359 mm, 119.6871 mm): Footprint SW12
+    @(66.7200 mm, 124.2500 mm): Footprint SW2
+[lib_footprint_issues]: The current configuration does not include the library 'MountingHole'.
+    Local override; Severity: warning
+    @(152.0000 mm, 95.0000 mm): Footprint H2
 [lib_footprint_issues]: The current configuration does not include the library 'Button_Switch_THT'.
     Local override; Severity: warning
-    @(121.5300 mm, 116.2500 mm): Footprint SW6
+    @(135.5300 mm, 131.2500 mm): Footprint SW7
 [lib_footprint_issues]: The current configuration does not include the library 'MountingHole'.
     Local override; Severity: warning
     @(56.0000 mm, 95.0000 mm): Footprint H1
 [lib_footprint_issues]: The current configuration does not include the library 'Button_Switch_THT'.
     Local override; Severity: warning
-    @(66.7200 mm, 124.2500 mm): Footprint SW2
+    @(93.8859 mm, 119.6871 mm): Footprint SW11
 [lib_footprint_issues]: The current configuration does not include the library 'Button_Switch_THT'.
     Local override; Severity: warning
-    @(135.5300 mm, 131.2500 mm): Footprint SW7
+    @(106.3359 mm, 119.6871 mm): Footprint SW12
 [lib_footprint_issues]: The current configuration does not include the library 'Button_Switch_THT'.
     Local override; Severity: warning
     @(100.1109 mm, 109.7071 mm): Footprint SW13
 [lib_footprint_issues]: The current configuration does not include the library 'Button_Switch_THT'.
     Local override; Severity: warning
-    @(54.2200 mm, 111.7500 mm): Footprint SW3
+    @(149.5300 mm, 113.2500 mm): Footprint SW10
+[lib_footprint_issues]: The current configuration does not include the library 'Connector_PinHeader_2.54mm'.
+    Local override; Severity: warning
+    @(60.9200 mm, 90.0800 mm): Footprint J1
+[lib_footprint_issues]: The current configuration does not include the library 'Capacitor_SMD'.
+    Local override; Severity: warning
+    @(106.0000 mm, 101.6000 mm): Footprint C3
+[lib_footprint_issues]: The current configuration does not include the library 'Resistor_SMD'.
+    Local override; Severity: warning
+    @(121.0000 mm, 99.0000 mm): Footprint R6
+[lib_footprint_issues]: The current configuration does not include the library 'Capacitor_SMD'.
+    Local override; Severity: warning
+    @(102.1000 mm, 85.7000 mm): Footprint C2
+[lib_footprint_issues]: The current configuration does not include the library 'Capacitor_SMD'.
+    Local override; Severity: warning
+    @(92.0000 mm, 96.0000 mm): Footprint C1
+[lib_footprint_issues]: The current configuration does not include the library 'Capacitor_SMD'.
+    Local override; Severity: warning
+    @(116.0000 mm, 90.5000 mm): Footprint C4
 [lib_footprint_issues]: The current configuration does not include the library 'Resistor_SMD'.
     Local override; Severity: warning
     @(124.0000 mm, 99.0000 mm): Footprint R7
 [lib_footprint_issues]: The current configuration does not include the library 'Resistor_SMD'.
     Local override; Severity: warning
-    @(121.0000 mm, 99.0000 mm): Footprint R6
+    @(130.0000 mm, 99.0000 mm): Footprint R9
 [lib_footprint_issues]: The current configuration does not include the library 'Resistor_SMD'.
     Local override; Severity: warning
-    @(97.6000 mm, 85.7000 mm): Footprint R3
-[lib_footprint_issues]: The current configuration does not include the library 'Capacitor_SMD'.
-    Local override; Severity: warning
-    @(102.1000 mm, 85.7000 mm): Footprint C2
+    @(127.0000 mm, 99.0000 mm): Footprint R8
 [lib_footprint_issues]: The current configuration does not include the library 'Resistor_SMD'.
     Local override; Severity: warning
     @(86.0000 mm, 93.0000 mm): Footprint R1
@@ -202,25 +214,10 @@
     @(84.0000 mm, 93.0000 mm): Footprint R2
 [lib_footprint_issues]: The current configuration does not include the library 'Resistor_SMD'.
     Local override; Severity: warning
-    @(76.0000 mm, 93.0000 mm): Footprint R11
-[lib_footprint_issues]: The current configuration does not include the library 'Capacitor_SMD'.
-    Local override; Severity: warning
-    @(92.0000 mm, 96.0000 mm): Footprint C1
-[lib_footprint_issues]: The current configuration does not include the library 'Resistor_SMD'.
-    Local override; Severity: warning
-    @(130.0000 mm, 99.0000 mm): Footprint R9
-[lib_footprint_issues]: The current configuration does not include the library 'Capacitor_SMD'.
-    Local override; Severity: warning
-    @(106.0000 mm, 101.6000 mm): Footprint C3
-[lib_footprint_issues]: The current configuration does not include the library 'Capacitor_SMD'.
-    Local override; Severity: warning
-    @(116.0000 mm, 90.5000 mm): Footprint C4
+    @(97.6000 mm, 85.7000 mm): Footprint R3
 [lib_footprint_issues]: The current configuration does not include the library 'Connector_PinHeader_2.54mm'.
     Local override; Severity: warning
     @(130.0000 mm, 86.5000 mm): Footprint J2
-[lib_footprint_issues]: The current configuration does not include the library 'Resistor_SMD'.
-    Local override; Severity: warning
-    @(127.0000 mm, 99.0000 mm): Footprint R8
 [silk_edge_clearance]: Silkscreen clipped by board edge
     Rule: board setup constraints silk; Severity: warning
     @(165.0000 mm, 83.5000 mm): Line on Edge.Cuts

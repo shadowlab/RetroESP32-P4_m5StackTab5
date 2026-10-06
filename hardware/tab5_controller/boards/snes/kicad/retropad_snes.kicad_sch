@@ -1201,22 +1201,7 @@
     (instances
       (project "retropad_snes" (path "/7b7c4538-5bb4-5c1e-935f-8dbb5492f62e" (reference "J1") (unit 1)))))
   (no_connect (at 170.18 39.37) (uuid "ea8e788f-7b9b-5d4d-8510-44151218d60a"))
-  (wire
-    (pts (xy 182.88 49.53) (xy 190.5 49.53))
-    (stroke (width 0) (type default))
-    (uuid "33453c91-4f7c-5c0a-bf0e-d40da476f0cf"))
-  (global_label
-    "G9_UPDI"
-    (shape bidirectional)
-    (at 190.5 49.53 0)
-    (fields_autoplaced)
-    (effects (font (size 1.27 1.27)) (justify left))
-    (uuid "e1848b0d-5eab-5aad-8a66-3f1f1fac85bf")
-    (property
-      "Intersheetrefs"
-      "${INTERSHEET_REFS}"
-      (at 190.5 49.53 0)
-      (effects (font (size 1.27 1.27)) hide)))
+  (no_connect (at 182.88 49.53) (uuid "f17dd722-4ed4-557f-9f03-72fa11b3230c"))
   (wire
     (pts (xy 182.88 39.37) (xy 190.5 39.37))
     (stroke (width 0) (type default))
@@ -2106,63 +2091,6 @@
       (project
         "retropad_snes"
         (path "/7b7c4538-5bb4-5c1e-935f-8dbb5492f62e" (reference "#PWR17") (unit 1)))))
-  (text
-    "R11 (DNP): UPDI to J1 pin 10 / G9 — experimental in-system programming from the Tab5"
-    (at 150 200 0)
-    (effects (font (size 1.27 1.27)) (justify left))
-    (uuid "ac6cbbb3-47ad-5f6a-9da5-707baf505acd"))
-  (symbol
-    (lib_id "Device:R")
-    (at 234.95 190.5 0)
-    (unit 1)
-    (in_bom no)
-    (on_board yes)
-    (dnp yes)
-    (uuid "e42f79ed-9039-589e-aac7-ed5dcd19dea4")
-    (property "Reference" "R11" (at 237.49 189.23 0) (effects (font (size 1.27 1.27)) (justify left)))
-    (property "Value" "DNP" (at 237.49 191.77 0) (effects (font (size 1.27 1.27)) (justify left)))
-    (property
-      "Footprint"
-      "Resistor_SMD:R_0603_1608Metric"
-      (at 234.95 190.5 0)
-      (effects (font (size 1.27 1.27)) hide))
-    (property "Datasheet" "~" (at 234.95 190.5 0) (effects (font (size 1.27 1.27)) hide))
-    (pin "1" (uuid "9f9f4d3d-7009-5be8-9646-913a9af4aec3"))
-    (pin "2" (uuid "690c5d64-43d3-57d7-9b3c-1d18305a3643"))
-    (instances
-      (project "retropad_snes" (path "/7b7c4538-5bb4-5c1e-935f-8dbb5492f62e" (reference "R11") (unit 1)))))
-  (wire
-    (pts (xy 234.95 186.69) (xy 234.95 184.15))
-    (stroke (width 0) (type default))
-    (uuid "125f80f7-2a37-55c6-b3a7-1804449d595b"))
-  (global_label
-    "UPDI"
-    (shape bidirectional)
-    (at 234.95 184.15 90)
-    (fields_autoplaced)
-    (effects (font (size 1.27 1.27)) (justify left))
-    (uuid "34431000-1e6d-588c-a678-3928831762a1")
-    (property
-      "Intersheetrefs"
-      "${INTERSHEET_REFS}"
-      (at 234.95 184.15 0)
-      (effects (font (size 1.27 1.27)) hide)))
-  (wire
-    (pts (xy 234.95 194.31) (xy 234.95 196.85))
-    (stroke (width 0) (type default))
-    (uuid "4436ae14-b15c-578b-b5b6-05a2b02bfaf3"))
-  (global_label
-    "G9_UPDI"
-    (shape bidirectional)
-    (at 234.95 196.85 270)
-    (fields_autoplaced)
-    (effects (font (size 1.27 1.27)) (justify right))
-    (uuid "64c09e42-ffc8-59e1-a8fc-144ba4fc9319")
-    (property
-      "Intersheetrefs"
-      "${INTERSHEET_REFS}"
-      (at 234.95 196.85 0)
-      (effects (font (size 1.27 1.27)) hide)))
   (text
     "Mounting holes (M3, 96 mm apart)"
     (at 150 210 0)

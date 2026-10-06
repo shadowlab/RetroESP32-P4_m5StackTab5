@@ -104,10 +104,9 @@ AVRDD_PINS = {
 }
 
 # M5Stack Tab5 Keyboard P1 pinout (SCH_Tab5_Keyboard_SCH_V1.0). INT (pin 9)
-# is not wired (the host polls), and G9 (pin 10) can reach UPDI through an
-# unfitted 0R for in-system programming tests.
+# is not wired (the host polls); G9 (pin 10) is unused, as on the keyboard.
 HEADER_PINS = {1: None, 2: "GND", 3: "GND", 4: "GND", 5: "+3V3", 6: None,
-               7: "SCL", 8: "SDA", 9: None, 10: "G9_UPDI"}
+               7: "SCL", 8: "SDA", 9: None, 10: None}
 
 
 def mm(x, y):
@@ -237,10 +236,6 @@ def build_core(b):
         if not fitted:
             r.SetExcludedFromBOM(True)
     b.text(pcbnew.B_SilkS, 85.5, 37.8, "ID0 ID1 ID2 ID3", 0.8, mirror=True)
-
-    # Experimental: UPDI to header pin 10 (G9), so the Tab5 could reprogram the board
-    r = passive("R11", "DNP", 36.0, 47.0, "UPDI", "G9_UPDI", 90.0)
-    r.SetExcludedFromBOM(True)
 
     place_header(b, HEADER_PINS)
 

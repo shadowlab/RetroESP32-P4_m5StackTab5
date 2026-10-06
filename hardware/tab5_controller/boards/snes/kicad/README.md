@@ -14,7 +14,7 @@ fully routed board, linked to each other. It was made with KiCad 7 and opens in 
 | `retropad_snes.kicad_pro` | The KiCad project; open this |
 | `retropad_snes.kicad_sch` / `retropad_snes_schematic.pdf` | Schematic (one A3 sheet) and a PDF of it |
 | `retropad_snes.kicad_pcb` | The routed board |
-| `retropad_snes_bom.csv` | Bill of materials. R8, R9 and R11 are listed as DNP (not fitted). |
+| `retropad_snes_bom.csv` | Bill of materials. R8 and R9 are listed as DNP (not fitted). |
 | `retropad_snes_drc.rpt` | KiCad DRC report for this board |
 | [`../../kicad_gen/`](../../kicad_gen) | Shared generators: `gen_pcb.py`, `gen_sch.py`, `check_netlist.py` and `gen_avrdd_pinmap.py` for every console board |
 
@@ -32,12 +32,11 @@ fully routed board, linked to each other. It was made with KiCad 7 and opens in 
     I2C pull-ups and a 10 k RESET pull-up.
   * Console-ID resistors R6–R9: 0 Ω on ID0 and ID1 for SNES, R8 and R9 not fitted.
   * UPDI header J2: 3V3, UPDI, GND.
-  * R11 (not fitted): UPDI to J1 pin 10 (G9), for experiments with programming from the Tab5.
 * **Buttons:** each switch connects its own MCU pin to GND, with the MCU's internal pull-up.
   No matrix, no diodes. The slot order (PD1–PD7, PC0–PC3, PF0–PF1) follows the layout's
   button order and matches `firmware_avrdd/pinmap.h`; the table is in
-  [`../README.md`](../README.md#pcb-and-schematic). J1 pin 9 (INT) is not connected; the host
-  polls.
+  [`../README.md`](../README.md#pcb-and-schematic). J1 pin 9 (INT) and pin 10 (G9) are not
+  connected; the host polls.
 * **Outline:**
   * 125 × 55 mm, inset 1.5 mm from the case on each side.
   * Notched 3 mm in at the top corners above y = 46 to clear the latch arms.
@@ -53,7 +52,7 @@ fully routed board, linked to each other. It was made with KiCad 7 and opens in 
   silkscreen warnings (labels overlapping pads or running past the edge where L/R overhang),
   plus "library not configured" notes that only appear on a machine without KiCad's library
   table. All are cosmetic.
-* **Schematic vs board:** `check_netlist.py` reports the same 26 nets on each side with 0
+* **Schematic vs board:** `check_netlist.py` reports the same 25 nets on each side with 0
   differences.
 * **Wiring vs firmware:** every switch lands on the MCU pin the firmware's pin map gives it
   for console ID 3, the straps encode ID 3, and J1 carries M5Stack's P1 pinout.
@@ -66,7 +65,7 @@ The schematic covers the same circuit on one A3 sheet:
   from the pin-compatible AVR32DB28, with pins 13/14/15/19 renamed (PD7, VDD, GND, UPDI/PF7).
 * **Tab5 header and UPDI header.**
 * **Support parts:** decoupling, I2C pull-ups and the RESET pull-up.
-* **Console-ID straps:** R8 and R9 are marked DNP, as is R11.
+* **Console-ID straps:** R8 and R9 are marked DNP.
 * **Mounting holes.**
 * **Buttons:** one line per button, K_<button> → switch → GND.
 
@@ -79,7 +78,7 @@ How it stays in step with the board:
 * Each footprint carries its symbol's UUID, so in KiCad **Tools → Update PCB from
   Schematic** matches every part and reports no changes.
 * `check_netlist.py snes` exports the schematic netlist with `kicad-cli` and compares it with the
-  board pad by pad. Current result: 26 nets on each side, 0 differences.
+  board pad by pad. Current result: 25 nets on each side, 0 differences.
 
 You can now edit the design in KiCad the normal way, schematic first. Just remember that
 re-running the generator scripts overwrites the `.kicad_sch` and `.kicad_pcb` files. Once you

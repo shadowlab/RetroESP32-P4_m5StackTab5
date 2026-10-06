@@ -86,8 +86,8 @@ routed two-layer PCB, a BOM and the DRC report.
 | Check | Result |
 |---|---|
 | DRC | 0 unconnected pads, no clearance/short/edge/courtyard errors (silkscreen warnings only) |
-| Routing | 300 track segments, 10 vias, GND pour on both layers |
-| Schematic vs PCB | 26 schematic nets, 26 PCB nets, 0 differences |
+| Routing | 281 track segments, 5 vias, GND pour on both layers |
+| Schematic vs PCB | 25 schematic nets, 25 PCB nets, 0 differences |
 | Wiring vs firmware | every switch is on the MCU pin `firmware_avrdd/pinmap.h` gives it for console ID 3 |
 
 Each switch connects its own AVR32DD28 pin to GND (internal pull-up, no diodes):
