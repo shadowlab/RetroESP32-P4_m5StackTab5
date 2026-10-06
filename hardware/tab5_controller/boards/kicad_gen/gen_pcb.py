@@ -459,7 +459,7 @@ def import_ses(board, path):
     return n_tracks, n_vias
 
 
-# Orderable parts for the switch footprints. The KiCad footprints were drawn for
+# Orderable parts for the switch and Tab5-header footprints. The KiCad footprints were drawn for
 # these families: SW_PUSH_6mm = 6x6 mm THT tact (6.5 x 4.5 mm pins),
 # SW_PUSH-12mm = Omron B3F-40xx (12.5 x 5.0 mm pins), and the angled footprint
 # is named after the C&K PTS645Vx31. A DigiKey number is filled in only where it
@@ -468,6 +468,9 @@ PARTS = {
     "SW_PUSH_6mm": ("C&K", "PTS645SM43-2 LFS", ""),
     "SW_PUSH-12mm": ("Omron", "B3F-4055", "SW414-ND"),
     "SW_Tactile_SPST_Angled_PTS645Vx31-2LFS": ("C&K", "PTS645VL31-2 LFS", "CKN9094-ND"),
+    # J1 to the Tab5: 2x5 right-angle male, 5.84 mm mating pins. Confirm the pin
+    # length against M5Stack's keyboard before ordering (see README checklist).
+    "PinHeader_2x05_P2.54mm_Horizontal": ("Samtec", "TSW-105-08-G-D-RA", "SAM1037-05-ND"),
 }
 
 

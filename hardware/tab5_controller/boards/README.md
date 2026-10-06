@@ -71,7 +71,7 @@ done
 Freerouting 1.9 runs single-threaded on purpose. In testing, 2.1's multi-threaded optimiser
 reported "0 unrouted" but wrote a session with nets missing.
 
-BOMs list the orderable switches (Manufacturer / MPN / DigiKey columns, from `PARTS` in
+BOMs list the orderable switches and Tab5 header (Manufacturer / MPN / DigiKey columns, from `PARTS` in
 `kicad_gen/gen_pcb.py`):
 
 | Footprint | Part | DigiKey |
@@ -79,6 +79,7 @@ BOMs list the orderable switches (Manufacturer / MPN / DigiKey columns, from `PA
 | `SW_PUSH_6mm` | C&K PTS645SM43-2 LFS (6×6 mm, 4.3 mm, ~160 gf) | search by MPN |
 | `SW_PUSH-12mm` | Omron B3F-4055 (12×12 mm, 7.3 mm, 260 gf, takes B32 caps) | SW414-ND |
 | `SW_Tactile_SPST_Angled_PTS645Vx31-2LFS` | C&K PTS645VL31-2 LFS (right angle) | CKN9094-ND |
+| `PinHeader_2x05_P2.54mm_Horizontal` (J1, to the Tab5) | Samtec TSW-105-08-G-D-RA (2×5 right angle, 5.84 mm mating pins); check the pin length against M5Stack's keyboard first | SAM1037-05-ND |
 
 After changing `PARTS`, run `python3 gen_pcb.py <console> --bom-only` to rewrite a BOM from
 the routed board without re-routing.

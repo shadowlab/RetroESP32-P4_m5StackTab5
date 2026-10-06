@@ -1,7 +1,7 @@
 Qty,References,Value,Footprint,Side,Fit,Manufacturer,MPN,DigiKey
 3,C1 C2 C3,100nF,C_0603_1608Metric,back,yes,,,
 1,C4,4.7uF,C_0603_1608Metric,back,yes,,,
-1,J1,Tab5 Ext.Port1,PinHeader_2x05_P2.54mm_Horizontal,front,yes,,,
+1,J1,Tab5 Ext.Port1,PinHeader_2x05_P2.54mm_Horizontal,front,yes,Samtec,TSW-105-08-G-D-RA,SAM1037-05-ND
 1,J2,UPDI,PinHeader_1x03_P2.54mm_Vertical,back,yes,,,
 2,R1 R2,4.7k,R_0603_1608Metric,back,yes,,,
 1,R3,10k,R_0603_1608Metric,back,yes,,,
