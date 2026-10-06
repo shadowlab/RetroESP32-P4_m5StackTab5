@@ -1,10 +1,9 @@
-# RetroPad firmware for AVR DD boards
+# RetroPad board firmware
 
-Firmware for console boards built on a **Microchip AVR32DD28** (SOIC-28), such as the
-[SNES AVR DD prototype](../boards/snes_dd/README.md). It speaks the same I2C protocol as the
-STM32 boards: client address 0x6D, RetroPad register block 0x70–0x87, see
-[`retropad_proto.h`](../../../components/tab5_ctrl/include/retropad_proto.h). The Tab5 host
-driver can't tell the two kinds of board apart.
+Firmware for the [console boards](../boards/README.md), which are all built on a **Microchip
+AVR32DD28** (SOIC-28). One image serves every board. It speaks the RetroPad I2C protocol:
+client address 0x6D, M5Stack's keyboard registers plus the RetroPad block 0x70–0x87, see
+[`retropad_proto.h`](../../../components/tab5_ctrl/include/retropad_proto.h).
 
 | File | What it is |
 |---|---|
@@ -20,7 +19,7 @@ driver can't tell the two kinds of board apart.
 * **Console ID:** read once at boot from straps on PA0, PA1, PA6 and PA7 (0 Ω to GND = bit
   set). The ID selects the pin map row.
   * Every console ID has a row.
-  * IDs with no AVR DD layout yet use a generic order, so a slot can never default to UP.
+  * IDs with no board layout yet use a generic order, so a slot can never default to UP.
 * **Analog:** PA4/PA5 (AIN24/AIN25) are read as 8-bit values, but only for the Atari 2600 and
   5200 IDs.
 * **I2C client** (TWI0 on PA2 SDA, PA3 SCL; interrupt driven):
@@ -57,6 +56,8 @@ This builds the real `main.c` on the host and replays what `components/tab5_ctrl
   then with UP released;
 * checks that the client completes a read when the host NACKs.
 
-It also checks the generic fallback for an ID without a layout. All pass.
+It then switches the ID straps to NES, Game Boy, Master System and Genesis and checks that
+each board's pins map to the right bits, and checks the generic fallback for an ID without a
+layout. All pass.
 
 The firmware has not run on real hardware yet, and no AVR DD simulator was available.

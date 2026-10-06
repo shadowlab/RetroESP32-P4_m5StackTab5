@@ -49,8 +49,8 @@ and the shoulder buttons sit below the latch arms.
 | L | `RP_BTN_L` | 5.00 | 38.00 | 6x6 right-angle | 0° |
 | R | `RP_BTN_R` | 123.00 | 38.00 | 6x6 right-angle | 180° |
 
-Wire each switch to the matrix position of its RetroPad bit (main README §2.3), with a diode.
-Fit the console-ID strap on ID0 and ID1 (ID 3).
+Each switch goes to its own MCU pin (table under [PCB and schematic](#pcb-and-schematic)).
+Fit the console-ID straps R6 and R7 (ID0 and ID1, console ID 3).
 
 **L / R shoulders** are 6×6 right-angle tact switches. They sit at the left and right edges at
 y = 38 mm, with the actuators pointing out of the sides of the case. You press them with your
@@ -73,15 +73,50 @@ Re-run it after changing the scale or the case numbers.
 ## Changes from the reference drawing
 
 * **RJ12 connector (J2), 2×20 header and the on-board diodes/resistors:** replaced by the
-  RetroPad core: STM32F030, 2×5 header to the Tab5, and one diode per switch.
+  RetroPad core: AVR32DD28, 2×5 header to the Tab5, and one MCU pin per switch.
 * **L / R shoulders (SW11, SW12):** moved from the top edge, which docks into the Tab5, to the
   side edges.
 * **MENU:** added. The reference pad has no menu button.
 
-## PCB
+## PCB and schematic
 
-A routed, DRC-clean KiCad board is in [`kicad/`](kicad). That page has the list of things to
-check before ordering. The most important is the orientation of the 2×5 header.
+[`kicad/`](kicad) holds a complete KiCad project (`retropad_snes.kicad_pro`): a schematic, a
+routed two-layer PCB, a BOM and the DRC report.
+
+| Check | Result |
+|---|---|
+| DRC | 0 unconnected pads, no clearance/short/edge/courtyard errors (silkscreen warnings only) |
+| Routing | 300 track segments, 10 vias, GND pour on both layers |
+| Schematic vs PCB | 26 schematic nets, 26 PCB nets, 0 differences |
+| Wiring vs firmware | every switch is on the MCU pin `firmware_avrdd/pinmap.h` gives it for console ID 3 |
+
+Each switch connects its own AVR32DD28 pin to GND (internal pull-up, no diodes):
+
+| Button | MCU pin | RetroPad bit |
+|---|---|---|
+| UP | PD1 (pin 7) | `RP_BTN_UP` |
+| DOWN | PD2 (pin 8) | `RP_BTN_DOWN` |
+| LEFT | PD3 (pin 9) | `RP_BTN_LEFT` |
+| RIGHT | PD4 (pin 10) | `RP_BTN_RIGHT` |
+| X | PD5 (pin 11) | `RP_BTN_X` |
+| B | PD6 (pin 12) | `RP_BTN_B` |
+| Y | PD7 (pin 13) | `RP_BTN_Y` |
+| A | PC0 (pin 2) | `RP_BTN_A` |
+| SELECT | PC1 (pin 3) | `RP_BTN_SELECT` |
+| START | PC2 (pin 4) | `RP_BTN_START` |
+| MENU | PC3 (pin 5) | `RP_BTN_MENU` |
+| L | PF0 (pin 16) | `RP_BTN_L` |
+| R | PF1 (pin 17) | `RP_BTN_R` |
+
+| Front | Back (seen from the back) |
+|---|---|
+| ![front](kicad/front.png) | ![back](kicad/back.png) |
+
+![Schematic](kicad/schematic.png)
+
+The MCU section (AVR32DD28, decoupling, I2C pull-ups, UPDI header J2), the J1 header and the
+[pre-order checklist](../README.md#before-ordering-any-board) (also in [`kicad/README.md`](kicad/README.md)) are shared with every board; see
+[`../../README.md`](../../README.md) §2 for the pin plan.
 
 ## Open items
 

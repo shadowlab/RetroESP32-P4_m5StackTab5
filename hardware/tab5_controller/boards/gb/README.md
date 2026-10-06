@@ -9,7 +9,7 @@ the same.
 ## Layout
 
 * **B and A:** on the Game Boy's diagonal, with B low-left and A high-right (15 mm apart across, 8 mm up).
-* **SELECT / START:** flat. They were first drawn at the Game Boy's angle, but at 45° the router could not reach the SELECT diode (ROW7); flat, the board routes completely.
+* **SELECT / START:** flat 6×6 switches (the Game Boy angles them; flat keeps them level with the NES board's).
 * **MENU:** centred above SELECT/START.
 * **Shared with NES:** the Game Boy and Game Boy Color use the same core and the same buttons as the NES board, so either board works with either core. The console ID only decides how the host labels and maps the board.
 
@@ -27,8 +27,8 @@ the same.
 
 Clearance check (`python3 ../layout.py gb`): extent x 14.2..111.5, y 10.5..41.2; closest bodies 3.00 mm; closest pads 2.66 mm; inside wall margin: True; side buttons below latch arms: True.
 
-Console-ID straps: fit R7 (0 Ω), leave the others unfitted. Every board carries all five
-strap footprints.
+Console-ID straps: fit R7 (0 Ω), leave the others unfitted. Every board carries all four
+strap footprints (R6–R9).
 
 ## PCB and schematic
 
@@ -37,9 +37,24 @@ routed two-layer PCB, a BOM and the DRC report.
 
 | Check | Result |
 |---|---|
-| DRC | 0 unconnected pads, no clearance/short/edge errors (silkscreen warnings only) |
-| Routing | 357 track segments, 24 vias, GND pour on both layers |
-| Schematic vs PCB | 35 schematic nets, 35 PCB nets, 0 differences |
+| DRC | 0 unconnected pads, no clearance/short/edge/courtyard errors (silkscreen warnings only) |
+| Routing | 237 track segments, 8 vias, GND pour on both layers |
+| Schematic vs PCB | 22 schematic nets, 22 PCB nets, 0 differences |
+| Wiring vs firmware | every switch is on the MCU pin `firmware_avrdd/pinmap.h` gives it for console ID 2 |
+
+Each switch connects its own AVR32DD28 pin to GND (internal pull-up, no diodes):
+
+| Button | MCU pin | RetroPad bit |
+|---|---|---|
+| UP | PD1 (pin 7) | `RP_BTN_UP` |
+| DOWN | PD2 (pin 8) | `RP_BTN_DOWN` |
+| LEFT | PD3 (pin 9) | `RP_BTN_LEFT` |
+| RIGHT | PD4 (pin 10) | `RP_BTN_RIGHT` |
+| B | PD5 (pin 11) | `RP_BTN_B` |
+| A | PD6 (pin 12) | `RP_BTN_A` |
+| SELECT | PD7 (pin 13) | `RP_BTN_SELECT` |
+| START | PC0 (pin 2) | `RP_BTN_START` |
+| MENU | PC1 (pin 3) | `RP_BTN_MENU` |
 
 | Front | Back (seen from the back) |
 |---|---|
@@ -47,5 +62,6 @@ routed two-layer PCB, a BOM and the DRC report.
 
 ![Schematic](kicad/schematic.png)
 
-The MCU section, support parts, J1 header and the
-[pre-order checklist](../README.md#before-ordering-any-board) are shared with every board.
+The MCU section (AVR32DD28, decoupling, I2C pull-ups, UPDI header J2), the J1 header and the
+[pre-order checklist](../README.md#before-ordering-any-board) are shared with every board; see
+[`../../README.md`](../../README.md) §2 for the pin plan.

@@ -114,7 +114,7 @@ int main(void)
     mask = v[0] | (uint32_t)v[1] << 8 | (uint32_t)v[2] << 16 | (uint32_t)v[3] << 24;
     check("UP released", mask, RP_BIT(RP_BTN_A) | RP_BIT(RP_BTN_R));
 
-    printf("NES and Genesis boards (same firmware, map chosen by the ID straps)\n");
+    printf("NES, Game Boy, Master System and Genesis boards (same firmware, map chosen by the ID straps)\n");
     PORTA.IN = 0xFF & (uint8_t)~0x01;                   /* ID0 only -> console 1 */
     check("NES console id from straps", read_console_id(), RP_CONSOLE_NES);
     s_console = RP_CONSOLE_NES;
@@ -124,6 +124,22 @@ int main(void)
     check("NES PD6 -> A, PC1 -> MENU", buttons_sample(), RP_BIT(RP_BTN_A) | RP_BIT(RP_BTN_MENU));
     press(&PORTF, 0, 1);                                /* slot 11 not fitted on NES */
     check("NES unused slot PF0 ignored", buttons_sample(), RP_BIT(RP_BTN_A) | RP_BIT(RP_BTN_MENU));
+    PORTA.IN = 0xFF & (uint8_t)~(1 << 1);               /* ID1 only -> console 2 */
+    check("Game Boy console id from straps", read_console_id(), RP_CONSOLE_GB);
+    s_console = RP_CONSOLE_GB;
+    PORTC.IN = PORTD.IN = PORTF.IN = 0xFF;
+    press(&PORTD, 7, 1);                                /* slot 6 = SELECT on GB */
+    press(&PORTC, 0, 1);                                /* slot 7 = START on GB */
+    check("GB PD7 -> SELECT, PC0 -> START", buttons_sample(),
+          RP_BIT(RP_BTN_SELECT) | RP_BIT(RP_BTN_START));
+    PORTA.IN = 0xFF & (uint8_t)~(1 << 6);               /* ID2 only -> console 4 */
+    check("Master System console id from straps", read_console_id(), RP_CONSOLE_SMS);
+    s_console = RP_CONSOLE_SMS;
+    PORTC.IN = PORTD.IN = PORTF.IN = 0xFF;
+    press(&PORTD, 5, 1);                                /* slot 4 = button 1 (B bit) */
+    press(&PORTD, 7, 1);                                /* slot 6 = START */
+    check("SMS PD5 -> 1 (B), PD7 -> START", buttons_sample(),
+          RP_BIT(RP_BTN_B) | RP_BIT(RP_BTN_START));
     PORTA.IN = 0xFF & (uint8_t)~((1 << 0) | (1 << 6));  /* ID0 + ID2 -> console 5 */
     check("Genesis console id from straps", read_console_id(), RP_CONSOLE_GENESIS);
     s_console = RP_CONSOLE_GENESIS;

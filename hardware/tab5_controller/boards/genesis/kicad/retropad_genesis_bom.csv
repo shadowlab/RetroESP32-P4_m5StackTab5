@@ -1,13 +1,12 @@
 Qty,References,Value,Footprint,Side,Fit,Manufacturer,MPN,DigiKey
-4,C1 C2 C3 C5,100nF,C_0603_1608Metric,back,yes,,,
+3,C1 C2 C3,100nF,C_0603_1608Metric,back,yes,,,
 1,C4,4.7uF,C_0603_1608Metric,back,yes,,,
-13,D1 D2 D3 D4 D5 D6 D7 D8 D9 D10 D11 D12 D13,1N4148W,D_SOD-123,back,yes,,,
 1,J1,Tab5 Ext.Port1,PinHeader_2x05_P2.54mm_Horizontal,front,yes,Samtec,TSW-105-08-G-D-RA,SAM1037-05-ND
-1,J2,SWD,PinHeader_1x05_P2.54mm_Vertical,back,yes,,,
+1,J2,UPDI,PinHeader_1x03_P2.54mm_Vertical,back,yes,,,
 2,R1 R2,4.7k,R_0603_1608Metric,back,yes,,,
-3,R3 R4 R5,10k,R_0603_1608Metric,back,yes,,,
+1,R3,10k,R_0603_1608Metric,back,yes,,,
 2,R6 R8,0R,R_0603_1608Metric,back,yes,,,
-0,R7 R9 R10,DNP,R_0603_1608Metric,back,DNP,,,
+0,R7 R9 R11,DNP,R_0603_1608Metric,back,DNP,,,
 1,SW1,UP,SW_PUSH_6mm,front,yes,C&K,PTS645SM43-2 LFS,
 1,SW2,DOWN,SW_PUSH_6mm,front,yes,C&K,PTS645SM43-2 LFS,
 1,SW3,LEFT,SW_PUSH_6mm,front,yes,C&K,PTS645SM43-2 LFS,
@@ -21,4 +20,4 @@ Qty,References,Value,Footprint,Side,Fit,Manufacturer,MPN,DigiKey
 1,SW11,MODE,SW_PUSH_6mm,front,yes,C&K,PTS645SM43-2 LFS,
 1,SW12,START,SW_PUSH_6mm,front,yes,C&K,PTS645SM43-2 LFS,
 1,SW13,MENU,SW_PUSH_6mm,front,yes,C&K,PTS645SM43-2 LFS,
-1,U1,STM32F030C8T6,LQFP-48_7x7mm_P0.5mm,back,yes,,,
+1,U1,AVR32DD28-I/SO,SOIC-28W_7.5x17.9mm_P1.27mm,back,yes,,,

@@ -1,4 +1,4 @@
-# RetroPad firmware for AVR DD boards (AVR32DD28).
+# RetroPad firmware for the console controller boards (AVR32DD28).
 #
 #   make                 # needs an avr-gcc with AVR DD support (GCC 13+ / avr-libc 2.2+)
 #   make flash PORT=/dev/ttyUSB0      # SerialUPDI (USB-serial adapter + resistor)

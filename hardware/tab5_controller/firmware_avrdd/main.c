@@ -1,11 +1,11 @@
 /*
- * RetroPad firmware for AVR DD controller boards (AVR32DD28, SOIC-28).
+ * RetroPad firmware for the console controller boards (AVR32DD28, SOIC-28).
  * SPDX-License-Identifier: MIT
  *
- * Speaks the same I2C protocol as the STM32 RetroPad boards (address 0x6D,
- * register map in components/tab5_ctrl/include/retropad_proto.h), so the Tab5
- * host driver needs no changes. Only the registers that driver touches are
- * implemented; the stock M5Stack keyboard's event/HID/char modes are not.
+ * Speaks the RetroPad I2C protocol (address 0x6D, M5Stack keyboard register
+ * map plus the block in components/tab5_ctrl/include/retropad_proto.h). Only
+ * the registers the Tab5 host driver touches are implemented; the stock M5Stack
+ * keyboard's event/HID/char modes are not.
  *
  * Pins (see boards/layout.py AVRDD_SLOTS and pinmap.h):
  *   PD1-PD7, PC0-PC3, PF0-PF1  13 button slots, switch to GND, internal pull-up
@@ -122,7 +122,7 @@ static uint8_t analog_read(uint8_t muxpos)
     return (uint8_t)(ADC0.RES >> 4);                         /* 12-bit -> 8-bit */
 }
 
-/* ── I2C client: register window shared with the STM32 RetroPad firmware ── */
+/* ── I2C client: RetroPad register window ─────────────────────────────── */
 static uint8_t s_reg;                  /* register pointer */
 static bool s_reg_set;                 /* first byte of a write sets the pointer */
 static bool s_first_read;              /* no byte sent yet in this read */

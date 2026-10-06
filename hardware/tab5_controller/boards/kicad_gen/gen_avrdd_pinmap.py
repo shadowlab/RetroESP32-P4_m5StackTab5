@@ -6,7 +6,7 @@
 For every console layout the header lists which RetroPad bit each of the 13
 button slots carries (slot order = the layout's button order). The firmware
 reads the console ID from its straps and picks the matching row, so one
-firmware image serves every AVR DD board. gen_pcb.py wires the same slots.
+firmware image serves every board. gen_pcb.py wires the same slots.
 """
 import os
 import sys
@@ -25,8 +25,6 @@ GENERIC = ["UP", "DOWN", "LEFT", "RIGHT", "A", "B", "X", "Y", "L", "R", "SELECT"
 def main():
     by_id = {}
     for name, (cid, title) in layout.CONSOLES.items():
-        if name.endswith("_dd"):
-            continue                     # same layout as its base console
         by_id[cid] = (name, title, layout.avrdd_slots(name))
 
     lines = [
@@ -56,7 +54,7 @@ def main():
             lines.append("    /* %2d %s: %s */" % (cid, title, names))
         else:
             bits = ["RP_BTN_" + b for b in GENERIC]
-            lines.append("    /* %2d no AVR DD layout yet: generic slot order %s */" % (cid, " ".join(GENERIC)))
+            lines.append("    /* %2d no board layout yet: generic slot order %s */" % (cid, " ".join(GENERIC)))
         lines.append("    [%d] = {%s}," % (cid, ", ".join(bits)))
     lines += ["};", "", "#endif /* RETROPAD_PINMAP_H */", ""]
     os.makedirs(os.path.dirname(OUT), exist_ok=True)

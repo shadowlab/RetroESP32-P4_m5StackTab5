@@ -45,11 +45,8 @@ class Console:
         self.pcb = os.path.join(self.dir, self.base + ".kicad_pcb")
         self.pcb_unrouted = os.path.join(self.dir, self.base + "_unrouted.kicad_pcb")
         self.sch_file = self.base + ".kicad_sch"
-        self.core = layout.core_of(name)
         # ID0..ID3 = bits of the console id (0R fitted = bit set)
         self.straps = [("R%d" % (6 + i), "ID%d" % i, bool(self.id >> i & 1)) for i in range(4)]
-        if self.core == "stm32":
-            self.straps.append(("R10", "AN_EN", False))     # analog-fitted strap (unused here)
 
     def buttons(self):
         return layout.BOARDS[self.name]()[0]
@@ -91,17 +88,6 @@ HEADER_BODY_DEPTH = 6.58        # pin row 1 to the front face of the header body
 M3_Y = 45.0                     # estimate; caliper-check on a real keyboard
 M3_X = (16.0, 112.0)
 
-# STM32F030C8T6 LQFP48 pin -> net (pins not listed are left unconnected)
-MCU_PINS = {
-    1: "+3V3", 24: "+3V3", 48: "+3V3", 9: "+3V3",
-    8: "GND", 23: "GND", 47: "GND",
-    7: "NRST", 44: "BOOT0",
-    10: "COL0", 11: "COL1", 12: "COL2", 13: "COL3",
-    18: "ROW0", 19: "ROW1", 20: "ROW2", 39: "ROW3", 40: "ROW4", 41: "ROW5", 42: "ROW6", 43: "ROW7",
-    21: "SCL", 22: "SDA", 38: "INT", 34: "SWDIO", 37: "SWCLK",
-    25: "ID0", 26: "ID1", 27: "ID2", 45: "ID3", 46: "AN_EN",
-}
-
 # AVR32DD28 SOIC-28 pin -> net (checked against DxCore's pinout from Microchip's
 # DFP and KiCad's pin-compatible AVR32DB28 symbol). Button slots are added from
 # layout.avrdd_slots(); pins not listed are left unconnected.
@@ -117,16 +103,11 @@ AVRDD_PINS = {
     26: "AN0", 27: "AN1",                       # PA4 / PA5 (AIN24 / AIN25)
 }
 
-# M5Stack Tab5 Keyboard P1 pinout (SCH_Tab5_Keyboard_SCH_V1.0)
+# M5Stack Tab5 Keyboard P1 pinout (SCH_Tab5_Keyboard_SCH_V1.0). INT (pin 9)
+# is not wired (the host polls), and G9 (pin 10) can reach UPDI through an
+# unfitted 0R for in-system programming tests.
 HEADER_PINS = {1: None, 2: "GND", 3: "GND", 4: "GND", 5: "+3V3", 6: None,
-               7: "SCL", 8: "SDA", 9: "INT", 10: None}
-
-# Header pins that differ on AVR DD boards: INT is not wired (the host polls)
-# and G9 can reach UPDI through an unfitted 0R for in-system programming tests.
-HEADER_PINS_AVRDD = {**HEADER_PINS, 9: None, 10: "G9_UPDI"}
-
-RP_BIT = {name: i for i, name in enumerate(
-    "UP DOWN LEFT RIGHT A B C X Y Z L R L2 R2 START SELECT MENU VOLUME OPT1 OPT2".split())}
+               7: "SCL", 8: "SDA", 9: None, 10: "G9_UPDI"}
 
 
 def mm(x, y):
@@ -226,7 +207,7 @@ class Builder:
         return z
 
 
-def build_avrdd_core(b):
+def build_core(b):
     """AVR32DD28 (SOIC-28) on the back, one pin per button, UPDI programming."""
     u = b.place("Package_SO", "SOIC-28W_7.5x17.9mm_P1.27mm", "U1", "AVR32DD28-I/SO", 64.0, 46.5, 90.0, back=True)
     pins = dict(AVRDD_PINS)
@@ -261,7 +242,7 @@ def build_avrdd_core(b):
     r = passive("R11", "DNP", 36.0, 47.0, "UPDI", "G9_UPDI", 90.0)
     r.SetExcludedFromBOM(True)
 
-    place_header(b, HEADER_PINS_AVRDD)
+    place_header(b, HEADER_PINS)
 
     # UPDI programming header: 1 = 3V3, 2 = UPDI, 3 = GND
     j2 = b.place("Connector_PinHeader_2.54mm", "PinHeader_1x03_P2.54mm_Vertical", "J2", "UPDI",
@@ -301,12 +282,9 @@ def build():
     b.text(pcbnew.F_SilkS, 64, 49.5, "RetroPad %s  (console ID %d)" % (CFG.title, CFG.id), 1.2)
     b.text(pcbnew.B_SilkS, 100, 53.5, "RetroPad %s rev 0.1" % CFG.name.upper(), 1.0, mirror=True)
 
-    # Buttons (front) and their matrix diodes (back)
-    for n, (name, rp, x, y, kind, rot) in enumerate(buttons, start=1):
-        bit = RP_BIT[rp[len("RP_BTN_"):]]
-        row, col = f"ROW{bit % 8}", f"COL{bit // 8}"
-        key = f"K_{name}"
-        sref, dref = f"SW{n}", f"D{n}"
+    # Buttons (front): one MCU pin each, switch to GND, internal pull-up in the MCU
+    for n, (name, _rp, x, y, kind, rot) in enumerate(buttons, start=1):
+        sref = f"SW{n}"
         if kind == "ra":
             # Right-angle switch: body front flush with the side edge, actuator out
             left = rot == 0
@@ -316,73 +294,14 @@ def build():
             # edge, below it on the right), so offset pin 1 to centre the pins on y.
             sw = b.place("Button_Switch_THT", "SW_Tactile_SPST_Angled_PTS645Vx31-2LFS", sref, name,
                          px, y - 2.25 if left else y + 2.25, frot)
-            dx = x + (7.0 if left else -7.0)
         else:
-            lib, fpn = ("SW_PUSH_6mm", 6) if kind == 6 else ("SW_PUSH-12mm", 12)
-            sw = b.place("Button_Switch_THT", lib, sref, name, x, y, rot, anchor="pads")
-            dx = x
-        b.connect(sw, 1, key)
-        if CFG.core == "avrdd":
-            # One MCU pin per button: switch to GND, internal pull-up in the MCU
-            b.connect(sw, 2, "GND")
-            continue
-        # Matrix: switch pin 1 -> diode cathode, pin 2 -> column. Diode anode -> row.
-        d = b.place("Diode_SMD", "D_SOD-123", dref, "1N4148W", dx, y,
-                    90.0 if kind == "ra" else rot, back=True)
-        b.connect(sw, 2, col)
-        b.connect(d, 1, key)    # SOD-123 pad 1 = cathode
-        b.connect(d, 2, row)
+            fpn = "SW_PUSH_6mm" if kind == 6 else "SW_PUSH-12mm"
+            sw = b.place("Button_Switch_THT", fpn, sref, name, x, y, rot, anchor="pads")
+        b.connect(sw, 1, f"K_{name}")
+        b.connect(sw, 2, "GND")
 
-    if CFG.core == "avrdd":
-        build_avrdd_core(b)
-        return b
-
-    # MCU and support parts (back side, top-middle band)
-    u = b.place("Package_QFP", "LQFP-48_7x7mm_P0.5mm", "U1", "STM32F030C8T6", 64.0, 47.0, 0.0, back=True)
-    for pin, netname in MCU_PINS.items():
-        b.connect(u, pin, netname)
-
-    def passive(ref, value, x, y, a, c, rot=0.0, fp="R_0603_1608Metric", lib="Resistor_SMD"):
-        f = b.place(lib, fp, ref, value, x, y, rot, back=True)
-        b.connect(f, 1, a)
-        b.connect(f, 2, c)
-        return f
-
-    cap = dict(fp="C_0603_1608Metric", lib="Capacitor_SMD")
-    passive("C1", "100nF", 57.0, 47.0, "+3V3", "GND", 90.0, **cap)
-    passive("C2", "100nF", 71.0, 47.0, "+3V3", "GND", 90.0, **cap)
-    passive("C3", "100nF", 58.6, 41.4, "+3V3", "GND", 45.0, **cap)
-    passive("C4", "4.7uF", 64.0, 53.6, "+3V3", "GND", 0.0, **cap)
-    passive("C5", "100nF", 52.0, 41.0, "NRST", "GND", 90.0, **cap)
-    passive("R1", "4.7k", 46.0, 47.0, "+3V3", "SCL", 90.0)
-    passive("R2", "4.7k", 44.0, 47.0, "+3V3", "SDA", 90.0)
-    passive("R3", "10k", 42.0, 47.0, "+3V3", "INT", 90.0)
-    passive("R4", "10k", 54.0, 41.0, "+3V3", "NRST", 90.0)
-    passive("R5", "10k", 76.0, 50.0, "BOOT0", "GND", 90.0)
-
-    # Console-ID / analog straps: 0R to GND = bit set. Every board carries all
-    # five footprints; the BOM decides the console id (see Console.straps).
-    for i, (ref, sig, fitted) in enumerate(CFG.straps):
-        r = passive(ref, "0R" if fitted else "DNP", 79.0 + i * 3.0, 41.0, sig, "GND", 90.0)
-        if not fitted:
-            r.SetDNP(True) if hasattr(r, "SetDNP") else None
-            r.SetExcludedFromBOM(True) if hasattr(r, "SetExcludedFromBOM") else None
-    b.text(pcbnew.B_SilkS, 85.0, 37.8, "ID0 ID1 ID2 ID3 AN", 0.8, mirror=True)
-
-    place_header(b, HEADER_PINS)
-
-    # SWD (pads only; 1 = 3V3, 2 = SWCLK, 3 = SWDIO, 4 = NRST, 5 = GND as on the keyboard)
-    j2 = b.place("Connector_PinHeader_2.54mm", "PinHeader_1x05_P2.54mm_Vertical", "J2", "SWD",
-                 88.0, 53.5, 90.0, back=True)
-    for pin, netname in {1: "+3V3", 2: "SWCLK", 3: "SWDIO", 4: "NRST", 5: "GND"}.items():
-        b.connect(j2, pin, netname)
-    for p in j2.Pads():
-        if p.GetNetname() == "GND":
-            p.SetZoneConnection(pcbnew.ZONE_CONNECTION_FULL)
-    b.text(pcbnew.B_SilkS, 93.0, 50.6, "SWD 3V3 CLK DIO RST GND", 0.8, mirror=True)
-
+    build_core(b)
     return b
-
 
 def drc(path):
     rpt = path.replace(".kicad_pcb", "_drc.rpt")

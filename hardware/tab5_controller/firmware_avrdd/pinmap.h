@@ -14,7 +14,7 @@ static const uint8_t slot_pin[SLOT_COUNT] = {1, 2, 3, 4, 5, 6, 7, 0, 1, 2, 3, 0,
 
 /* Console ID -> RetroPad bit carried by each slot (SLOT_NONE = not fitted) */
 static const uint8_t slot_bit[RP_CONSOLE_COUNT][SLOT_COUNT] = {
-    /*  0 no AVR DD layout yet: generic slot order UP DOWN LEFT RIGHT A B X Y L R SELECT START MENU */
+    /*  0 no board layout yet: generic slot order UP DOWN LEFT RIGHT A B X Y L R SELECT START MENU */
     [0] = {RP_BTN_UP, RP_BTN_DOWN, RP_BTN_LEFT, RP_BTN_RIGHT, RP_BTN_A, RP_BTN_B, RP_BTN_X, RP_BTN_Y, RP_BTN_L, RP_BTN_R, RP_BTN_SELECT, RP_BTN_START, RP_BTN_MENU},
     /*  1 NES: UP=PD1, DOWN=PD2, LEFT=PD3, RIGHT=PD4, B=PD5, A=PD6, SELECT=PD7, START=PC0, MENU=PC1 */
     [1] = {RP_BTN_UP, RP_BTN_DOWN, RP_BTN_LEFT, RP_BTN_RIGHT, RP_BTN_B, RP_BTN_A, RP_BTN_SELECT, RP_BTN_START, RP_BTN_MENU, SLOT_NONE, SLOT_NONE, SLOT_NONE, SLOT_NONE},
@@ -26,25 +26,25 @@ static const uint8_t slot_bit[RP_CONSOLE_COUNT][SLOT_COUNT] = {
     [4] = {RP_BTN_UP, RP_BTN_DOWN, RP_BTN_LEFT, RP_BTN_RIGHT, RP_BTN_B, RP_BTN_A, RP_BTN_START, RP_BTN_MENU, SLOT_NONE, SLOT_NONE, SLOT_NONE, SLOT_NONE, SLOT_NONE},
     /*  5 Genesis / Mega Drive 6-button: UP=PD1, DOWN=PD2, LEFT=PD3, RIGHT=PD4, A=PD5, X=PD6, B=PD7, Y=PC0, C=PC1, Z=PC2, MODE=PC3, START=PF0, MENU=PF1 */
     [5] = {RP_BTN_UP, RP_BTN_DOWN, RP_BTN_LEFT, RP_BTN_RIGHT, RP_BTN_A, RP_BTN_X, RP_BTN_B, RP_BTN_Y, RP_BTN_C, RP_BTN_Z, RP_BTN_SELECT, RP_BTN_START, RP_BTN_MENU},
-    /*  6 no AVR DD layout yet: generic slot order UP DOWN LEFT RIGHT A B X Y L R SELECT START MENU */
+    /*  6 no board layout yet: generic slot order UP DOWN LEFT RIGHT A B X Y L R SELECT START MENU */
     [6] = {RP_BTN_UP, RP_BTN_DOWN, RP_BTN_LEFT, RP_BTN_RIGHT, RP_BTN_A, RP_BTN_B, RP_BTN_X, RP_BTN_Y, RP_BTN_L, RP_BTN_R, RP_BTN_SELECT, RP_BTN_START, RP_BTN_MENU},
-    /*  7 no AVR DD layout yet: generic slot order UP DOWN LEFT RIGHT A B X Y L R SELECT START MENU */
+    /*  7 no board layout yet: generic slot order UP DOWN LEFT RIGHT A B X Y L R SELECT START MENU */
     [7] = {RP_BTN_UP, RP_BTN_DOWN, RP_BTN_LEFT, RP_BTN_RIGHT, RP_BTN_A, RP_BTN_B, RP_BTN_X, RP_BTN_Y, RP_BTN_L, RP_BTN_R, RP_BTN_SELECT, RP_BTN_START, RP_BTN_MENU},
-    /*  8 no AVR DD layout yet: generic slot order UP DOWN LEFT RIGHT A B X Y L R SELECT START MENU */
+    /*  8 no board layout yet: generic slot order UP DOWN LEFT RIGHT A B X Y L R SELECT START MENU */
     [8] = {RP_BTN_UP, RP_BTN_DOWN, RP_BTN_LEFT, RP_BTN_RIGHT, RP_BTN_A, RP_BTN_B, RP_BTN_X, RP_BTN_Y, RP_BTN_L, RP_BTN_R, RP_BTN_SELECT, RP_BTN_START, RP_BTN_MENU},
-    /*  9 no AVR DD layout yet: generic slot order UP DOWN LEFT RIGHT A B X Y L R SELECT START MENU */
+    /*  9 no board layout yet: generic slot order UP DOWN LEFT RIGHT A B X Y L R SELECT START MENU */
     [9] = {RP_BTN_UP, RP_BTN_DOWN, RP_BTN_LEFT, RP_BTN_RIGHT, RP_BTN_A, RP_BTN_B, RP_BTN_X, RP_BTN_Y, RP_BTN_L, RP_BTN_R, RP_BTN_SELECT, RP_BTN_START, RP_BTN_MENU},
-    /* 10 no AVR DD layout yet: generic slot order UP DOWN LEFT RIGHT A B X Y L R SELECT START MENU */
+    /* 10 no board layout yet: generic slot order UP DOWN LEFT RIGHT A B X Y L R SELECT START MENU */
     [10] = {RP_BTN_UP, RP_BTN_DOWN, RP_BTN_LEFT, RP_BTN_RIGHT, RP_BTN_A, RP_BTN_B, RP_BTN_X, RP_BTN_Y, RP_BTN_L, RP_BTN_R, RP_BTN_SELECT, RP_BTN_START, RP_BTN_MENU},
-    /* 11 no AVR DD layout yet: generic slot order UP DOWN LEFT RIGHT A B X Y L R SELECT START MENU */
+    /* 11 no board layout yet: generic slot order UP DOWN LEFT RIGHT A B X Y L R SELECT START MENU */
     [11] = {RP_BTN_UP, RP_BTN_DOWN, RP_BTN_LEFT, RP_BTN_RIGHT, RP_BTN_A, RP_BTN_B, RP_BTN_X, RP_BTN_Y, RP_BTN_L, RP_BTN_R, RP_BTN_SELECT, RP_BTN_START, RP_BTN_MENU},
-    /* 12 no AVR DD layout yet: generic slot order UP DOWN LEFT RIGHT A B X Y L R SELECT START MENU */
+    /* 12 no board layout yet: generic slot order UP DOWN LEFT RIGHT A B X Y L R SELECT START MENU */
     [12] = {RP_BTN_UP, RP_BTN_DOWN, RP_BTN_LEFT, RP_BTN_RIGHT, RP_BTN_A, RP_BTN_B, RP_BTN_X, RP_BTN_Y, RP_BTN_L, RP_BTN_R, RP_BTN_SELECT, RP_BTN_START, RP_BTN_MENU},
-    /* 13 no AVR DD layout yet: generic slot order UP DOWN LEFT RIGHT A B X Y L R SELECT START MENU */
+    /* 13 no board layout yet: generic slot order UP DOWN LEFT RIGHT A B X Y L R SELECT START MENU */
     [13] = {RP_BTN_UP, RP_BTN_DOWN, RP_BTN_LEFT, RP_BTN_RIGHT, RP_BTN_A, RP_BTN_B, RP_BTN_X, RP_BTN_Y, RP_BTN_L, RP_BTN_R, RP_BTN_SELECT, RP_BTN_START, RP_BTN_MENU},
-    /* 14 no AVR DD layout yet: generic slot order UP DOWN LEFT RIGHT A B X Y L R SELECT START MENU */
+    /* 14 no board layout yet: generic slot order UP DOWN LEFT RIGHT A B X Y L R SELECT START MENU */
     [14] = {RP_BTN_UP, RP_BTN_DOWN, RP_BTN_LEFT, RP_BTN_RIGHT, RP_BTN_A, RP_BTN_B, RP_BTN_X, RP_BTN_Y, RP_BTN_L, RP_BTN_R, RP_BTN_SELECT, RP_BTN_START, RP_BTN_MENU},
-    /* 15 no AVR DD layout yet: generic slot order UP DOWN LEFT RIGHT A B X Y L R SELECT START MENU */
+    /* 15 no board layout yet: generic slot order UP DOWN LEFT RIGHT A B X Y L R SELECT START MENU */
     [15] = {RP_BTN_UP, RP_BTN_DOWN, RP_BTN_LEFT, RP_BTN_RIGHT, RP_BTN_A, RP_BTN_B, RP_BTN_X, RP_BTN_Y, RP_BTN_L, RP_BTN_R, RP_BTN_SELECT, RP_BTN_START, RP_BTN_MENU},
 };
 

@@ -27,8 +27,8 @@ the same.
 
 Clearance check (`python3 ../layout.py nes`): extent x 14.2..112.0, y 10.5..41.2; closest bodies 4.00 mm; closest pads 2.66 mm; inside wall margin: True; side buttons below latch arms: True.
 
-Console-ID straps: fit R6 (0 Ω), leave the others unfitted. Every board carries all five
-strap footprints.
+Console-ID straps: fit R6 (0 Ω), leave the others unfitted. Every board carries all four
+strap footprints (R6–R9).
 
 ## PCB and schematic
 
@@ -37,9 +37,24 @@ routed two-layer PCB, a BOM and the DRC report.
 
 | Check | Result |
 |---|---|
-| DRC | 0 unconnected pads, no clearance/short/edge errors (silkscreen warnings only) |
-| Routing | 345 track segments, 21 vias, GND pour on both layers |
-| Schematic vs PCB | 35 schematic nets, 35 PCB nets, 0 differences |
+| DRC | 0 unconnected pads, no clearance/short/edge/courtyard errors (silkscreen warnings only) |
+| Routing | 243 track segments, 9 vias, GND pour on both layers |
+| Schematic vs PCB | 22 schematic nets, 22 PCB nets, 0 differences |
+| Wiring vs firmware | every switch is on the MCU pin `firmware_avrdd/pinmap.h` gives it for console ID 1 |
+
+Each switch connects its own AVR32DD28 pin to GND (internal pull-up, no diodes):
+
+| Button | MCU pin | RetroPad bit |
+|---|---|---|
+| UP | PD1 (pin 7) | `RP_BTN_UP` |
+| DOWN | PD2 (pin 8) | `RP_BTN_DOWN` |
+| LEFT | PD3 (pin 9) | `RP_BTN_LEFT` |
+| RIGHT | PD4 (pin 10) | `RP_BTN_RIGHT` |
+| B | PD5 (pin 11) | `RP_BTN_B` |
+| A | PD6 (pin 12) | `RP_BTN_A` |
+| SELECT | PD7 (pin 13) | `RP_BTN_SELECT` |
+| START | PC0 (pin 2) | `RP_BTN_START` |
+| MENU | PC1 (pin 3) | `RP_BTN_MENU` |
 
 | Front | Back (seen from the back) |
 |---|---|
@@ -47,5 +62,6 @@ routed two-layer PCB, a BOM and the DRC report.
 
 ![Schematic](kicad/schematic.png)
 
-The MCU section, support parts, J1 header and the
-[pre-order checklist](../README.md#before-ordering-any-board) are shared with every board.
+The MCU section (AVR32DD28, decoupling, I2C pull-ups, UPDI header J2), the J1 header and the
+[pre-order checklist](../README.md#before-ordering-any-board) are shared with every board; see
+[`../../README.md`](../../README.md) §2 for the pin plan.
