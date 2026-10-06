@@ -102,7 +102,7 @@ def nes():
 
 
 def gb():
-    """Game Boy: B low-left / A high-right on a diagonal, SELECT/START angled."""
+    """Game Boy: B low-left / A high-right on a diagonal, SELECT/START flat."""
     cx, cy = CASE_W / 2, KEY_H / 2
     fx = cx + 41 * _S
     return _dpad() + [
