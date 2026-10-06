@@ -370,12 +370,10 @@ static void genesis_video_task(void *arg)
         }
 
         /* Draw sidebar buttons on first frames */
-#ifndef CONFIG_HDMI_OUTPUT
         if (sidebar_countdown > 0) {
             genesis_blit_sidebar_buttons();
             sidebar_countdown--;
         }
-#endif
 
         xQueueReceive(vidQueue, &frame, portMAX_DELAY);
     }
@@ -1043,9 +1041,7 @@ void genesis_run(const char *rom_path)
              REG1_PAL ? GWENESIS_AUDIO_FREQ_PAL : GWENESIS_AUDIO_FREQ_NTSC, gen_i2s_rate);
 
     /* ── Pre-render sidebar buttons ── */
-#ifndef CONFIG_HDMI_OUTPUT
     genesis_init_sidebar_buttons();
-#endif
 
     /* Genesis 3-button pad needs X/Y as face buttons (A/C).
      * MENU and VOLUME are handled by the touchscreen shoulder zones. */
