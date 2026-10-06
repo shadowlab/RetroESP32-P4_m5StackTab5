@@ -78,9 +78,13 @@ static uint8_t read_console_id(void)
     for (volatile uint16_t d = 0; d < 2000; d++) {         /* let the pull-ups settle */
     }
     for (uint8_t i = 0; i < 4; i++) {
-        if (!(PORTA.IN & (1 << strap_pin[i])))
+        if (!(PORTA.IN & (1 << strap_pin[i]))) {
             id |= (uint8_t)(1 << i);
-        (&PORTA.PIN0CTRL)[strap_pin[i]] = 0;                /* pull-ups off again */
+            /* Fitted strap: the pin is tied to GND, so drop the pull-up
+             * (it would draw current) and the input buffer. */
+            (&PORTA.PIN0CTRL)[strap_pin[i]] = PORT_ISC_INPUT_DISABLE_gc;
+        }
+        /* Unfitted strap: keep the pull-up so the pin doesn't float */
     }
     return id;
 }
@@ -104,10 +108,17 @@ static uint32_t buttons_sample(void)
     return mask;
 }
 
+/* AN0 / AN1 (PA4 / PA5) are analog-only. On boards without pots they are
+ * unconnected, so their digital input buffers stay off on every board rather
+ * than leaving floating inputs. */
+static void analog_pins_init(void)
+{
+    PORTA.PIN4CTRL = PORT_ISC_INPUT_DISABLE_gc;
+    PORTA.PIN5CTRL = PORT_ISC_INPUT_DISABLE_gc;
+}
+
 static void analog_init(void)
 {
-    PORTA.PIN4CTRL = PORT_ISC_INPUT_DISABLE_gc;              /* analog-only pins */
-    PORTA.PIN5CTRL = PORT_ISC_INPUT_DISABLE_gc;
     VREF.ADC0REF = VREF_REFSEL_VDD_gc;
     ADC0.CTRLC = ADC_PRESC_DIV16_gc;                         /* 1.5 MHz ADC clock */
     ADC0.CTRLA = ADC_ENABLE_bm | ADC_RESSEL_12BIT_gc;
@@ -252,6 +263,7 @@ int main(void)
     if (s_console >= RP_CONSOLE_COUNT)
         s_console = RP_CONSOLE_GENERIC;
     buttons_init();
+    analog_pins_init();
     if (HAS_ANALOG(s_console)) {
         analog_init();
         s_analog_count = 2;

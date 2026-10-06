@@ -76,11 +76,19 @@ int main(void)
     PORTC.IN = PORTD.IN = PORTF.IN = 0xFF;
     s_console = read_console_id();
     buttons_init();
+    analog_pins_init();
     twi_init();
     printf("boot\n");
     check("console id from straps", s_console, RP_CONSOLE_SNES);
     check("TWI address", TWI0.SADDR, 0x6D << 1);
     check("pull-up on PD1 (UP)", PORTD.PIN1CTRL & PORT_PULLUPEN_bm, PORT_PULLUPEN_bm);
+    printf("unused pins don't float\n");
+    check("fitted strap PA0: pull-up off", PORTA.PIN0CTRL & PORT_PULLUPEN_bm, 0);
+    check("fitted strap PA1: pull-up off", PORTA.PIN1CTRL & PORT_PULLUPEN_bm, 0);
+    check("unfitted strap PA6: pull-up kept", PORTA.PIN6CTRL & PORT_PULLUPEN_bm, PORT_PULLUPEN_bm);
+    check("unfitted strap PA7: pull-up kept", PORTA.PIN7CTRL & PORT_PULLUPEN_bm, PORT_PULLUPEN_bm);
+    check("AN0 PA4: input buffer off", PORTA.PIN4CTRL, PORT_ISC_INPUT_DISABLE_gc);
+    check("AN1 PA5: input buffer off", PORTA.PIN5CTRL, PORT_ISC_INPUT_DISABLE_gc);
 
     printf("probe (tab5_ctrl.c probe())\n");
     uint8_t v[RP_EXT_BLOCK_LEN];

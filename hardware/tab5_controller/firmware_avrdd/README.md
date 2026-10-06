@@ -22,6 +22,9 @@ client address 0x6D, M5Stack's keyboard registers plus the RetroPad block 0x70â€
   * IDs with no board layout yet use a generic order, so a slot can never default to UP.
 * **Analog:** PA4/PA5 (AIN24/AIN25) are read as 8-bit values, but only for the Atari 2600 and
   5200 IDs.
+* **Unused pins don't float:** PA4/PA5 have their digital input buffers off on every board, and
+  an unfitted console-ID strap keeps its pull-up. A fitted strap (tied to GND) has its pull-up
+  and input buffer turned off after the ID is read, so it draws no current.
 * **I2C client** (TWI0 on PA2 SDA, PA3 SCL; interrupt driven):
   * Implements what the host driver uses: the 0x70â€“0x87 block, FW_VERSION (0xFE = 0x21), and
     INT_CFG / EVENT_NUM / KB_MODE writes.
