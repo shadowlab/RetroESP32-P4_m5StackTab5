@@ -12,18 +12,19 @@ core expects them. You can also swap boards while the system is running.
  └───────────┬─ Ext.Port1 (2x5) ─┬──────┘
              │ G0 SDA  G1 SCL    │   I2C 400 kHz, addr 0x6D
  ┌───────────┴───────────────────┴──────┐
- │  STM32F030C8T6  ── 8x4 key matrix    │   same MCU as the M5 keyboard
+ │  AVR32DD28 (SOIC-28) ─ 1 pin/button  │   up to 13 buttons, no matrix
  │  ID straps ─ console id              │   NES / SNES / Genesis / ...
- │  PA6/PA7   ─ paddles / analog stick  │   optional
+ │  PA4/PA5   ─ paddles / analog stick  │   optional
  └──────────────────────────────────────┘
 ```
 
-The design has three parts, and each one stays compatible with M5Stack's own:
+The design has three parts. The boards are mechanically and electrically compatible with
+M5Stack's keyboard port, and they answer on its I2C address:
 
 | Part | Where | What it does |
 |---|---|---|
-| Board hardware | this document | Uses the keyboard's outline, latches, 2x5 header and MCU, with console-specific buttons |
-| Board firmware | [`firmware/`](firmware) | A patch on M5Stack's MIT-licensed keyboard firmware. It adds a read-only register block and changes nothing else. |
+| Board hardware | this document | Uses the keyboard's outline, latches and 2x5 header, with console-specific buttons on an AVR32DD28 |
+| Board firmware | `firmware_avrdd/` (added with the boards) | One firmware image for every board. It answers at 0x6D with M5Stack's register map plus the RetroPad block. |
 | Host driver | [`components/tab5_ctrl`](../../components/tab5_ctrl) | Detects the board, polls it and feeds `odroid_input_gamepad_read()` |
 
 The stock M5Stack Tab5 Keyboard also works with the host driver. It acts as a generic pad
@@ -104,103 +105,71 @@ This is P1 in M5Stack's keyboard schematic (`SCH_Tab5_Keyboard_SCH_V1.0`): a 2×
 
 | Pin | Net | Board side | | Pin | Net | Board side |
 |---|---|---|---|---|---|---|
-| 10 | G9 | **not connected** | | 9 | INT_G50 | STM32 PA15, 10 kΩ pull-up to 3V3 |
-| 8 | SDA_G0 | STM32 PB11 (I2C2_SDA), 4.7 kΩ pull-up | | 7 | SCL_G1 | STM32 PB10 (I2C2_SCL), 4.7 kΩ pull-up |
+| 10 | G9 | **not connected** (optional 0 Ω to UPDI, unfitted) | | 9 | INT_G50 | **not connected** |
+| 8 | SDA_G0 | PA2 (TWI0 SDA), 4.7 kΩ pull-up | | 7 | SCL_G1 | PA3 (TWI0 SCL), 4.7 kΩ pull-up |
 | 6 | SYS_EXT5V | **not connected** | | 5 | VCC_3V3 | Board supply |
 | 4 | GND | GND | | 3 | GND | GND |
 | 2 | GND | GND | | 1 | SYS_VIN | **not connected** |
 
 * The whole board runs from the Tab5's 3.3 V on pin 5. Leave SYS_VIN and SYS_EXT5V open, as
   M5Stack does.
-* G9 (pin 10) is unused on the keyboard. It is the only spare line to the Tab5, so it could
-  carry a future signal. Leave it open for now.
-* The host driver polls the board, so INT is optional. Keep the pin and its pull-up anyway, so
-  the board still works with software written for the stock keyboard.
+* G9 (pin 10) is unused on the keyboard. It is the only spare line to the Tab5. The boards
+  carry an unfitted 0 Ω from UPDI to it, as an experiment towards letting the Tab5 reprogram
+  a board; G9's suitability isn't verified.
+* INT is not wired. The host driver polls the board, and the AVR32DD28 has no pin left for it.
 
 ### 2.2 MCU and reference circuit
 
-Use an **STM32F030C8T6 (LQFP48)**, the same part as the keyboard, so M5Stack's bootloader and
-pinout carry over unchanged. Copy M5Stack's support circuit:
+Every board uses a **Microchip AVR32DD28-I/SO** (SOIC-28, 24 MHz, 32 KB flash), programmed over
+UPDI. Its SOIC-28 pinout was cross-checked between DxCore's diagram (generated from
+Microchip's AVR64DD28 device pack) and KiCad's pin-compatible AVR32DB28 symbol.
 
-| Part | Keyboard ref | Value / connection |
-|---|---|---|
-| I2C pull-ups | R1, R2 | 4.7 kΩ from PB10 and PB11 to 3V3 |
-| INT pull-up | R3 | 10 kΩ from PA15 to 3V3 |
-| Reset | R4, C4 | 10 kΩ pull-up and 100 nF to GND on NRST (pin 7) |
-| BOOT0 | R5 | 10 kΩ to GND (pin 44) |
-| Decoupling | C1, C2, C5 | 3 × 100 nF on VDD (pins 1, 24, 48) and VDDA (pin 9). VSS/VSSA (pins 23, 47, 8) go to GND. |
-| SWD header | P2 | 1 = 3V3, 2 = SWCLK (PA14), 3 = SWDIO (PA13), 4 = NRST, 5 = GND |
-| Status LEDs (optional) | U2, U3, R7 | 2 × WS2812E-1313 in a chain, with the data input from PB15 through 1 kΩ |
+| Pin | Port | Use | | Pin | Port | Use |
+|---|---|---|---|---|---|---|
+| 1 | PA7 | ID3 strap | | 15 | GND | |
+| 2–5 | PC0–PC3 | Button slots S7–S10 | | 16–17 | PF0–PF1 | Button slots S11–S12 |
+| 6 | VDDIO2 | 3V3 (supplies PORTC) | | 18 | PF6 | RESET (10 kΩ pull-up) |
+| 7–13 | PD1–PD7 | Button slots S0–S6 | | 19 | PF7 | UPDI |
+| 14 | VDD | 3V3 | | 20 | VDD | 3V3 |
+| | | | | 21 | GND | |
+| | | | | 22, 23 | PA0, PA1 | ID0, ID1 straps |
+| | | | | 24, 25 | PA2, PA3 | SDA, SCL (TWI0) |
+| | | | | 26, 27 | PA4, PA5 | AN0, AN1 (AIN24, AIN25) |
+| | | | | 28 | PA6 | ID2 strap |
 
-Pin use on a RetroPad board:
+Support circuit:
 
-| STM32 pin | Keyboard use | RetroPad use |
-|---|---|---|
-| PB0–PB7 | ROW0–ROW7 | Same: matrix rows, each driven high in turn |
-| PA0–PA3 | COL0–COL3 | Same: matrix columns, with internal pull-downs |
-| PA4, PA5, PA8 | COL4, COL5, COL8 | Spare matrix columns (future use) |
-| PA6, PA7 | COL6, COL7 | **AN0 / AN1** analog inputs (ADC_IN6/7), taken out of the matrix |
-| PA9, PA10 | COL9, COL10 (two FN keys straight to GND) | Unused |
-| PB12, PB13, PB14, PB8 | unconnected | **Console ID straps** ID0–ID3 |
-| PB9 | unconnected | **AN strap.** Fit it to enable AN0/AN1. |
-| PB10 / PB11 | I2C2 | Same |
-| PA15 | INT | Same |
-| PB15 | RGB_DATA | Same (optional) |
+| Part | Value / connection |
+|---|---|
+| Decoupling | 100 nF on each VDD pin (14, 20) and on VDDIO2 (6), plus 4.7 µF bulk |
+| I2C pull-ups | 4.7 kΩ from PA2 and PA3 to 3V3 |
+| RESET | 10 kΩ pull-up on PF6 |
+| UPDI header | 3 pins: 1 = 3V3, 2 = UPDI (PF7), 3 = GND |
 
-Every pin the RetroPad adds was unconnected on the keyboard, so nothing on the keyboard
-circuit has to move.
+### 2.3 Buttons: one pin each
 
-### 2.3 Buttons: one matrix wiring for every board
+Each button connects its MCU pin to GND, and the pin has the MCU's internal pull-up. No
+matrix, no diodes, so any combination of buttons reads correctly.
 
-Each button **always** uses the same matrix position on every board. A board only populates
-the buttons its console has. Bit *b* sits at **row = b % 8, column = b / 8**:
+The 13 button slots (S0–S12 = PD1–PD7, PC0–PC3, PF0–PF1) are filled in the order the
+console's layout lists its buttons. The firmware holds that slot table for every console ID,
+generated from the board layouts, and reports each button under its canonical RetroPad bit:
 
-| Bit | Button | Row | Column |
-|---|---|---|---|
-| 0 | `UP` | ROW0 (PB0) | COL0 (PA0) |
-| 1 | `DOWN` | ROW1 (PB1) | COL0 (PA0) |
-| 2 | `LEFT` | ROW2 (PB2) | COL0 (PA0) |
-| 3 | `RIGHT` | ROW3 (PB3) | COL0 (PA0) |
-| 4 | `A` | ROW4 (PB4) | COL0 (PA0) |
-| 5 | `B` | ROW5 (PB5) | COL0 (PA0) |
-| 6 | `C` | ROW6 (PB6) | COL0 (PA0) |
-| 7 | `X` | ROW7 (PB7) | COL0 (PA0) |
-| 8 | `Y` | ROW0 (PB0) | COL1 (PA1) |
-| 9 | `Z` | ROW1 (PB1) | COL1 (PA1) |
-| 10 | `L` | ROW2 (PB2) | COL1 (PA1) |
-| 11 | `R` | ROW3 (PB3) | COL1 (PA1) |
-| 12 | `L2` | ROW4 (PB4) | COL1 (PA1) |
-| 13 | `R2` | ROW5 (PB5) | COL1 (PA1) |
-| 14 | `START` | ROW6 (PB6) | COL1 (PA1) |
-| 15 | `SELECT` | ROW7 (PB7) | COL1 (PA1) |
-| 16 | `MENU` | ROW0 (PB0) | COL2 (PA2) |
-| 17 | `VOLUME` | ROW1 (PB1) | COL2 (PA2) |
-| 18 | `OPT1` | ROW2 (PB2) | COL2 (PA2) |
-| 19 | `OPT2` | ROW3 (PB3) | COL2 (PA2) |
-| 20 | `KP1` | ROW4 (PB4) | COL2 (PA2) |
-| 21 | `KP2` | ROW5 (PB5) | COL2 (PA2) |
-| 22 | `KP3` | ROW6 (PB6) | COL2 (PA2) |
-| 23 | `KP4` | ROW7 (PB7) | COL2 (PA2) |
-| 24 | `KP5` | ROW0 (PB0) | COL3 (PA3) |
-| 25 | `KP6` | ROW1 (PB1) | COL3 (PA3) |
-| 26 | `KP7` | ROW2 (PB2) | COL3 (PA3) |
-| 27 | `KP8` | ROW3 (PB3) | COL3 (PA3) |
-| 28 | `KP9` | ROW4 (PB4) | COL3 (PA3) |
-| 29 | `KP*` | ROW5 (PB5) | COL3 (PA3) |
-| 30 | `KP0` | ROW6 (PB6) | COL3 (PA3) |
-| 31 | `KP#` | ROW7 (PB7) | COL3 (PA3) |
-
-**Put a diode on every switch, wired the way the keyboard does it:** anode on the ROW net,
-cathode to one side of the switch, and the other side of the switch to the COL net (D1–D69
-in M5Stack's matrix sheet). Gamepads routinely hold a diagonal plus two buttons. Without the
-diodes that creates phantom presses.
+| Bits | Buttons |
+|---|---|
+| 0–3 | `UP` `DOWN` `LEFT` `RIGHT` |
+| 4–9 | `A` `B` `C` `X` `Y` `Z` |
+| 10–13 | `L` `R` `L2` `R2` |
+| 14–17 | `START` `SELECT` `MENU` `VOLUME` |
+| 18–19 | `OPT1` `OPT2` |
+| 20–31 | Keypad `KP1`–`KP9`, `KP*`, `KP0`, `KP#` |
 
 ### 2.4 Console ID straps
 
-Each strap pin has an internal pull-up. Fit a 0 Ω resistor or a solder jumper to GND to set
-that bit. With no straps fitted the ID is 0, which means Generic.
+Each strap pin uses the MCU's internal pull-up, read once at boot. Fit a 0 Ω resistor to GND
+to set that bit. With no straps fitted the ID is 0, which means Generic.
 
-| ID | Console | ID3 PB8 | ID2 PB14 | ID1 PB13 | ID0 PB12 |
+| ID | Console | ID3 PA7 | ID2 PA6 | ID1 PA1 | ID0 PA0 |
 |---|---|---|---|---|---|
 | 0 | Generic | – | – | – | – |
 | 1 | NES | – | – | – | ● |
@@ -218,13 +187,13 @@ that bit. With no straps fitted the ID is 0, which means Generic.
 | 13 | ZX Spectrum | ● | ● | – | ● |
 | 14 | reserved | ● | ● | ● | – |
 
-Because the ID is set by the straps, **one firmware image serves every board**.
+The ID also selects the button slot table, so **one firmware image serves every board**.
 
 ### 2.5 Analog (optional)
 
-Fit the AN strap (PB9 → GND). Then wire a 10 kΩ–100 kΩ potentiometer between 3V3 and GND
-for each channel, with the wiper going to PA6 (AN0) or PA7 (AN1). Values are read as 8-bit.
-AN0 drives the existing Atari paddle input (`odroid_paddle_adc_raw`).
+The firmware reads AN0 (PA4) and AN1 (PA5) as 8-bit values on the Atari 2600 and 5200 IDs.
+Wire a 10 kΩ–100 kΩ potentiometer between 3V3 and GND for each channel, with the wiper on the
+pin. AN0 drives the existing Atari paddle input (`odroid_paddle_adc_raw`).
 
 ## 3. Console catalog
 
@@ -271,11 +240,12 @@ if (b & RP_BIT(RP_BTN_KP5)) { /* keypad 5 */ }
 ## 4. Register protocol
 
 The canonical definition is
-[`components/tab5_ctrl/include/retropad_proto.h`](../../components/tab5_ctrl/include/retropad_proto.h).
-The firmware patch carries a byte-identical copy.
+[`components/tab5_ctrl/include/retropad_proto.h`](../../components/tab5_ctrl/include/retropad_proto.h),
+which the board firmware includes directly.
 
-All stock registers (0x00–0x67, 0xFD–0xFF) keep their M5Stack meaning. The RetroPad
-firmware adds:
+The boards answer at M5Stack's address (0x6D) with the stock registers the host driver uses:
+the configuration registers, FW_VERSION (0xFE), and an always-empty key-event queue. They
+add:
 
 | Reg | Len | Content |
 |---|---|---|
@@ -288,9 +258,8 @@ firmware adds:
 | 0x84 | 4 | AN0, AN1 (8-bit), 2 reserved |
 
 The block reads as one burst, so reading 8 bytes from 0x80 returns buttons and analog in a
-single transfer. The firmware still produces Normal-mode key events, which report each
-button's bit number as `row = bit / 14, col = bit % 14`. Tools written for the stock keyboard
-can therefore still see presses.
+single transfer. The board snapshots the block at the start of each read, so the 4-byte
+button mask is always coherent.
 
 ## 5. Host side
 
@@ -337,27 +306,19 @@ keys to the canonical buttons:
 
 ## 6. Building and flashing the board firmware
 
+The firmware is in `firmware_avrdd/` (added with the boards). It needs avr-gcc 13 or newer
+with avr-libc 2.2 or newer for the AVR DD:
+
 ```
-cd hardware/tab5_controller/firmware
-./build.sh            # needs arm-none-eabi-gcc and python3
-./build.sh --flash    # also writes it with an ST-Link (st-flash)
+cd hardware/tab5_controller/firmware_avrdd
+make AVR_GCC_DIR=/path/to/avr-gcc-14.1.0-x64-linux
+make flash PORT=/dev/ttyUSB0       # SerialUPDI: USB-serial adapter + resistor
 ```
-
-`build.sh` does the following:
-
-1. Clones M5Stack's firmware at the revision the patch was made against.
-2. Applies `retropad-fw.patch`.
-3. Builds with plain GCC.
-4. Runs `pack_retropad_fw.py`, which merges M5Stack's IAP bootloader with the new application
-   and writes the CRC-32 the bootloader checks before it will start the app.
-
-The CRC scheme was checked by recomputing the CRC of M5Stack's own prebuilt image. You can
-also open the patched tree in STM32CubeIDE, but its output still needs `pack_retropad_fw.py`.
 
 ## 7. Status and open items
 
-* **Firmware:** the patch applies cleanly to upstream and builds (17 KB of the 52 KB app
-  area). It has not yet run on real hardware.
+* **Firmware:** builds to about 1.5 KB and passes a host test that replays the driver's I2C
+  traffic. It has not yet run on real hardware.
 * **Host driver:** the launcher builds with ESP-IDF v5.5.2 both with the driver off (the
   default) and with `CONFIG_TAB5_CTRL_ENABLE=y`. It has not yet run on real hardware.
 * **This repo has no Tab5 board support yet.** The display (MIPI panel), touch, audio
