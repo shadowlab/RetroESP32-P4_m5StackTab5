@@ -1,15 +1,16 @@
 /*
  * RetroPad protocol — shared by the ESP32-P4 host driver (tab5_ctrl) and the
- * STM32F030 controller-board firmware (hardware/tab5_controller/firmware).
+ * AVR32DD28 controller-board firmware (hardware/tab5_controller/firmware_avrdd),
+ * which includes this header directly.
  *
  * A RetroPad board is electrically and mechanically a drop-in replacement for
- * the M5Stack Tab5 Keyboard (SKU A164): same STM32F030C8T6, same 2x5 Ext.Port1
- * header (G0 = SDA, G1 = SCL, G50 = INT), same I2C address (0x6D) and the
- * same register map.  The RetroPad firmware only ADDS the block below; every
- * stock register (0x00-0x67, 0xFD-0xFF) keeps its M5Stack meaning, so the
- * host can talk to a stock keyboard and a RetroPad with one driver.
+ * the M5Stack Tab5 Keyboard (SKU A164): same 2x5 Ext.Port1 header (G0 = SDA,
+ * G1 = SCL), same I2C address (0x6D) and the same register map.  The RetroPad
+ * firmware only ADDS the block below; every stock register (0x00-0x67,
+ * 0xFD-0xFF) keeps its M5Stack meaning, so the host can talk to a stock
+ * keyboard and a RetroPad with one driver.
  *
- * Keep this file byte-identical in both trees.
+ * This is the single copy; do not fork it into the firmware tree.
  */
 #ifndef RETROPAD_PROTO_H
 #define RETROPAD_PROTO_H
@@ -65,19 +66,19 @@ typedef enum {
 } rp_console_t;
 
 /* ── Canonical button bits (RP_REG_BUTTONS) ─────────────────────────────── *
- * Every board wires a given button to the same matrix position, so the bit
- * meaning is fixed across boards; the console id only says which subset is
- * populated and how the host should map it for the running emulator.
- * Matrix position: row = bit % 8 (PB0..PB7), column = bit / 8 (PA0..PA3).   */
+ * The bit meaning is fixed across boards; the console id only says which
+ * subset is populated and how the host should map it for the running
+ * emulator.  The board firmware translates its per-console pin wiring
+ * (firmware_avrdd/pinmap.h, one GPIO per button) into these bits.          */
 enum {
-    RP_BTN_UP = 0,  RP_BTN_DOWN,   RP_BTN_LEFT,  RP_BTN_RIGHT,     /* col 0 rows 0-3 */
-    RP_BTN_A,       RP_BTN_B,      RP_BTN_C,     RP_BTN_X,         /* col 0 rows 4-7 */
-    RP_BTN_Y,       RP_BTN_Z,      RP_BTN_L,     RP_BTN_R,         /* col 1 rows 0-3 */
-    RP_BTN_L2,      RP_BTN_R2,     RP_BTN_START, RP_BTN_SELECT,    /* col 1 rows 4-7 */
-    RP_BTN_MENU,    RP_BTN_VOLUME, RP_BTN_OPT1,  RP_BTN_OPT2,      /* col 2 rows 0-3 */
-    RP_BTN_KP1,     RP_BTN_KP2,    RP_BTN_KP3,   RP_BTN_KP4,       /* col 2 rows 4-7 */
-    RP_BTN_KP5,     RP_BTN_KP6,    RP_BTN_KP7,   RP_BTN_KP8,       /* col 3 rows 0-3 */
-    RP_BTN_KP9,     RP_BTN_KPSTAR, RP_BTN_KP0,   RP_BTN_KPHASH,    /* col 3 rows 4-7 */
+    RP_BTN_UP = 0,  RP_BTN_DOWN,   RP_BTN_LEFT,  RP_BTN_RIGHT,
+    RP_BTN_A,       RP_BTN_B,      RP_BTN_C,     RP_BTN_X,
+    RP_BTN_Y,       RP_BTN_Z,      RP_BTN_L,     RP_BTN_R,
+    RP_BTN_L2,      RP_BTN_R2,     RP_BTN_START, RP_BTN_SELECT,
+    RP_BTN_MENU,    RP_BTN_VOLUME, RP_BTN_OPT1,  RP_BTN_OPT2,
+    RP_BTN_KP1,     RP_BTN_KP2,    RP_BTN_KP3,   RP_BTN_KP4,
+    RP_BTN_KP5,     RP_BTN_KP6,    RP_BTN_KP7,   RP_BTN_KP8,
+    RP_BTN_KP9,     RP_BTN_KPSTAR, RP_BTN_KP0,   RP_BTN_KPHASH,
     RP_BTN_COUNT
 };
 
