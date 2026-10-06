@@ -1,0 +1,448 @@
+#!/usr/bin/env python3
+"""Generate the KiCad 7 schematic for a RetroPad console board.
+
+    python3 gen_sch.py snes        # writes ../snes/kicad/retropad_snes.kicad_sch
+
+The connectivity is not typed in twice: the board from gen_pcb.build()
+is the single source, and every symbol pin takes the net of the footprint pad
+with the same number. Symbols are copied from KiCad's standard libraries and
+get the same deterministic UUIDs that gen_pcb.py writes into the
+footprints, so the schematic and the PCB stay linked in one KiCad project.
+"""
+import os
+import re
+import uuid
+
+import sys
+
+import gen_pcb as pcb
+
+SYMS = "/usr/share/kicad/symbols"
+PROJECT = None        # "retropad_<console>", set by configure()
+ROOT_UUID = None
+
+
+def configure(name):
+    global PROJECT, ROOT_UUID
+    cfg = pcb.configure(name)
+    PROJECT = cfg.base
+    ROOT_UUID = str(uuid.uuid5(pcb.UUID_NS, PROJECT + "/root"))
+    return cfg
+# Supply nets. They are drawn as global labels like every other net, not power
+# symbols: EasyEDA's KiCad import names a power symbol's net after its library
+# id ("power_GND", "power_+3V3").
+POWER = ("GND", "+3V3", "+5V")
+STUB = 2.54
+
+
+# ── s-expressions ────────────────────────────────────────────────────────────
+class Sym(str):
+    """A bare (unquoted) token."""
+
+
+def parse(text):
+    toks = re.findall(r'"(?:[^"\\]|\\.)*"|[()]|[^\s()]+', text)
+    stack, cur = [], []
+    for t in toks:
+        if t == "(":
+            stack.append(cur)
+            cur = []
+        elif t == ")":
+            done, cur = cur, stack.pop()
+            cur.append(done)
+        elif t.startswith('"'):
+            cur.append(t[1:-1].replace('\\"', '"').replace("\\\\", "\\"))
+        else:
+            cur.append(Sym(t))
+    return cur[0]
+
+
+def dump(x, ind=0):
+    if isinstance(x, list):
+        inner = [dump(e, ind + 1) for e in x]
+        flat = "(" + " ".join(inner) + ")"
+        if len(flat) < 100 and "\n" not in flat:
+            return flat
+        return "(" + inner[0] + "".join("\n" + "  " * (ind + 1) + e for e in inner[1:]) + ")"
+    if isinstance(x, Sym):
+        return str(x)
+    if isinstance(x, (int, float)):
+        return ("%.4f" % x).rstrip("0").rstrip(".")
+    return '"' + str(x).replace("\\", "\\\\").replace('"', '\\"') + '"'
+
+
+def S(*a):
+    return [Sym(a[0])] + list(a[1:])
+
+
+def uid(key):
+    return str(uuid.uuid5(pcb.UUID_NS, PROJECT + "/" + key))
+
+
+# ── library symbols ──────────────────────────────────────────────────────────
+_libs = {}
+
+
+# KiCad 7 has no AVR DD symbols. The AVR32DD28 SOIC-28 is pin-compatible with
+# the AVR32DB28 apart from pin names, so its symbol is derived from that one.
+AVRDD_SYMBOL = "RetroPad:AVR32DD28-xSO"
+AVRDD_PIN_NAMES = {"13": "PD7", "14": "VDD", "15": "GND", "19": "UPDI/PF7"}
+
+
+def _avrdd_symbol():
+    sym = lib_symbol("MCU_Microchip_AVR_Dx:AVR32DB28x-xSO")
+    base = "AVR32DD28-xSO"
+
+    def fix(node):
+        out = []
+        for e in node:
+            if isinstance(e, list):
+                if e[0] == "symbol" and isinstance(e[1], str) and e[1].startswith("AVR32DB28x-xSO_"):
+                    e = [e[0], base + e[1][len("AVR32DB28x-xSO"):]] + e[2:]
+                if e[0] == "pin":
+                    num = next(x for x in e if isinstance(x, list) and x[0] == "number")[1]
+                    if num in AVRDD_PIN_NAMES:
+                        e = [[x[0], AVRDD_PIN_NAMES[num]] + x[2:] if isinstance(x, list) and x[0] == "name" else x
+                             for x in e]
+                if e[0] == "property" and e[1] in ("Value",):
+                    e = [e[0], e[1], "AVR32DD28-xSO"] + e[3:]
+                if e[0] == "property" and e[1] in ("ki_description", "Description"):
+                    e = [e[0], e[1], "AVR DD 24 MHz, 32 KB flash, 4 KB SRAM, SOIC-28 "
+                         "(symbol derived from the pin-compatible AVR32DB28)"] + e[3:]
+                e = fix(e)
+            out.append(e)
+        return out
+
+    sym = fix(sym)
+    sym[1] = AVRDD_SYMBOL
+    return sym
+
+
+# 4-leg tact switch, drawn and numbered like the parts' own symbols: pins 1-2
+# tied (top), 4-3 tied (bottom), one contact between the pairs. KiCad's
+# Switch:SW_Push_Dual has four pins too, but it is a two-contact switch
+# (1-2 and 3-4 each switched), so it does not fit these parts.
+SWITCH4_SYMBOL = "RetroPad:SW_Push_4pin"
+
+
+def _pin(num, x, y, ang):
+    return ('(pin passive line (at %s %s %s) (length 2.54) (name "%s" (effects (font (size 1.27 1.27)))) '
+            '(number "%s" (effects (font (size 1.27 1.27)))))' % (x, y, ang, num, num))
+
+
+def _line(*pts):
+    return ('(polyline (pts %s) (stroke (width 0) (type default)) (fill (type none)))'
+            % " ".join("(xy %s %s)" % p for p in pts))
+
+
+def _switch4_symbol():
+    body = [
+        _line((-2.54, 2.54), (2.54, 2.54)),           # 1-2 tied
+        _line((-2.54, -2.54), (2.54, -2.54)),         # 4-3 tied
+        _line((0, 2.54), (0, 1.524)),
+        _line((0, -2.54), (0, -1.524)),
+        '(circle (center 0 1.016) (radius 0.508) (stroke (width 0) (type default)) (fill (type none)))',
+        '(circle (center 0 -1.016) (radius 0.508) (stroke (width 0) (type default)) (fill (type none)))',
+        _line((-0.254, -1.27), (-1.778, 1.778)),      # contact lever
+    ]
+    pins = [_pin(1, -5.08, 2.54, 0), _pin(2, 5.08, 2.54, 180), _pin(3, 5.08, -2.54, 180), _pin(4, -5.08, -2.54, 0)]
+    text = ('(symbol "%s" (pin_names (offset 1.016) hide) (in_bom yes) (on_board yes) '
+            '(property "Reference" "SW" (at 0 5.08 0) (effects (font (size 1.27 1.27)))) '
+            '(property "Value" "SW_Push_4pin" (at 0 -5.08 0) (effects (font (size 1.27 1.27)))) '
+            '(property "Footprint" "" (at 0 0 0) (effects (font (size 1.27 1.27)) hide)) '
+            '(property "Datasheet" "~" (at 0 0 0) (effects (font (size 1.27 1.27)) hide)) '
+            '(property "ki_description" "Push button, 4-leg tact switch: 1-2 and 3-4 tied" (at 0 0 0) '
+            '(effects (font (size 1.27 1.27)) hide)) '
+            '(symbol "SW_Push_4pin_0_1" %s) (symbol "SW_Push_4pin_1_1" %s))'
+            % (SWITCH4_SYMBOL, " ".join(body), " ".join(pins)))
+    return parse(text)
+
+
+# SK6812MINI-E: KiCad's LED:SK6812MINI has the same pins under other numbers
+# (1 DOUT, 2 VSS, 3 DIN, 4 VDD); the MINI-E is 1 GND, 2 DIN, 3 VDD, 4 DOUT.
+LED_SYMBOL = "RetroPad:SK6812MINI-E"
+LED_PIN_NUMBERS = {"DOUT": "4", "VSS": "1", "DIN": "2", "VDD": "3"}
+
+
+def _led_symbol():
+    sym = lib_symbol("LED:SK6812MINI")
+
+    def fix(node):
+        out = []
+        for e in node:
+            if isinstance(e, list):
+                if e[0] == "symbol" and isinstance(e[1], str) and e[1].startswith("SK6812MINI_"):
+                    e = [e[0], "SK6812MINI-E" + e[1][len("SK6812MINI"):]] + e[2:]
+                if e[0] == "pin":
+                    name = next(x for x in e if isinstance(x, list) and x[0] == "name")[1]
+                    e = [[x[0], LED_PIN_NUMBERS[name]] + x[2:] if isinstance(x, list) and x[0] == "number" else x
+                         for x in e]
+                if e[0] == "property" and e[1] == "Value":
+                    e = [e[0], e[1], "SK6812MINI-E"] + e[3:]
+                e = fix(e)
+            out.append(e)
+        return out
+
+    sym = fix(sym)
+    sym[1] = LED_SYMBOL
+    return sym
+
+
+def lib_symbol(lib_id):
+    if lib_id == AVRDD_SYMBOL:
+        return _avrdd_symbol()
+    if lib_id == LED_SYMBOL:
+        return _led_symbol()
+    if lib_id == SWITCH4_SYMBOL:
+        return _switch4_symbol()
+    lib, name = lib_id.split(":")
+    if lib not in _libs:
+        _libs[lib] = parse(open(os.path.join(SYMS, lib + ".kicad_sym")).read())
+    for s in _libs[lib]:
+        if isinstance(s, list) and s[0] == "symbol" and s[1] == name:
+            s = list(s)
+            s[1] = lib_id
+            return s
+    raise KeyError(lib_id)
+
+
+def pins_of(sym):
+    """{number: (x, y, angle)} for a library symbol (unit 1 / common unit)."""
+    out = {}
+
+    def walk(node):
+        for e in node:
+            if isinstance(e, list):
+                if e[0] == "pin":
+                    at = next(x for x in e if isinstance(x, list) and x[0] == "at")
+                    num = next(x for x in e if isinstance(x, list) and x[0] == "number")
+                    out[num[1]] = (float(at[1]), float(at[2]), float(at[3]))
+                elif e[0] == "symbol":
+                    walk(e)
+    walk(sym)
+    return out
+
+
+# ── schematic builder ───────────────────────────────────────────────────────
+class Sheet:
+    def __init__(self):
+        self.items = []
+        self.used = {}
+
+    def lib(self, lib_id):
+        if lib_id not in self.used:
+            self.used[lib_id] = lib_symbol(lib_id)
+        return self.used[lib_id]
+
+    def symbol(self, lib_id, ref, value, x, y, rot=0, footprint="", key=None, in_bom=True, dnp=False,
+               hide_ref=False, ref_at=(2.54, -1.27), val_at=(2.54, 1.27)):
+        sym = self.lib(lib_id)
+        pins = pins_of(sym)
+        u = uid(key or ref)
+        props = [
+            S("property", "Reference", ref, S("at", x + ref_at[0], y + ref_at[1], 0),
+              S("effects", S("font", S("size", 1.27, 1.27)), S("justify", Sym("left"))) + ([Sym("hide")] if hide_ref else [])),
+            S("property", "Value", value, S("at", x + val_at[0], y + val_at[1], 0),
+              S("effects", S("font", S("size", 1.27, 1.27)), S("justify", Sym("left")))),
+            S("property", "Footprint", footprint, S("at", x, y, 0),
+              S("effects", S("font", S("size", 1.27, 1.27)), Sym("hide"))),
+            S("property", "Datasheet", "~", S("at", x, y, 0), S("effects", S("font", S("size", 1.27, 1.27)), Sym("hide"))),
+        ]
+        node = S("symbol", S("lib_id", lib_id), S("at", x, y, rot), S("unit", 1),
+                 S("in_bom", Sym("yes" if in_bom else "no")), S("on_board", Sym("yes")),
+                 S("dnp", Sym("yes" if dnp else "no")), S("uuid", u), *props)
+        for n in pins:
+            node.append(S("pin", n, S("uuid", uid((key or ref) + "/pin/" + n))))
+        node.append(S("instances", S("project", PROJECT, S("path", "/" + ROOT_UUID, S("reference", ref), S("unit", 1)))))
+        self.items.append(node)
+        return {n: self.pin_xy(x, y, rot, p) for n, p in pins.items()}
+
+    @staticmethod
+    def pin_xy(x, y, rot, p):
+        """Schematic position and outward direction (deg) of a pin."""
+        px, py, pa = p
+        r = rot % 360
+        # library y is up, schematic y is down; rotation is counter-clockwise
+        rx, ry = {0: (px, py), 90: (-py, px), 180: (-px, -py), 270: (py, -px)}[r]
+        out = (pa + 180 + r) % 360           # pin body points into the symbol
+        return (round(x + rx, 2), round(y - ry, 2), out)
+
+    def wire(self, a, b):
+        self.items.append(S("wire", S("pts", S("xy", *a), S("xy", *b)),
+                            S("stroke", S("width", 0), S("type", Sym("default"))), S("uuid", uid("w/%s/%s" % (a, b)))))
+
+    def label(self, net, x, y, ang):
+        self.items.append(S("global_label", net, S("shape", Sym("bidirectional")), S("at", x, y, ang),
+                            S("fields_autoplaced"),
+                            S("effects", S("font", S("size", 1.27, 1.27)),
+                              S("justify", Sym("left" if ang in (0, 90) else "right"))),
+                            S("uuid", uid("gl/%s/%s/%s" % (net, x, y))),
+                            S("property", "Intersheetrefs", "${INTERSHEET_REFS}", S("at", x, y, 0),
+                              S("effects", S("font", S("size", 1.27, 1.27)), Sym("hide")))))
+
+    def noconnect(self, x, y):
+        self.items.append(S("no_connect", S("at", x, y), S("uuid", uid("nc/%s/%s" % (x, y)))))
+
+    def text(self, s, x, y, size=1.27):
+        self.items.append(S("text", s, S("at", x, y, 0), S("effects", S("font", S("size", size, size)),
+                                                              S("justify", Sym("left"))), S("uuid", uid("t/" + s))))
+
+    def terminate(self, pin, net, stub=STUB, symbol=True):
+        """Stub + global label / no-connect on one pin.
+
+        Returns the stub end. symbol=False draws only the stub (for power pins
+        that share one rail and one label)."""
+        x, y, ang = pin
+        if not net:
+            self.noconnect(x, y)
+            return None
+        dx, dy = {0: (stub, 0), 90: (0, -stub), 180: (-stub, 0), 270: (0, stub)}[int(ang)]
+        end = (round(x + dx, 2), round(y + dy, 2))
+        self.wire((x, y), end)
+        if not symbol:
+            return end
+        self.label(net, end[0], end[1], int(ang))
+        return end
+
+    def save(self, path):
+        doc = S("kicad_sch", S("version", 20230121), S("generator", Sym("eeschema")),
+                S("uuid", ROOT_UUID), S("paper", "A3"),
+                S("title_block", S("title", "RetroPad %s (%s)" % (pcb.CFG.title, pcb.CFG.id_label)), S("date", "2026-10-05"),
+                  S("rev", "0.1"), S("company", "RetroESP32-P4"),
+                  S("comment", 1, "Generated by kicad_gen/gen_sch.py from gen_pcb.py and layout.py"),
+                  S("comment", 2, "Tab5 keyboard-port board: AVR32DD28 + firmware_avrdd, I2C 0x6D")),
+                S("lib_symbols", *self.used.values()), *self.items,
+                S("sheet_instances", S("path", "/", S("page", "1"))))
+        with open(path, "w") as f:
+            f.write(dump(doc) + "\n")
+
+
+# ── page layout ──────────────────────────────────────────────────────────────
+def lib_for(fp):
+    ref = fp.GetReference()
+    if ref.startswith("U"):
+        return AVRDD_SYMBOL
+    if ref == "LED1":
+        return LED_SYMBOL
+    if ref.startswith("D"):
+        return "Device:D"
+    if ref.startswith("SW"):
+        n = sum(1 for p in fp.Pads() if p.GetNumber())
+        return SWITCH4_SYMBOL if n == 4 else "Switch:SW_Push"
+    if ref.startswith("C"):
+        return "Device:C"
+    if ref.startswith("R"):
+        return "Device:R"
+    if ref == "J1":
+        return "Connector_Generic:Conn_02x05_Odd_Even"
+    if ref == "J2":
+        return "Connector_Generic:Conn_01x03"
+    if ref.startswith("H"):
+        return "Mechanical:MountingHole"
+    raise KeyError(ref)
+
+
+def g(v):
+    """Snap to the 1.27 mm schematic grid."""
+    return round(round(v / 1.27) * 1.27, 2)
+
+
+def build():
+    board = pcb.build().board
+    fps = {f.GetReference(): f for f in board.GetFootprints()}
+
+    def nets(ref):
+        d = {}
+        for p in fps[ref].Pads():
+            if p.GetNumber():
+                d[p.GetNumber()] = p.GetNetname() or None
+        return d
+
+    def fpid(ref):
+        f = fps[ref].GetFPID()
+        return "%s:%s" % (f.GetLibNickname(), f.GetLibItemName())
+
+    sh = Sheet()
+
+    def place(ref, x, y, rot=0, stub=STUB, label_each_pin=False, **kw):
+        f = fps[ref]
+        dnp = f.GetValue() == "DNP"
+        pins = sh.symbol(lib_for(f), ref, f.GetValue(), g(x), g(y), rot, footprint=fpid(ref),
+                         in_bom=not dnp, dnp=dnp, **kw)
+        n = nets(ref)
+        # Power pins on the same side of a symbol share one rail and one label
+        rails = {}
+        for num, pin in pins.items():
+            if n.get(num) in POWER:
+                rails.setdefault((n[num], int(pin[2])), []).append(pin)
+        # Connectors label each supply pin instead, so adjacent GND / +3V3 pins
+        # keep their own wires.
+        shared = {} if label_each_pin else {k: v for k, v in rails.items() if len(v) > 1}
+        for num, pin in pins.items():
+            if (n.get(num), int(pin[2])) not in shared:
+                sh.terminate(pin, n.get(num), stub)
+        for (net, ang), plist in shared.items():
+            ends = sorted(sh.terminate(p, net, stub, symbol=False) for p in plist)
+            for a, b in zip(ends, ends[1:]):
+                sh.wire(a, b)
+            sh.label(net, ends[0][0], ends[0][1], ang)
+        return pins
+
+    # MCU
+    sh.text("MCU — AVR32DD28 (SOIC-28) running firmware_avrdd (I2C client 0x6D, RetroPad protocol)", 30, 25, 2.0)
+    sh.text("PD1-PD7, PC0-PC3, PF0-PF1: one button per pin (internal pull-ups)", 30, 30, 1.27)
+    place("U1", 80, 95, stub=5.08)
+
+    # Tab5 connector + programming header
+    sh.text("Tab5 Ext.Port1 (M5Stack Tab5 Keyboard P1 pinout) — verify pin 1 orientation before fab", 150, 25, 1.5)
+    place("J1", 175, 45, stub=7.62, label_each_pin=True, ref_at=(0, -10.16), val_at=(0, 10.16))
+    sh.text("UPDI programming (SerialUPDI / MPLAB Snap)", 150, 70, 1.5)
+    place("J2", 175, 85, stub=7.62, label_each_pin=True, ref_at=(0, -10.16), val_at=(0, 10.16))
+
+    # Support parts
+    sh.text("Decoupling (VDD x2, VDDIO2), I2C pull-ups, RESET pull-up", 150, 110, 1.5)
+    for i, ref in enumerate(["C1", "C2", "C3", "C4"]):
+        place(ref, 160 + i * 15, 130)
+    for i, ref in enumerate(["R1", "R2", "R3"]):
+        place(ref, 167.5 + i * 15, 155)     # between the capacitors: their labels interleave
+    sh.text("Console ID straps: 0R to GND = bit set. " + pcb.CFG.strap_note(), 150, 172, 1.5)
+    for i, (ref, _sig, _fit) in enumerate(pcb.CFG.straps):
+        place(ref, 160 + i * 15, 190)
+    if pcb.CFG.select:
+        sh.text("Console select: SW_SEL steps NES / GB / SMS (PC3); LED1 shows it (PC2 via R10). "
+                "LED1 runs from J1's 5 V through D1 (~4.3 V)", 150, 274, 1.27)
+        place("SW_SEL", 160, 248, ref_at=(-2.54, -5.08), val_at=(-2.54, 5.08))
+        place("LED1", 195, 248, stub=2.54, ref_at=(8.89, -2.54), val_at=(8.89, 5.08))
+        place("R10", 225, 248)
+        place("D1", 240, 248, rot=90, label_each_pin=True, ref_at=(-3.81, 0), val_at=(3.81, 0))
+        place("C5", 255, 248)
+    sh.text("Mounting holes (M3, 96 mm apart)", 150, 210, 1.5)
+    place("H1", 160, 220)
+    place("H2", 175, 220)
+
+    # One pin per button: K_<button> label -> switch -> GND (4-leg switches: 1-2 GND, 3-4 K_<button>)
+    sh.text("Buttons — one MCU pin each, switch to GND (internal pull-up); slot table in "
+            "firmware_avrdd/pinmap.h", 260, 25, 1.5)
+    for i, (name, *_r) in enumerate(pcb.CFG.buttons()):
+        sref = "SW%d" % (i + 1)
+        y = g(40 + i * 15.24)
+        sp = sh.symbol(lib_for(fps[sref]), sref, fps[sref].GetValue(), g(300), y, 0, footprint=fpid(sref),
+                       ref_at=(-2.54, -5.08), val_at=(-2.54, 5.08))
+        sn = nets(sref)
+        for num in sorted(sp):
+            sh.terminate(sp[num], sn[num])
+        sh.text(name, g(320), y - 1.27, 1.27)
+    return sh
+
+
+def main():
+    if len(sys.argv) != 2 or sys.argv[1] not in pcb.layout.CONSOLES:
+        sys.exit("usage: gen_sch.py {%s}" % ",".join(pcb.layout.CONSOLES))
+    cfg = configure(sys.argv[1])
+    out = os.path.join(cfg.dir, cfg.sch_file)
+    build().save(out)
+    print("saved", out)
+
+
+if __name__ == "__main__":
+    main()
