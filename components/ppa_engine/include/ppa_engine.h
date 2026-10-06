@@ -243,6 +243,21 @@ esp_err_t ppa_rotate_scale_rgb565_to(const void *in_buf, uint32_t in_w, uint32_t
                                       bool byte_swap);
 
 /**
+ * @brief Rotate + scale RGB565 straight into a sub-rectangle of a larger RGB565
+ *        buffer (e.g. a display frame buffer), placing the result at (dst_x, dst_y).
+ *
+ * scale_x / scale_y are post-rotation factors and must be multiples of 1/16.
+ */
+esp_err_t ppa_rotate_scale_rgb565_to_rect(const void *in_buf, uint32_t in_w, uint32_t in_h,
+                                          uint32_t angle_deg,
+                                          float scale_x, float scale_y,
+                                          void *dst_buf, size_t dst_buf_size,
+                                          uint32_t dst_w, uint32_t dst_h,
+                                          uint32_t dst_x, uint32_t dst_y,
+                                          uint32_t *out_w, uint32_t *out_h,
+                                          bool byte_swap);
+
+/**
  * @brief Scale an RGB565 image to RGB888 output using PPA hardware (single operation)
  *
  * Performs scale + color format conversion (RGB565→RGB888) in one PPA SRM call.

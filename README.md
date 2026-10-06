@@ -71,6 +71,19 @@ A single [480×800 touchscreen module](https://www.guition.com/esp32p4-display-m
 
 ![Guition ESP32-P4 4.3-inch display module](images/image-20260419091837418.png)
 
+### 2. M5Stack Tab5 — the tablet
+
+The **M5Stack Tab5** (ESP32-P4, 5″ 720×1280 touchscreen, USB-A host port) is supported as a second target. The
+launcher and emulators render straight into the panel's DSI frame buffer (UI 1.25×, emulators 3×), with an
+**on-screen touch pad** (D-pad, A/B/X/Y, L/R, Start/Select, Menu, Volume) in the side bars; USB controllers
+work too. Not yet verified on real hardware — see **[TAB5.md](TAB5.md)** for the
+hardware map, build steps (`./build_all_tab5.sh`) and a first-boot checklist.
+
+> **Update the ESP32-C6 first.** Before flashing RetroESP on a Tab5, run the separate
+> [tab5-p4-c6-sdio-ota](https://github.com/shadowlab/tab5-p4-c6-sdio-ota) updater, which flashes a matching ESP-Hosted 3.x firmware into the C6
+> over SDIO. It is its own application, not part of this build: flash it on its own, wait for `[PASS]`, then
+> flash RetroESP.
+
 ---
 
 ## 🧩 Native Apps from PSRAM

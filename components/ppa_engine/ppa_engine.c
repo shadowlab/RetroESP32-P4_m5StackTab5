@@ -755,6 +755,92 @@ esp_err_t ppa_rotate_scale_rgb565_to(const void *in_buf, uint32_t in_w, uint32_t
     return ESP_OK;
 }
 
+/* ─── Rotate+scale into a sub-rectangle of a larger RGB565 buffer ──
+ *
+ * Lets the PPA write straight into a display frame buffer (e.g. the Tab5's
+ * 720x1280 DPI buffer) at (dst_x, dst_y), so no intermediate buffer and no
+ * second copy pass is needed.  Scale factors must be exactly representable
+ * in the PPA's 1/16 fixed point (1.5, 2, 3, ...), otherwise the hardware
+ * truncates and leaves a stale edge. */
+esp_err_t ppa_rotate_scale_rgb565_to_rect(const void *in_buf, uint32_t in_w, uint32_t in_h,
+                                          uint32_t angle_deg,
+                                          float scale_x, float scale_y,
+                                          void *dst_buf, size_t dst_buf_size,
+                                          uint32_t dst_w, uint32_t dst_h,
+                                          uint32_t dst_x, uint32_t dst_y,
+                                          uint32_t *out_w, uint32_t *out_h,
+                                          bool byte_swap)
+{
+    if (!s_ppa_srm_client || !in_buf || !dst_buf) return ESP_ERR_INVALID_ARG;
+
+    ppa_srm_rotation_angle_t rotation;
+    switch (angle_deg) {
+        case 0:   rotation = PPA_SRM_ROTATION_ANGLE_0;   break;
+        case 90:  rotation = PPA_SRM_ROTATION_ANGLE_90;  break;
+        case 180: rotation = PPA_SRM_ROTATION_ANGLE_180; break;
+        case 270: rotation = PPA_SRM_ROTATION_ANGLE_270; break;
+        default:  return ESP_ERR_INVALID_ARG;
+    }
+
+    /* Caller factors are post-rotation; the hardware scales first. */
+    float ppa_sx = scale_x, ppa_sy = scale_y;
+    if (angle_deg == 90 || angle_deg == 270) {
+        ppa_sx = scale_y;
+        ppa_sy = scale_x;
+    }
+
+    uint32_t scaled_w = (uint32_t)(in_w * ppa_sx + 0.5f);
+    uint32_t scaled_h = (uint32_t)(in_h * ppa_sy + 0.5f);
+    uint32_t result_w = (angle_deg == 90 || angle_deg == 270) ? scaled_h : scaled_w;
+    uint32_t result_h = (angle_deg == 90 || angle_deg == 270) ? scaled_w : scaled_h;
+
+    if (dst_x + result_w > dst_w || dst_y + result_h > dst_h) {
+        ESP_LOGE(TAG, "rect %ux%u @(%u,%u) does not fit %ux%u", (unsigned)result_w, (unsigned)result_h,
+                 (unsigned)dst_x, (unsigned)dst_y, (unsigned)dst_w, (unsigned)dst_h);
+        return ESP_ERR_INVALID_SIZE;
+    }
+    if (dst_buf_size < (size_t)dst_w * dst_h * sizeof(uint16_t)) return ESP_ERR_INVALID_SIZE;
+
+    ppa_srm_oper_config_t srm_cfg = {
+        .in = {
+            .buffer = in_buf,
+            .pic_w = in_w,
+            .pic_h = in_h,
+            .block_w = in_w,
+            .block_h = in_h,
+            .block_offset_x = 0,
+            .block_offset_y = 0,
+            .srm_cm = PPA_SRM_COLOR_MODE_RGB565,
+        },
+        .out = {
+            .buffer = dst_buf,
+            .buffer_size = dst_buf_size,
+            .pic_w = dst_w,
+            .pic_h = dst_h,
+            .block_offset_x = dst_x,
+            .block_offset_y = dst_y,
+            .srm_cm = PPA_SRM_COLOR_MODE_RGB565,
+        },
+        .rotation_angle = rotation,
+        .scale_x = ppa_sx,
+        .scale_y = ppa_sy,
+        .mirror_x = false,
+        .mirror_y = false,
+        .rgb_swap = false,
+        .byte_swap = byte_swap,
+        .mode = PPA_TRANS_MODE_BLOCKING,
+    };
+
+    esp_err_t ret = ppa_do_scale_rotate_mirror(s_ppa_srm_client, &srm_cfg);
+    if (ret != ESP_OK) {
+        ESP_LOGE(TAG, "PPA SRM rect rotate+scale failed: %s", esp_err_to_name(ret));
+        return ret;
+    }
+    if (out_w) *out_w = result_w;
+    if (out_h) *out_h = result_h;
+    return ESP_OK;
+}
+
 /* ─── Scale RGB565 → RGB888 (single PPA SRM operation) ────────── */
 esp_err_t ppa_scale_rgb565_to_rgb888(const void *in_buf, uint32_t in_w, uint32_t in_h,
                                       float scale_x, float scale_y,

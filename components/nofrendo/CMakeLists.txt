@@ -106,3 +106,7 @@ target_compile_options(${COMPONENT_LIB} PRIVATE
 target_compile_definitions(${COMPONENT_LIB} PRIVATE
     CONFIG_SOUND_ENA=1
 )
+
+# Written for C89/C99: own `bool`/`false` definitions and K&R `f()` prototypes break under the
+# C23 default of newer toolchains (ESP-IDF 6 / GCC 15). Pin the C standard the core was written for.
+target_compile_options(${COMPONENT_LIB} PRIVATE $<$<COMPILE_LANGUAGE:C>:-std=gnu17>)

@@ -10,6 +10,44 @@
 #include "esp_lcd_touch_gt911.h"
 #include "gt911_touch.h"
 
+#ifdef CONFIG_BOARD_M5STACK_TAB5
+/*
+ * M5Stack Tab5: the touch controller is GT911 or ST712x depending on the
+ * hardware revision and reports in the native 720x1280 portrait space.  All
+ * callers (launcher keyboard, safe-boot check, PAPP loader) work in the original
+ * 480x800 portrait space, so coordinates are mapped back through the UI rect
+ * (see TAB5_UI_* in tab5_board.h):
+ *   legacy_x = (x - 60) / 1.25,   legacy_y = (y - 140) / 1.25
+ * Touches in the side bars belong to the on-screen pad (tab5_pad.c) and are NOT
+ * reported here, so pressing a pad button never clicks a UI element.
+ * The args of gt911_touch_init() are ignored - the board owns the pins.
+ */
+#include "tab5_board.h"
+
+esp_err_t gt911_touch_init(int8_t sda_pin, int8_t scl_pin, int8_t rst_pin, int8_t int_pin)
+{
+    (void)sda_pin; (void)scl_pin; (void)rst_pin; (void)int_pin;
+    return tab5_touch_init();   /* idempotent */
+}
+
+bool gt911_touch_get_xy(uint16_t *x, uint16_t *y)
+{
+    tab5_touch_point_t pts[TAB5_MAX_TOUCH_POINTS];
+    int n = tab5_touch_read(pts, TAB5_MAX_TOUCH_POINTS);
+    for (int i = 0; i < n; i++) {
+        int px = pts[i].x - TAB5_UI_X_OFF;
+        int py = pts[i].y - TAB5_UI_Y_OFF;
+        if (px < 0 || py < 0 || px >= (int)(480 * TAB5_UI_SCALE) || py >= (int)(800 * TAB5_UI_SCALE))
+            continue;                       /* in a pad bar / margin */
+        if (x) *x = (uint16_t)(px * 4 / 5);   /* / 1.25 */
+        if (y) *y = (uint16_t)(py * 4 / 5);
+        return true;
+    }
+    return false;
+}
+
+#else  /* original RetroESP32-P4 board: GT911 on I2C1 */
+
 #define CONFIG_LCD_HRES 480
 #define CONFIG_LCD_VRES 800
 
@@ -63,3 +101,5 @@ bool gt911_touch_get_xy(uint16_t *x, uint16_t *y)
 
     return touched;
 }
+
+#endif /* CONFIG_BOARD_M5STACK_TAB5 */

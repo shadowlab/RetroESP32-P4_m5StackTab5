@@ -15,11 +15,12 @@
 8. [Emulator Apps](#emulator-apps)
 9. [Neo Geo Cache](#neo-geo-cache)
 10. [NVS Protocol](#nvs-protocol)
-11. [SDK Configuration](#sdk-configuration)
-12. [Build & Flash](#build--flash)
-13. [Adding an Emulator](#adding-an-emulator)
-14. [Binary Sizes](#binary-sizes)
-15. [Troubleshooting](#troubleshooting)
+11. [M5Stack Tab5 Target](#m5stack-tab5-target)
+12. [SDK Configuration](#sdk-configuration)
+13. [Build & Flash](#build--flash)
+14. [Adding an Emulator](#adding-an-emulator)
+15. [Binary Sizes](#binary-sizes)
+16. [Troubleshooting](#troubleshooting)
 
 ---
 
@@ -100,16 +101,16 @@ Bootloader is at **0x2000** (ESP32-P4 requirement, not 0x0); partition table at 
 | nvs | 0x009000 | 16 KB | NVS store |
 | otadata | 0x00D000 | 8 KB | OTA boot selection |
 | factory | 0x010000 | 768 KB | Launcher |
-| ota_0 | 0x0D0000 | 576 KB | NES |
-| ota_1 | 0x160000 | 640 KB | GB/GBC |
-| ota_2 | 0x200000 | 1.31 MB | SMS/GG/COL |
-| ota_3 | 0x350000 | 768 KB | ZX Spectrum |
-| ota_4 | 0x410000 | 1.25 MB | Atari 2600 |
-| ota_5 | 0x550000 | 640 KB | Atari 7800 |
-| ota_6 | 0x5F0000 | 640 KB | Atari Lynx |
-| ota_7 | 0x690000 | 704 KB | PC Engine |
-| ota_8 | 0x740000 | 768 KB | Atari 800 |
-| ota_9 | 0x800000 | 768 KB | *(free)* |
+| ota_0 | 0x0D0000 | 640 KB | NES |
+| ota_1 | 0x170000 | 640 KB | GB/GBC |
+| ota_2 | 0x210000 | 1.31 MB | SMS/GG/COL |
+| ota_3 | 0x360000 | 768 KB | ZX Spectrum |
+| ota_4 | 0x420000 | 1.25 MB | Atari 2600 |
+| ota_5 | 0x560000 | 640 KB | Atari 7800 |
+| ota_6 | 0x600000 | 640 KB | Atari Lynx |
+| ota_7 | 0x6A0000 | 704 KB | PC Engine |
+| ota_8 | 0x750000 | 832 KB | Atari 800 |
+| ota_9 | 0x820000 | 640 KB | *(free)* |
 | ota_10 | 0x8C0000 | 960 KB | SNES |
 | ota_11 | 0x9B0000 | 1.31 MB | Genesis |
 | ota_12 | 0xB00000 | 1.5 MB | Neo Geo |
@@ -242,6 +243,26 @@ Launcher writes, emulator reads; namespace `"Odroid"`, API in `odroid_settings.h
 
 ---
 
+## M5Stack Tab5 Target
+
+A port of the handheld build to the M5Stack Tab5 tablet (5″ 720×1280 MIPI-DSI, no physical buttons),
+selected with `CONFIG_BOARD_M5STACK_TAB5=y` and built with `build_all_tab5.sh` → `RetroESP32_P4_Tab5_v1.bin`.
+Compared with the Guition handheld:
+
+| | Guition handheld | Tab5 |
+|---|---|---|
+| Panel | 480×800 ST7701S | 720×1280 ILI9881C / ST7123 / ST7121 (auto-detected) |
+| Touch | GT911 | GT911 or ST712x, multi-touch |
+| Audio | ES8311 | ES8388 |
+| Buttons | GPIO pad + USB | on-screen touch pad + USB |
+| Battery | ADC divider | INA226 power monitor |
+
+The UI and emulator images keep their landscape geometry and get one extra PPA scale (1.25× UI, 3× emulators)
+straight into the DSI frame buffer; the side bars hold the touch pad. `components/tab5_board` owns the I2C bus,
+IO-expander power rails, panel/touch detection, battery monitor and frame buffer. Details: `TAB5.md`.
+
+---
+
 ## SDK Configuration
 
 Emulator apps share `apps/sdkconfig_common.defaults`; launcher uses `launcher/sdkconfig.defaults`.
@@ -304,7 +325,8 @@ For a native port, build a `.papp` from `ESP32_P4_PAPP_Template/` instead — no
 ## Binary Sizes
 
 Approximate (from `partitions_ota.csv`; re-measure after builds). Partitions that run **tight**:
-launcher (~706 KB / 768 KB), nes (~567 KB / 576 KB), atari800 (~734 KB / 768 KB). Others carry
+launcher (~706 KB / 768 KB; Tab5 ~735 KB). NES and Atari 800 each got 64 KB from the free ota_9 slot
+(NES now 640 KB, Tab5 build ~590 KB; Atari 800 now 832 KB, Tab5 build ~757 KB). Others carry
 60–360 KB headroom. Largest cores: sms ~1231 KB, genesis ~1212 KB, stella ~1184 KB, neogeo ~1177 KB.
 On overflow: shrink the app (`-Os`, strip) or grow the partition and shift later offsets.
 

@@ -1,6 +1,6 @@
 idf_component_register(
-    SRCS "st7701_lcd.c" "esp_lcd_st7701.c" "esp_lcd_st7701_mipi.c"
+    SRCS "st7701_lcd.c" "st7701_lcd_tab5.c" "esp_lcd_st7701.c" "esp_lcd_st7701_mipi.c"
     INCLUDE_DIRS "include"
-    REQUIRES driver esp_lcd esp_hw_support ppa_engine
+    REQUIRES driver esp_lcd esp_hw_support ppa_engine tab5_board
     PRIV_REQUIRES esp_mm
 )

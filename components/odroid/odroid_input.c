@@ -22,6 +22,10 @@
 
 #include "odroid_input.h"
 #include "gamepad.h"   /* gamepad_is_connected() */
+#ifdef CONFIG_BOARD_M5STACK_TAB5
+#include "tab5_board.h"
+#include "tab5_pad.h"
+#endif
 #include "tab5_ctrl.h"
 #include "gt911_touch.h"
 
@@ -46,10 +50,12 @@
 static const char *TAG = "odroid_input";
 static bool s_initialized = false;
 
+#if !defined(CONFIG_BOARD_M5STACK_TAB5)
 /* Cached touch state — updated at 2 Hz */
 static volatile int s_touch_menu   = 0;
 static volatile int s_touch_volume = 0;
 static int64_t      s_touch_last_us = 0;
+#endif
 
 /* ─── Paddle ADC (GPIO 51 = ADC2_CH2 on ESP32-P4) ───────────────── */
 #define PADDLE_ADC_UNIT    ADC_UNIT_2
@@ -120,6 +126,12 @@ static uint16_t s_usb_map_pid = 0;  /* PID of the currently loaded map */
 /* ─── GPIO gamepad detection & init ──────────────────────────────── */
 static void gpio_pad_detect_and_init(void)
 {
+#ifdef CONFIG_BOARD_M5STACK_TAB5
+    /* Tab5 has no GPIO pad, and GPIO 28/29/30 (the pad's Start/L1/L2 lines)
+     * are the I2S DIN/WS/MCLK pins of the audio codec - never touch them. */
+    ESP_LOGI(TAG, "Tab5: GPIO gamepad disabled (USB gamepad + touch only)");
+    return;
+#endif
     /* Detection: pull-up GPIO 29 (L1), read. If 0 → custom pad connected
        (the physical pull-down on the gamepad board wins). */
     gpio_config_t detect_cfg = {
@@ -282,7 +294,7 @@ static const int8_t s_rp_map_neogeo[RP_BTN_COUNT] = {
     [RP_BTN_OPT1 ... RP_BTN_KPHASH] = RP_NONE,
 };
 
-static void tab5_pad_read(odroid_gamepad_state *state)
+static void tab5_ctrl_pad_read(odroid_gamepad_state *state)
 {
     uint32_t mask = tab5_ctrl_get_buttons();
     if (!mask) return;
@@ -374,11 +386,16 @@ void odroid_input_gamepad_read(odroid_gamepad_state *state)
     }
 
     /* Tab5 keyboard-port controller board — OR its buttons into the state */
-    tab5_pad_read(state);
+    tab5_ctrl_pad_read(state);
 
     /* Custom GPIO gamepad — OR its buttons into the state */
     gpio_pad_read(state);
 
+#ifdef CONFIG_BOARD_M5STACK_TAB5
+    /* Tab5: full on-screen touch pad in the side bars (D-pad, A/B/X/Y, L/R, START/SELECT,
+     * MENU, VOL).  Replaces the handheld's two coarse touch zones, which would overlap it. */
+    tab5_pad_read(state);
+#else
     /* Touch-panel virtual shoulder buttons — sampled at 2 Hz to avoid CPU overhead.
      * Disabled when touch keyboard is active (odroid_input_touch_buttons_disable). */
     if (!odroid_input_touch_buttons_disable) {
@@ -402,6 +419,7 @@ void odroid_input_gamepad_read(odroid_gamepad_state *state)
         s_touch_menu = 0;
         s_touch_volume = 0;
     }
+#endif /* CONFIG_BOARD_M5STACK_TAB5 */
 
     /* X → Menu, Y → Volume for emulators that lack native X/Y (skip for SNES/Genesis). */
     if (!odroid_input_xy_menu_disable) {
@@ -419,6 +437,10 @@ odroid_gamepad_state odroid_input_read_raw(void)
 
 void odroid_paddle_adc_init(void)
 {
+#ifdef CONFIG_BOARD_M5STACK_TAB5
+    /* Tab5: no paddle wheel; GPIO 51 is not wired for it */
+    return;
+#endif
     if (s_paddle_adc_handle) return;  /* already initialised */
 
     /* Reuse existing ADC2 handle if GPIO gamepad or battery already created it */
@@ -444,6 +466,12 @@ void odroid_paddle_adc_init(void)
 
 void odroid_input_battery_level_init(void)
 {
+#ifdef CONFIG_BOARD_M5STACK_TAB5
+    /* Tab5: battery is monitored by an INA226 over I2C, not an ADC divider.
+     * If it does not answer, _read() keeps reporting a full battery. */
+    tab5_battery_init();
+    return;
+#endif
     if (s_battery_adc_handle) return;  /* already initialised */
 
     /* Reuse existing ADC2 handle if GPIO pad or paddle already created it */
@@ -472,10 +500,57 @@ void odroid_input_battery_level_init(void)
     ESP_LOGI(TAG, "Battery ADC initialised: ADC2_CH4 (GPIO 53), divider 68K/100K");
 }
 
+#ifdef CONFIG_BOARD_M5STACK_TAB5
+/* 2S Li-ion (NP-F550) open-circuit-voltage curve, per cell in mV -> percent */
+static int tab5_cell_mv_to_percent(int cell_mv)
+{
+    static const struct { int mv, pct; } curve[] = {
+        {3000, 0}, {3300, 5}, {3600, 20}, {3700, 40}, {3800, 55},
+        {3900, 68}, {4000, 80}, {4100, 92}, {4200, 100},
+    };
+    const int n = sizeof(curve) / sizeof(curve[0]);
+    if (cell_mv <= curve[0].mv)   return 0;
+    if (cell_mv >= curve[n-1].mv) return 100;
+    for (int i = 1; i < n; i++) {
+        if (cell_mv <= curve[i].mv) {
+            return curve[i-1].pct + (cell_mv - curve[i-1].mv) *
+                   (curve[i].pct - curve[i-1].pct) / (curve[i].mv - curve[i-1].mv);
+        }
+    }
+    return 100;
+}
+
+static void tab5_battery_level_read(odroid_battery_state *state)
+{
+    int mv = 0, ma = 0;
+    /* Defaults when the monitor is absent: behave like the old "no battery" case. */
+    state->millivolts = 8400;
+    state->percentage = 100;
+    state->charging = false;
+    if (tab5_battery_read(&mv, &ma) != ESP_OK) return;
+
+    /* Standard Tab5 ships without a pack and runs from external power; the bus then
+     * sits near the 5 V rail, well below an empty 2S pack (6 V). */
+    if (mv < 5500) return;
+
+    bool charging = TAB5_BATT_CHARGE_CURRENT_POSITIVE ? (ma > 50) : (ma < -50);
+    /* Voltage reads high while charging, so don't trust it for the percentage then. */
+    int pct = tab5_cell_mv_to_percent(mv / 2);
+    if (charging && pct > 95) pct = 100;
+    state->millivolts = mv;
+    state->percentage = pct;
+    state->charging = charging;
+}
+#endif
+
 void odroid_input_battery_level_read(odroid_battery_state *state)
 {
     if (!state) return;
 
+#ifdef CONFIG_BOARD_M5STACK_TAB5
+    tab5_battery_level_read(state);
+    return;
+#endif
     if (!s_battery_adc_handle) {
         /* Not initialised — report full */
         state->millivolts = 4200;

@@ -320,8 +320,7 @@ static int svc_fb_copy(const uint16_t *src, uint16_t *dst,
     if (!s_axi_mcp) {
         async_memcpy_config_t cfg = {
             .backlog = 4,
-            .sram_trans_align = 64,
-            .psram_trans_align = 64,
+            .dma_burst_size = 64,   /* 5.x: same storage as the deprecated psram_trans_align */
             .flags = 0,
         };
         esp_err_t err = esp_async_memcpy_install_gdma_axi(&cfg, &s_axi_mcp);

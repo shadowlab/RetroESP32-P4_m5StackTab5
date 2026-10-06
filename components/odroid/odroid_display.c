@@ -11,6 +11,12 @@
 #include "ppa_engine.h"
 #include "pins_config.h"
 
+#ifdef CONFIG_BOARD_M5STACK_TAB5
+#include "tab5_board.h"
+#include "tab5_pad.h"
+#include <math.h>
+#endif
+
 #include "st7701_lcd.h"
 
 #include <string.h>
@@ -68,6 +74,10 @@ static void backlight_init(void)
 }
 
 /* ─── Pre-allocated PPA output buffer ──────────────────────────── */
+#if defined(CONFIG_BOARD_M5STACK_TAB5)
+/* Tab5: PPA renders straight into the 720x1280 DSI frame buffer (see tab5_present),
+ * so no intermediate output buffer is needed. */
+#else
 /* LCD: Max PPA output: 480×800 (full LCD). Actual size depends on scale factors. */
 #define PPA_OUT_MAX_W  480
 #define PPA_OUT_MAX_H  800
@@ -77,6 +87,7 @@ static void backlight_init(void)
 
 static void *s_ppa_out_buf = NULL;
 static size_t s_ppa_out_size = 0;
+#endif
 
 /* Emulator standard resolution (all Pipeline A emulators scale to this) */
 #define EMU_W 320
@@ -86,11 +97,86 @@ static size_t s_ppa_out_size = 0;
 
 /* Shared 320×240 intermediate buffer for Pipeline A emulators */
 static uint16_t *s_emu_scaled = NULL;
+#if !defined(CONFIG_BOARD_M5STACK_TAB5)
 static bool s_emu_borders_cleared_a = false;
+#endif
 
 /* Configurable scale factors (1×1 = native resolution → 480×800) */
 static float s_scale_x = 1.0f;
 static float s_scale_y = 1.0f;
+
+#ifdef CONFIG_BOARD_M5STACK_TAB5
+/* ─── Tab5 presentation ───────────────────────────────────────────
+ *
+ * The whole firmware draws for the original handheld: a landscape UI/emulator
+ * image that is rotated 270° onto a 480×800 portrait panel.  On the Tab5
+ * (720×1280) the same "legacy" geometry is kept and scaled by an extra factor:
+ *   launcher UI / PAPP  800×480  → 1000×600  (TAB5_UI_SCALE  1.25×)
+ *   emulators           320×240  →  960×720  (TAB5_EMU_SCALE 1.5× on the legacy 2× = 3×, 4:3)
+ * Both leave side bars of >= 140 px that carry the touch pad (tab5_pad.c).
+ * PPA does rotate + scale in ONE pass, writing directly into the DSI frame
+ * buffer - the legacy path rendered into a staging buffer and then copied it
+ * to the panel, which cost a full extra pass over ~1 MB per frame.
+ */
+
+/* Remembered geometry of the last frame: when it changes, stale pixels from the
+ * previous mode (launcher UI vs. emulator vs. PAPP) are cleared once. */
+static uint32_t s_tab5_geom = 0;
+
+/* may_drop: emulator frames pass true, so with double buffering a frame is skipped instead of
+ * waiting for the panel's VSYNC (an emulator must never be paced by the panel, which may run
+ * slower than 60 Hz).  UI frames pass false: they wait, so the last frame is always shown. */
+static esp_err_t tab5_present(const uint16_t *src, uint32_t in_w, uint32_t in_h,
+                              float legacy_sx, float legacy_sy, float factor, bool byte_swap,
+                              bool may_drop)
+{
+    void *fb = tab5_display_begin_frame(may_drop);
+    if (!fb) return tab5_display_fb_count() ? ESP_OK /* dropped */ : ESP_ERR_INVALID_STATE;
+
+    /* Post-rotation factors (same convention as ppa_rotate_scale_rgb565_to):
+     * px scales the output width, py the output height.  PPA scale has 1/16
+     * resolution, so round to keep the output size deterministic. */
+    float px = roundf(legacy_sx * factor * 16.0f) / 16.0f;
+    float py = roundf(legacy_sy * factor * 16.0f) / 16.0f;
+
+    /* rotate 270°: output width comes from the input height and vice versa */
+    uint32_t out_w = (uint32_t)(in_h * px + 0.5f);
+    uint32_t out_h = (uint32_t)(in_w * py + 0.5f);
+    if (out_w > TAB5_PANEL_W || out_h > TAB5_PANEL_H) {
+        return ESP_ERR_INVALID_SIZE;   /* nothing drawn, no flip: the current picture stays */
+    }
+    uint32_t x_off = (TAB5_PANEL_W - out_w) / 2;
+    uint32_t y_off = (TAB5_PANEL_H - out_h) / 2;
+
+    uint32_t geom = (out_w << 20) ^ (out_h << 8) ^ (x_off << 4) ^ y_off;
+    if (geom != s_tab5_geom) {
+        tab5_display_fill(0x0000);
+        s_tab5_geom = geom;
+    }
+
+    esp_err_t ret = ppa_rotate_scale_rgb565_to_rect(
+        src, in_w, in_h,
+        270, px, py,
+        fb, tab5_display_fb_size(), TAB5_PANEL_W, TAB5_PANEL_H,
+        x_off, y_off, NULL, NULL, byte_swap);
+    tab5_display_end_frame();
+    return ret;
+}
+
+/* Present a native-resolution emulator frame in ONE PPA pass (no 320×240
+ * intermediate).  h_scale / v_scale are landscape factors and must be
+ * multiples of 1/16; the call sites keep the same 4:3 picture as the
+ * two-pass path. */
+static void tab5_present_direct(const uint16_t *src, uint32_t w, uint32_t h,
+                                float h_scale, float v_scale)
+{
+    /* tab5_present's factors are post-rotation: x = panel width = landscape vertical */
+    esp_err_t ret = tab5_present(src, w, h, v_scale, h_scale, 1.0f, false, true);
+    if (ret != ESP_OK) {
+        ESP_LOGE(TAG, "Tab5 direct present %ux%u failed (0x%x)", (unsigned)w, (unsigned)h, ret);
+    }
+}
+#endif /* CONFIG_BOARD_M5STACK_TAB5 */
 
 /* ─── Timing instrumentation ──────────────────────────────────── */
 static int64_t s_timing_ppa_acc = 0;
@@ -105,6 +191,17 @@ void display_flush(void)
     if (!s_fb_dirty || !s_framebuffer) return;
     s_fb_dirty = false;
 
+#if defined(CONFIG_BOARD_M5STACK_TAB5)
+    /* Tab5: one PPA pass (rotate 270° + 1.25×) straight into the DSI frame buffer */
+    int64_t t0 = esp_timer_get_time();
+    esp_err_t ret = tab5_present(s_framebuffer, FB_W, FB_H, s_scale_x, s_scale_y, TAB5_UI_SCALE, false, false);
+    int64_t t1 = esp_timer_get_time();
+    if (ret != ESP_OK) {
+        ESP_LOGE(TAG, "Tab5 present failed (0x%x)", ret);
+        return;
+    }
+    int64_t t2 = t1;   /* no separate panel transfer: PPA already wrote the scan-out buffer */
+#else
     /* LCD: PPA rotate 270° + scale → push to ST7701 */
     /* Lazy-allocate the persistent PPA output buffer */
     if (!s_ppa_out_buf) {
@@ -140,6 +237,7 @@ void display_flush(void)
 
     st7701_lcd_draw_rgb_bitmap(0, y_off, out_w, out_h, (const uint16_t *)s_ppa_out_buf);
     int64_t t2 = esp_timer_get_time();
+#endif /* CONFIG_BOARD_M5STACK_TAB5 */
 
     s_timing_ppa_acc += (t1 - t0);
     s_timing_lcd_acc += (t2 - t1);
@@ -179,6 +277,17 @@ void display_set_scale(float sx, float sy)
 /* ─── Emulator flush helper ────────────────────────────────────── */
 static void display_emu_flush_320x240(const uint16_t *buf, bool byte_swap)
 {
+#if defined(CONFIG_BOARD_M5STACK_TAB5)
+    /* Tab5: 320×240 → 3× + 270° → 720×960 directly into the DSI frame buffer */
+    int64_t t0 = esp_timer_get_time();
+    esp_err_t ret = tab5_present(buf, EMU_W, EMU_H, 2.0f, 2.0f, TAB5_EMU_SCALE, byte_swap, true);
+    int64_t t1 = esp_timer_get_time();
+    if (ret != ESP_OK) {
+        ESP_LOGE(TAG, "Tab5 emu present failed (0x%x)", ret);
+        return;
+    }
+    int64_t t2 = t1;
+#else
     /* LCD: PPA 2× scale + 270° rotate → 480×640 */
     /* Lazy-allocate the persistent PPA output buffer */
     if (!s_ppa_out_buf) {
@@ -221,6 +330,7 @@ static void display_emu_flush_320x240(const uint16_t *buf, bool byte_swap)
     uint16_t y_off = (lcd_h > out_h) ? (lcd_h - out_h) / 2 : 0;
     st7701_lcd_draw_rgb_bitmap(0, y_off, out_w, out_h, (const uint16_t *)s_ppa_out_buf);
     int64_t t2 = esp_timer_get_time();
+#endif /* CONFIG_BOARD_M5STACK_TAB5 */
 
     s_timing_ppa_acc += (t1 - t0);
     s_timing_lcd_acc += (t2 - t1);
@@ -257,6 +367,9 @@ void ili9341_init(void)
     if (!s_backlight_init) {
         backlight_init();
     }
+#ifdef CONFIG_BOARD_M5STACK_TAB5
+    tab5_pad_init();   /* touch pad is redrawn after every frame-buffer clear */
+#endif
 }
 
 void ili9341_write_frame_rectangleLE(int x, int y, int w, int h, const uint16_t *data)
@@ -374,6 +487,13 @@ void ili9341_write_frame_gb(uint16_t *buffer, int scale)
         /* Copy input into DMA-aligned temp buffer */
         memcpy(s_gb_temp, buffer, GB_PIXELS * sizeof(uint16_t));
 
+#ifdef CONFIG_BOARD_M5STACK_TAB5
+        /* Tab5: one PPA pass 160×144 → 960×720 (6× / 5×, same 4:3 picture) */
+        tab5_present_direct(s_gb_temp, GAMEBOY_WIDTH, GAMEBOY_HEIGHT, 6.0f, 5.0f);
+        odroid_display_unlock_gb_display();
+        return;
+#endif
+
         /* Lazy-allocate shared 320×240 intermediate buffer (prefer internal SRAM) */
         if (!s_emu_scaled) {
             s_emu_scaled = heap_caps_aligned_calloc(
@@ -440,6 +560,14 @@ void ili9341_write_frame_nes(uint8_t *buffer, uint16_t *myPalette, uint8_t scale
             uint16_t pixel = myPalette[buffer[i]];
             s_nes_temp[i] = (pixel >> 8) | (pixel << 8);
         }
+
+#ifdef CONFIG_BOARD_M5STACK_TAB5
+        /* Tab5: one PPA pass 256×224 → 960×714 (3.75× / 3.1875×; 720/224 is not
+         * a 1/16 multiple, so 6 rows short of the 4:3 frame, centred) */
+        tab5_present_direct(s_nes_temp, NES_GAME_WIDTH, NES_GAME_HEIGHT, 3.75f, 3.1875f);
+        odroid_display_unlock_nes_display();
+        return;
+#endif
 
         /* Lazy-allocate shared 320×240 intermediate buffer (prefer internal SRAM) */
         if (!s_emu_scaled) {
@@ -518,6 +646,14 @@ void ili9341_write_frame_sms(uint8_t *buffer, uint16_t color[], uint8_t isGameGe
                 dst_row[x] = color[src_row[x] & PIXEL_MASK];
             }
         }
+
+#ifdef CONFIG_BOARD_M5STACK_TAB5
+        /* Tab5: one PPA pass → 960×720 (SMS 256×192 at 3.75×, GG 160×144 at 6× / 5×) */
+        if (isGameGear) tab5_present_direct(s_sms_temp, src_w, src_h, 6.0f, 5.0f);
+        else            tab5_present_direct(s_sms_temp, src_w, src_h, 3.75f, 3.75f);
+        odroid_display_unlock_sms_display();
+        return;
+#endif
 
         /* Lazy-allocate shared 320×240 intermediate buffer (prefer internal SRAM) */
         if (!s_emu_scaled) {
@@ -659,6 +795,11 @@ void ili9341_write_frame_lynx(const uint16_t *buffer)
 
         memcpy(s_lynx_temp, buffer, LYNX_PIXELS * sizeof(uint16_t));
 
+#if defined(CONFIG_BOARD_M5STACK_TAB5)
+        /* Tab5: one PPA pass 160×102 → 960×612 (6×, true Lynx aspect) straight to the
+         * panel, instead of stretching into the 800×480 UI buffer and scaling again */
+        tab5_present_direct(s_lynx_temp, LYNX_GAME_WIDTH, LYNX_GAME_HEIGHT, 6.0f, 6.0f);
+#else
         /* LCD: single PPA scale 160×102 → 800×480 into framebuffer, then flush */
         float sx = (float)FB_W / LYNX_GAME_WIDTH;
         float sy = (float)FB_H / LYNX_GAME_HEIGHT;
@@ -675,6 +816,7 @@ void ili9341_write_frame_lynx(const uint16_t *buffer)
         }
         s_fb_dirty = true;
         display_flush();
+#endif
     }
 
     odroid_display_unlock();
@@ -691,7 +833,9 @@ void ili9341_write_frame_lynx(const uint16_t *buffer)
  * When byte_swap_input is set, PPA hardware swaps bytes during processing.
  */
 
+#if !defined(CONFIG_BOARD_M5STACK_TAB5)
 static bool s_emu_borders_cleared = false;
+#endif
 
 void ili9341_write_frame_rgb565_ex(const uint16_t *buffer, bool byte_swap_input)
 {
@@ -700,11 +844,30 @@ void ili9341_write_frame_rgb565_ex(const uint16_t *buffer, bool byte_swap_input)
     if (buffer == NULL) {
         ili9341_clear(0x0000);
         display_flush();
+#if !defined(CONFIG_BOARD_M5STACK_TAB5)
         s_emu_borders_cleared = false;
+#endif
         odroid_display_unlock();
         return;
     }
 
+#if defined(CONFIG_BOARD_M5STACK_TAB5)
+    /* Tab5: 2× legacy scale (×1.5 panel factor = 3×) + 270° straight into the DSI frame buffer */
+    {
+        int64_t t0 = esp_timer_get_time();
+        esp_err_t ret = tab5_present(buffer, EMU_W, EMU_H, 2.0f, 2.0f, TAB5_EMU_SCALE, byte_swap_input, true);
+        if (ret != ESP_OK) {
+            ESP_LOGE(TAG, "Tab5 emu present failed (0x%x)", ret);
+        }
+        s_timing_ppa_acc += (esp_timer_get_time() - t0);
+        if (++s_timing_count >= TIMING_INTERVAL) {
+            printf("DISP TIMING (%d frames): PPA+scanout buf=%.1fms\n",
+                   s_timing_count, s_timing_ppa_acc / (s_timing_count * 1000.0f));
+            s_timing_ppa_acc = 0;
+            s_timing_count = 0;
+        }
+    }
+#else
     /* LCD: PPA 2× scale + 270° rotate → push to ST7701 */
     if (!s_ppa_out_buf) {
         s_ppa_out_buf = heap_caps_aligned_calloc(
@@ -759,6 +922,7 @@ void ili9341_write_frame_rgb565_ex(const uint16_t *buffer, bool byte_swap_input)
         s_timing_pal_acc = 0;
         s_timing_count = 0;
     }
+#endif /* CONFIG_BOARD_M5STACK_TAB5 */
 
     odroid_display_unlock();
 }
@@ -770,7 +934,9 @@ void ili9341_write_frame_rgb565(const uint16_t *buffer)
 }
 
 /* ─── Custom-size RGB565 frame writer (PPA scale + rotate) ───── */
+#if !defined(CONFIG_BOARD_M5STACK_TAB5)
 static bool s_custom_borders_cleared = false;
+#endif
 
 void ili9341_write_frame_rgb565_custom(const uint16_t *buffer, uint16_t in_w,
                                         uint16_t in_h, float scale,
@@ -781,11 +947,22 @@ void ili9341_write_frame_rgb565_custom(const uint16_t *buffer, uint16_t in_w,
     if (buffer == NULL) {
         ili9341_clear(0x0000);
         display_flush();
+#if !defined(CONFIG_BOARD_M5STACK_TAB5)
         s_custom_borders_cleared = false;
+#endif
         odroid_display_unlock();
         return;
     }
 
+#if defined(CONFIG_BOARD_M5STACK_TAB5)
+    /* Tab5: `scale` is in legacy 480×800 space; tab5_present adds the emulator panel factor */
+    {
+        esp_err_t ret = tab5_present(buffer, in_w, in_h, scale, scale, TAB5_EMU_SCALE, byte_swap_input, true);
+        if (ret != ESP_OK) {
+            ESP_LOGE(TAG, "Tab5 custom present failed (0x%x)", ret);
+        }
+    }
+#else
     /* LCD: PPA scale + rotate 270° → push to ST7701 */
     if (!s_ppa_out_buf) {
         s_ppa_out_buf = heap_caps_aligned_calloc(
@@ -828,6 +1005,7 @@ void ili9341_write_frame_rgb565_custom(const uint16_t *buffer, uint16_t in_w,
 
     st7701_lcd_draw_rgb_bitmap(x_off, y_off, out_w, out_h,
                                (const uint16_t *)s_ppa_out_buf);
+#endif /* CONFIG_BOARD_M5STACK_TAB5 */
     odroid_display_unlock();
 }
 

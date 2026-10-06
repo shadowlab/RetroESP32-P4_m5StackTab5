@@ -2,6 +2,9 @@
  * ST7701 LCD wrapper - ported from Arduino C++ to ESP-IDF C
  */
 #include "sdkconfig.h"
+
+/* On the M5Stack Tab5 this API is provided by st7701_lcd_tab5.c */
+#ifndef CONFIG_BOARD_M5STACK_TAB5
 #include "freertos/FreeRTOS.h"
 #include "freertos/task.h"
 #include "esp_lcd_panel_ops.h"
@@ -188,3 +191,5 @@ uint16_t st7701_lcd_height(void)
 {
     return LCD_V_RES;
 }
+
+#endif /* !CONFIG_BOARD_M5STACK_TAB5 */

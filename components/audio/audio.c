@@ -5,6 +5,7 @@
  * esp_codec_dev to set up the ES8311 over the shared I2C bus.
  */
 
+#include "sdkconfig.h"
 #include "audio.h"
 #include <math.h>
 #include <string.h>
@@ -42,7 +43,7 @@ static bool s_initialized = false;
 /* ─── I2S driver init ─────────────────────────────────────────────── */
 static esp_err_t i2s_driver_init(const audio_config_t *cfg)
 {
-    i2s_chan_config_t chan_cfg = I2S_CHANNEL_DEFAULT_CONFIG((i2s_port_t)cfg->i2s_num, I2S_ROLE_MASTER);
+    i2s_chan_config_t chan_cfg = I2S_CHANNEL_DEFAULT_CONFIG(cfg->i2s_num, I2S_ROLE_MASTER);
     chan_cfg.auto_clear = true;
     ESP_RETURN_ON_ERROR(i2s_new_channel(&chan_cfg, &s_tx_handle, &s_rx_handle), TAG, "i2s_new_channel failed");
 
@@ -75,13 +76,17 @@ static esp_err_t i2s_driver_init(const audio_config_t *cfg)
     return ESP_OK;
 }
 
-/* ─── ES8311 codec init via esp_codec_dev ─────────────────────────── */
+/* ─── Codec init via esp_codec_dev (ES8311, or ES8388 on the Tab5) ── */
 static esp_err_t es8311_codec_init(const audio_config_t *cfg)
 {
     /* Create I2C control interface using the shared bus handle */
     audio_codec_i2c_cfg_t i2c_cfg = {
         .port = 0,   /* not used when bus_handle is provided */
+#ifdef CONFIG_BOARD_M5STACK_TAB5
+        .addr = ES8388_CODEC_DEFAULT_ADDR,
+#else
         .addr = ES8311_CODEC_DEFAULT_ADDR,
+#endif
         .bus_handle = cfg->i2c_handle,
     };
     const audio_codec_ctrl_if_t *ctrl_if = audio_codec_new_i2c_ctrl(&i2c_cfg);
@@ -109,6 +114,26 @@ static esp_err_t es8311_codec_init(const audio_config_t *cfg)
         return ESP_FAIL;
     }
 
+#ifdef CONFIG_BOARD_M5STACK_TAB5
+    /* Tab5: ES8388 DAC drives the speaker/headphone path (the ES7210 mic ADC
+     * shares the I2S bus but is not used by the emulators). The amplifier is
+     * switched by an IO expander (tab5_board_speaker_enable), not a GPIO. */
+    es8388_codec_cfg_t codec_cfg = {
+        .ctrl_if     = ctrl_if,
+        .gpio_if     = gpio_if,
+        .codec_mode  = ESP_CODEC_DEV_WORK_MODE_DAC,
+        .master_mode = false,
+        .pa_pin      = (int16_t)cfg->pa_ctrl_io,
+        .pa_reverted = false,
+        .hw_gain = {
+            .pa_voltage = 5.0,
+            .codec_dac_voltage = 3.3,
+        },
+    };
+    const audio_codec_if_t *codec_if = es8388_codec_new(&codec_cfg);
+    const esp_codec_dev_type_t codec_dev_type = ESP_CODEC_DEV_TYPE_OUT;
+    const char *codec_name = "ES8388";
+#else
     /* Create ES8311 codec interface */
     es8311_codec_cfg_t es8311_cfg = {
         .ctrl_if    = ctrl_if,
@@ -124,16 +149,19 @@ static esp_err_t es8311_codec_init(const audio_config_t *cfg)
         },
         .mclk_div = MCLK_MULTIPLE,
     };
-    const audio_codec_if_t *es8311_if = es8311_codec_new(&es8311_cfg);
-    if (!es8311_if) {
-        ESP_LOGE(TAG, "Failed to create ES8311 codec interface");
+    const audio_codec_if_t *codec_if = es8311_codec_new(&es8311_cfg);
+    const esp_codec_dev_type_t codec_dev_type = ESP_CODEC_DEV_TYPE_IN_OUT;
+    const char *codec_name = "ES8311";
+#endif
+    if (!codec_if) {
+        ESP_LOGE(TAG, "Failed to create %s codec interface", codec_name);
         return ESP_FAIL;
     }
 
     /* Create top-level codec device */
     esp_codec_dev_cfg_t dev_cfg = {
-        .dev_type = ESP_CODEC_DEV_TYPE_IN_OUT,
-        .codec_if = es8311_if,
+        .dev_type = codec_dev_type,
+        .codec_if = codec_if,
         .data_if  = data_if,
     };
     s_codec_handle = esp_codec_dev_new(&dev_cfg);
@@ -159,8 +187,7 @@ static esp_err_t es8311_codec_init(const audio_config_t *cfg)
         ESP_LOGW(TAG, "Failed to set initial volume");
     }
 
-    ESP_LOGI(TAG, "ES8311 codec initialized (I2C addr=0x%02x, vol=%d)",
-             ES8311_CODEC_DEFAULT_ADDR, cfg->volume);
+    ESP_LOGI(TAG, "%s codec initialized (vol=%d)", codec_name, cfg->volume);
     return ESP_OK;
 }
 

@@ -1,0 +1,153 @@
+# Build the M5Stack Tab5 firmware: the launcher and every emulator app, each in its own job,
+# then merge them into one flashable image (RetroESP32_P4_Tab5_v1.bin, flash at 0x0).
+# Built with ESP-IDF 5.5.2, the toolchain releases are made with.  build_all_tab5.sh fails a job when
+# an image does not fit its partition in partitions_ota.csv.
+# Pushing a tag named tab5-v<version> (e.g. tab5-v0.1.0, or tab5-v0.1.0-beta.1 for a pre-release)
+# also publishes a GitHub release with the merged image.
+name: Build Tab5 firmware
+
+on:
+  push:
+    branches: [main]   # other branches build through their pull request
+    tags: ['tab5-v*']  # release builds (path filters do not apply to tag pushes)
+    paths-ignore: ['**.md', 'images/**', 'promo/**', 'SDcard/**']
+  pull_request:
+    paths-ignore: ['**.md', 'images/**', 'promo/**', 'SDcard/**']
+  workflow_dispatch:
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+permissions:
+  contents: read
+
+jobs:
+  build:
+    name: ${{ matrix.project }} (IDF ${{ matrix.idf }})
+    runs-on: ubuntu-latest
+    container: espressif/idf:v${{ matrix.idf }}
+    strategy:
+      fail-fast: false
+      matrix:
+        idf: ['5.5.2']
+        project: [launcher, nes, gb, sms, spectrum, stella, prosystem, handy, pce, atari800, snes, genesis, neogeo]
+    steps:
+      - uses: actions/checkout@v5
+
+      - name: Build
+        shell: bash
+        run: |
+          . "$IDF_PATH/export.sh" > /dev/null
+          ./build_all_tab5.sh ${{ matrix.project }}
+
+      - uses: actions/upload-artifact@v6
+        with:
+          name: tab5-idf${{ matrix.idf }}-${{ matrix.project }}
+          path: firmware_tab5/*.bin
+          if-no-files-found: error
+          retention-days: 7
+
+  merge:
+    name: Merge image (IDF ${{ matrix.idf }})
+    needs: build
+    runs-on: ubuntu-latest
+    container: espressif/idf:v${{ matrix.idf }}
+    strategy:
+      fail-fast: false
+      matrix:
+        idf: ['5.5.2']
+    steps:
+      - uses: actions/checkout@v5
+
+      - uses: actions/download-artifact@v7
+        with:
+          pattern: tab5-idf${{ matrix.idf }}-*
+          path: firmware_tab5
+          merge-multiple: true
+
+      - name: Merge
+        shell: bash
+        run: |
+          . "$IDF_PATH/export.sh" > /dev/null
+          ./build_all_tab5.sh --merge-only | tee merge.log
+          {
+            echo "### Tab5 image sizes (ESP-IDF ${{ matrix.idf }})"
+            echo '```'
+            grep ' KB / ' merge.log
+            echo '```'
+          } >> "$GITHUB_STEP_SUMMARY"
+
+      - uses: actions/upload-artifact@v6
+        with:
+          name: RetroESP32_P4_Tab5-idf${{ matrix.idf }}
+          path: |
+            RetroESP32_P4_Tab5_v1.bin
+            firmware_tab5/*.bin
+            merge.log
+          if-no-files-found: error
+
+  release:
+    name: Publish release
+    if: startsWith(github.ref, 'refs/tags/tab5-v')
+    needs: merge
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    steps:
+      - uses: actions/download-artifact@v7
+        with:
+          name: RetroESP32_P4_Tab5-idf5.5.2
+          path: dist
+
+      - name: Publish
+        env:
+          GH_TOKEN: ${{ github.token }}
+          TAG: ${{ github.ref_name }}
+        run: |
+          cd dist
+          main="RetroESP32_P4_Tab5_${TAG#tab5-}.bin"
+          cp RetroESP32_P4_Tab5_v1.bin "$main"
+          sha256sum "$main" > SHA256SUMS
+
+          prerelease=()
+          [[ "$TAG" =~ ^tab5-v[0-9.]+- ]] && prerelease=(--prerelease)
+
+          {
+            echo "Firmware for the **M5Stack Tab5**, built by CI from \`${GITHUB_SHA::8}\`."
+            echo
+            echo "> **First update the ESP32-C6 firmware** with the separate [tab5-p4-c6-sdio-ota](https://github.com/shadowlab/tab5-p4-c6-sdio-ota) updater"
+            echo "> (flash it on its own, wait for \`[PASS]\` in its log). It is not part of this release."
+            echo
+            echo "Then flash \`$main\`, built with ESP-IDF 5.5.2. It is a complete image (bootloader, partition table, launcher and all 12 emulators), written at 0x0:"
+            echo
+            echo '```'
+            echo "python -m esptool --chip esp32p4 -b 460800 write_flash 0x0 $main"
+            echo '```'
+            echo
+            echo "Build steps, the hardware map and a first-boot checklist are in [TAB5.md](https://github.com/$GITHUB_REPOSITORY/blob/$GITHUB_SHA/TAB5.md)."
+            if [ ${#prerelease[@]} -ne 0 ]; then
+              echo
+              echo "> **Pre-release:** build-tested only, not yet run on a Tab5. Please report what works (TAB5.md lists what to check)."
+            fi
+            echo
+            echo "### Image sizes (ESP-IDF 5.5.2)"
+            echo '```'
+            grep ' KB / ' merge.log
+            echo '```'
+            echo
+            echo "### SHA-256"
+            echo '```'
+            cat SHA256SUMS
+            echo '```'
+          } > notes.md
+
+          if gh release view "$TAG" --repo "$GITHUB_REPOSITORY" > /dev/null 2>&1; then
+            # release already drafted/published on GitHub (which also creates the tag): attach the images
+            gh release upload "$TAG" --repo "$GITHUB_REPOSITORY" --clobber "$main" SHA256SUMS
+            gh release edit "$TAG" --repo "$GITHUB_REPOSITORY" --notes-file notes.md
+          else
+            gh release create "$TAG" --repo "$GITHUB_REPOSITORY" --verify-tag \
+              --title "M5Stack Tab5 ${TAG#tab5-}" --notes-file notes.md "${prerelease[@]}" \
+              "$main" SHA256SUMS
+          fi

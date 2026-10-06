@@ -1,0 +1,29 @@
+# M5Stack Tab5 variant - layer on top of sdkconfig.defaults (launcher) or
+# apps/sdkconfig_common.defaults (emulator apps), e.g.
+#   idf.py -DSDKCONFIG_DEFAULTS="sdkconfig.defaults;../../launcher/sdkconfig.tab5.defaults" build
+# build_all_tab5.sh does this for every project.
+
+CONFIG_BOARD_M5STACK_TAB5=y
+
+# The Tab5's ESP32-P4 is a pre-v3 chip (v1.x). These are ESP-IDF 5.5's defaults; they are spelled out
+# because ESP-IDF 6 defaults to v3.1+ and an image built for one revision family does not boot on the other.
+CONFIG_ESP32P4_SELECTS_REV_LESS_V3=y
+CONFIG_ESP32P4_REV_MIN_1=y
+
+# Flash + execution, as in M5Stack's own Tab5 firmware:
+#  - the Tab5's flash is wired for quad I/O
+#  - copy code (.text) and constants (.rodata) into the 200 MHz HEX PSRAM at boot and run from
+#    there, so instruction/rodata cache misses no longer go to 80 MHz flash. Costs ~app-size of
+#    PSRAM (<= 1.5 MB of 32 MB) and a short copy at boot.
+CONFIG_ESPTOOLPY_FLASHMODE_QIO=y
+CONFIG_SPIRAM_XIP_FROM_PSRAM=y
+
+# Display: double buffering is on by default (CONFIG_TAB5_DOUBLE_BUFFER).  The panel pixel clocks
+# default to the esp-bsp values (~48 Hz on v1, ~58 Hz on v2/v3).  For ~60 Hz (outside the tested
+# timings - try on the device) uncomment:
+# CONFIG_TAB5_ILI9881C_DPI_CLOCK_MHZ=75
+# CONFIG_TAB5_ST712X_DPI_CLOCK_MHZ=73
+
+# The emulator cores are third-party code that is not warning-clean on newer GCC (ESP-IDF 6 ships
+# GCC 15 and turns more warnings into errors). Keep warnings as warnings.
+CONFIG_COMPILER_DISABLE_DEFAULT_ERRORS=y

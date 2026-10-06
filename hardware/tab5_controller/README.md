@@ -274,7 +274,7 @@ CONFIG_TAB5_CTRL_I2C_SDA=0
 CONFIG_TAB5_CTRL_I2C_SCL=1
 ```
 
-It is off by default, so the current Guition LCD and HDMI builds are unchanged.
+It is off by default, so builds without it are unchanged.
 
 Behaviour:
 
