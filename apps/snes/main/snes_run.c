@@ -209,12 +209,10 @@ static void snes_video_task(void *arg)
                                            2.0f, false);
 
         /* Draw sidebar buttons once after the first frame clears borders */
-#ifndef CONFIG_HDMI_OUTPUT
         if (sidebar_countdown > 0) {
             snes_blit_sidebar_buttons();
             sidebar_countdown--;
         }
-#endif
 
         xQueueReceive(vidQueue, &frame, portMAX_DELAY);
     }
@@ -1025,9 +1023,7 @@ void snes_run(const char *rom_path)
     odroid_audio_init(AUDIO_SAMPLE_RATE);
 
     /* ── Pre-render sidebar button bitmaps ── */
-#ifndef CONFIG_HDMI_OUTPUT
     snes_init_sidebar_buttons();
-#endif
 
     /* SNES has native X/Y face buttons — don't alias them to Menu/Volume */
     odroid_input_xy_menu_disable = true;

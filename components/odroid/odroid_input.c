@@ -22,9 +22,8 @@
 
 #include "odroid_input.h"
 #include "gamepad.h"   /* gamepad_is_connected() */
-#ifndef CONFIG_HDMI_OUTPUT
+#include "tab5_ctrl.h"
 #include "gt911_touch.h"
-#endif
 
 #include <string.h>
 #include <stdio.h>
@@ -38,23 +37,19 @@
 #include "freertos/task.h"
 
 /* Touch zone thresholds (GT911 portrait coords, 480×800) */
-#ifndef CONFIG_HDMI_OUTPUT
 #define TOUCH_MENU_Y_MAX   170   /* y < 170 → left shoulder (landscape left)  */
 #define TOUCH_VOL_Y_MIN    630   /* y > 630 → right shoulder (landscape right) */
 
 /* Touch panel is sampled at most 2 Hz (every 500 ms) to avoid ~10% CPU overhead */
 #define TOUCH_POLL_INTERVAL_US  500000LL
-#endif
 
 static const char *TAG = "odroid_input";
 static bool s_initialized = false;
 
-#ifndef CONFIG_HDMI_OUTPUT
 /* Cached touch state — updated at 2 Hz */
 static volatile int s_touch_menu   = 0;
 static volatile int s_touch_volume = 0;
 static int64_t      s_touch_last_us = 0;
-#endif
 
 /* ─── Paddle ADC (GPIO 51 = ADC2_CH2 on ESP32-P4) ───────────────── */
 #define PADDLE_ADC_UNIT    ADC_UNIT_2
@@ -68,7 +63,6 @@ static int64_t      s_touch_last_us = 0;
 #define BATTERY_DIVIDER_DEN 100            /* R_low */
 
 /* ─── Custom GPIO Gamepad (active when physical board detected) ──── */
-#ifndef CONFIG_HDMI_OUTPUT
 /*  Analog inputs (shared ADC2):                                      */
 /*    GPIO 49 (ADC2_CH0) — Joy left/right                            */
 /*    GPIO 50 (ADC2_CH1) — Joy up/down                               */
@@ -98,15 +92,12 @@ static int64_t      s_touch_last_us = 0;
 static bool s_gpio_pad_detected = false;
 static bool s_gpio_pad_l2_stuck = false; /* GPIO 30 (L2/R) reads HIGH despite pull-down */
 static adc_oneshot_unit_handle_t s_gpio_pad_adc = NULL;
-#endif /* !CONFIG_HDMI_OUTPUT */
 
 volatile int odroid_paddle_adc_raw = -1;
 bool odroid_input_xy_menu_disable = false;
 bool odroid_input_touch_buttons_disable = false;
-#ifndef CONFIG_HDMI_OUTPUT
 static adc_oneshot_unit_handle_t s_paddle_adc_handle = NULL;
 static adc_oneshot_unit_handle_t s_battery_adc_handle = NULL;
-#endif
 
 /* ─── USB Gamepad Button Mapping ─────────────────────────────────── */
 /* Index: 0=A, 1=B, 2=X, 3=Y, 4=L, 5=R, 6=SELECT, 7=START */
@@ -127,7 +118,6 @@ static uint16_t s_usb_map_vid = 0;  /* VID of the currently loaded map */
 static uint16_t s_usb_map_pid = 0;  /* PID of the currently loaded map */
 
 /* ─── GPIO gamepad detection & init ──────────────────────────────── */
-#ifndef CONFIG_HDMI_OUTPUT
 static void gpio_pad_detect_and_init(void)
 {
     /* Detection: pull-up GPIO 29 (L1), read. If 0 → custom pad connected
@@ -245,25 +235,89 @@ static void gpio_pad_read(odroid_gamepad_state *state)
         }
     }
 }
-#endif /* !CONFIG_HDMI_OUTPUT */
+
+/* ─── Tab5 keyboard-port controller boards ──────────────────────── */
+/*  The board reports canonical RP_BTN_* bits; which ODROID input each one
+ *  drives depends on the console board that is plugged in, so a Genesis pad's
+ *  A/B/C or a Neo Geo pad's A/B/C/D land where those cores expect them.      */
+#define RP_NONE  (-1)
+
+static const int8_t s_rp_map_default[RP_BTN_COUNT] = {
+    [RP_BTN_UP]     = ODROID_INPUT_UP,     [RP_BTN_DOWN]   = ODROID_INPUT_DOWN,
+    [RP_BTN_LEFT]   = ODROID_INPUT_LEFT,   [RP_BTN_RIGHT]  = ODROID_INPUT_RIGHT,
+    [RP_BTN_A]      = ODROID_INPUT_A,      [RP_BTN_B]      = ODROID_INPUT_B,
+    [RP_BTN_C]      = RP_NONE,
+    [RP_BTN_X]      = ODROID_INPUT_X,      [RP_BTN_Y]      = ODROID_INPUT_Y,
+    [RP_BTN_Z]      = RP_NONE,
+    [RP_BTN_L]      = ODROID_INPUT_L,      [RP_BTN_R]      = ODROID_INPUT_R,
+    [RP_BTN_L2]     = ODROID_INPUT_L,      [RP_BTN_R2]     = ODROID_INPUT_R,
+    [RP_BTN_START]  = ODROID_INPUT_START,  [RP_BTN_SELECT] = ODROID_INPUT_SELECT,
+    [RP_BTN_MENU]   = ODROID_INPUT_MENU,   [RP_BTN_VOLUME] = ODROID_INPUT_VOLUME,
+    [RP_BTN_OPT1]   = ODROID_INPUT_SELECT, [RP_BTN_OPT2]   = ODROID_INPUT_START,
+    [RP_BTN_KP1 ... RP_BTN_KPHASH] = RP_NONE,   /* keypad: read via tab5_ctrl_get_buttons() */
+};
+
+/* Genesis core: ODROID A → pad B, B → pad C, X → pad A (genesis_run.c). */
+static const int8_t s_rp_map_genesis[RP_BTN_COUNT] = {
+    [RP_BTN_UP]     = ODROID_INPUT_UP,     [RP_BTN_DOWN]   = ODROID_INPUT_DOWN,
+    [RP_BTN_LEFT]   = ODROID_INPUT_LEFT,   [RP_BTN_RIGHT]  = ODROID_INPUT_RIGHT,
+    [RP_BTN_A]      = ODROID_INPUT_X,      [RP_BTN_B]      = ODROID_INPUT_A,
+    [RP_BTN_C]      = ODROID_INPUT_B,
+    [RP_BTN_X ... RP_BTN_R2] = RP_NONE,         /* X/Y/Z: genesis_run.c reads them for the 6-button pad */
+    [RP_BTN_START]  = ODROID_INPUT_START,  [RP_BTN_SELECT] = ODROID_INPUT_SELECT,
+    [RP_BTN_MENU]   = ODROID_INPUT_MENU,   [RP_BTN_VOLUME] = ODROID_INPUT_VOLUME,
+    [RP_BTN_OPT1 ... RP_BTN_KPHASH] = RP_NONE,
+};
+
+/* Neo Geo core: A, B, then C ← ODROID X and D ← ODROID Y (esp32_platform.c).
+ * The Neo Geo board wires D to RP_BTN_X. */
+static const int8_t s_rp_map_neogeo[RP_BTN_COUNT] = {
+    [RP_BTN_UP]     = ODROID_INPUT_UP,     [RP_BTN_DOWN]   = ODROID_INPUT_DOWN,
+    [RP_BTN_LEFT]   = ODROID_INPUT_LEFT,   [RP_BTN_RIGHT]  = ODROID_INPUT_RIGHT,
+    [RP_BTN_A]      = ODROID_INPUT_A,      [RP_BTN_B]      = ODROID_INPUT_B,
+    [RP_BTN_C]      = ODROID_INPUT_X,      [RP_BTN_X]      = ODROID_INPUT_Y,
+    [RP_BTN_Y ... RP_BTN_R2] = RP_NONE,
+    [RP_BTN_START]  = ODROID_INPUT_START,  [RP_BTN_SELECT] = ODROID_INPUT_SELECT,
+    [RP_BTN_MENU]   = ODROID_INPUT_MENU,   [RP_BTN_VOLUME] = ODROID_INPUT_VOLUME,
+    [RP_BTN_OPT1 ... RP_BTN_KPHASH] = RP_NONE,
+};
+
+static void tab5_pad_read(odroid_gamepad_state *state)
+{
+    uint32_t mask = tab5_ctrl_get_buttons();
+    if (!mask) return;
+
+    tab5_ctrl_info_t info;
+    tab5_ctrl_get_info(&info);
+    const int8_t *map = s_rp_map_default;
+    if (info.console == RP_CONSOLE_GENESIS)     map = s_rp_map_genesis;
+    else if (info.console == RP_CONSOLE_NEOGEO) map = s_rp_map_neogeo;
+
+    for (int b = 0; b < RP_BTN_COUNT; b++) {
+        if ((mask & RP_BIT(b)) && map[b] != RP_NONE)
+            state->values[map[b]] = 1;
+    }
+
+    /* Paddle boards feed the existing Atari paddle path */
+    int an = tab5_ctrl_get_analog(0);
+    if (an >= 0)
+        odroid_paddle_adc_raw = an * 4095 / 255;
+}
 
 void odroid_input_gamepad_init(void)
 {
     if (s_initialized) return;
 
-#ifndef CONFIG_HDMI_OUTPUT
     /* Detect and init custom GPIO gamepad (if connected) */
     gpio_pad_detect_and_init();
-#endif
+
+    /* Controller board on the Tab5 keyboard port (no-op unless enabled) */
+    tab5_ctrl_init();
 
     /* USB gamepad is initialized in odroid_system_init() */
     s_initialized = true;
-#ifndef CONFIG_HDMI_OUTPUT
     ESP_LOGI(TAG, "Input subsystem ready (USB HID gamepad%s)",
              s_gpio_pad_detected ? " + GPIO gamepad" : "");
-#else
-    ESP_LOGI(TAG, "Input subsystem ready (USB HID gamepad, HDMI mode)");
-#endif
 }
 
 void odroid_input_gamepad_read(odroid_gamepad_state *state)
@@ -311,17 +365,17 @@ void odroid_input_gamepad_read(odroid_gamepad_state *state)
 
         /* Read paddle potentiometer if ADC has been initialised and
            GPIO gamepad is NOT active (GPIO pad reads paddle itself) */
-#ifndef CONFIG_HDMI_OUTPUT
         if (!s_gpio_pad_detected && s_paddle_adc_handle) {
             int raw = 0;
             if (adc_oneshot_read(s_paddle_adc_handle, PADDLE_ADC_CHANNEL, &raw) == ESP_OK) {
                 odroid_paddle_adc_raw = raw;
             }
         }
-#endif
     }
 
-#ifndef CONFIG_HDMI_OUTPUT
+    /* Tab5 keyboard-port controller board — OR its buttons into the state */
+    tab5_pad_read(state);
+
     /* Custom GPIO gamepad — OR its buttons into the state */
     gpio_pad_read(state);
 
@@ -348,21 +402,6 @@ void odroid_input_gamepad_read(odroid_gamepad_state *state)
         s_touch_menu = 0;
         s_touch_volume = 0;
     }
-#endif /* !CONFIG_HDMI_OUTPUT */
-
-#ifdef CONFIG_HDMI_OUTPUT
-    /* HDMI: L2 → MENU, R2 → VOLUME (no touch panel available) */
-    {
-        gamepad_state_t gp_hdmi;
-        gamepad_get_state(&gp_hdmi);
-        if (gp_hdmi.connected) {
-            if (gp_hdmi.buttons & GAMEPAD_BTN_L2)
-                state->values[ODROID_INPUT_MENU]   = 1;
-            if (gp_hdmi.buttons & GAMEPAD_BTN_R2)
-                state->values[ODROID_INPUT_VOLUME] = 1;
-        }
-    }
-#endif
 
     /* X → Menu, Y → Volume for emulators that lack native X/Y (skip for SNES/Genesis). */
     if (!odroid_input_xy_menu_disable) {
@@ -380,9 +419,6 @@ odroid_gamepad_state odroid_input_read_raw(void)
 
 void odroid_paddle_adc_init(void)
 {
-#ifdef CONFIG_HDMI_OUTPUT
-    /* HDMI: no paddle ADC */
-#else
     if (s_paddle_adc_handle) return;  /* already initialised */
 
     /* Reuse existing ADC2 handle if GPIO gamepad or battery already created it */
@@ -404,14 +440,10 @@ void odroid_paddle_adc_init(void)
     ESP_ERROR_CHECK(adc_oneshot_config_channel(s_paddle_adc_handle,
                                                PADDLE_ADC_CHANNEL, &chan_cfg));
     ESP_LOGI(TAG, "Paddle ADC initialised: ADC2_CH2 (GPIO 51), 12-bit, 12dB atten");
-#endif
 }
 
 void odroid_input_battery_level_init(void)
 {
-#ifdef CONFIG_HDMI_OUTPUT
-    /* HDMI: no battery — skip */
-#else
     if (s_battery_adc_handle) return;  /* already initialised */
 
     /* Reuse existing ADC2 handle if GPIO pad or paddle already created it */
@@ -438,19 +470,12 @@ void odroid_input_battery_level_init(void)
                                                BATTERY_ADC_CHANNEL, &chan_cfg));
 
     ESP_LOGI(TAG, "Battery ADC initialised: ADC2_CH4 (GPIO 53), divider 68K/100K");
-#endif
 }
 
 void odroid_input_battery_level_read(odroid_battery_state *state)
 {
     if (!state) return;
 
-#ifdef CONFIG_HDMI_OUTPUT
-    /* HDMI: always report full battery */
-    state->millivolts = 4200;
-    state->percentage = 100;
-    state->charging = false;
-#else
     if (!s_battery_adc_handle) {
         /* Not initialised — report full */
         state->millivolts = 4200;
@@ -485,7 +510,6 @@ void odroid_input_battery_level_read(odroid_battery_state *state)
     state->millivolts = bat_mv;
     state->percentage = pct;
     state->charging = charging;
-#endif
 }
 
 void odroid_input_battery_monitor_enabled_set(bool enabled)
@@ -495,11 +519,7 @@ void odroid_input_battery_monitor_enabled_set(bool enabled)
 
 bool odroid_input_gpio_pad_detected(void)
 {
-#ifdef CONFIG_HDMI_OUTPUT
-    return false;
-#else
     return s_gpio_pad_detected;
-#endif
 }
 
 bool odroid_input_usb_gamepad_connected(void)

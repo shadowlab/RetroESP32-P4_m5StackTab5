@@ -21,8 +21,19 @@ __license__ = "GPLv3"
 #include <string.h>
 #include "gwenesis_io.h"
 #include "gwenesis_savestate.h"
+#include "m68k.h"
 
 unsigned char button_state[3]= {0xff,0xff,0xff};
+
+/* 6-button pads: X/Y/Z/MODE (active low, bit 0 = Z, 1 = Y, 2 = X, 3 = MODE).
+ * Kept apart from button_state so the save-state layout is unchanged. */
+static unsigned char button_state_ext[3] = {0xff, 0xff, 0xff};
+static unsigned char pad_type[3];          /* enum gwenesis_pad_type */
+static unsigned char pad_th_falls[3];      /* TH 1->0 edges since the last timeout */
+static int pad_th_time[3];                 /* master clock of the last TH edge */
+
+/* The pad's counter resets ~1.5 ms after the last TH edge (master clock). */
+#define SIX_BUTTON_TIMEOUT 80000
 
 /* Button mapping 
     7 6 5 4 3 2 1 0
@@ -135,21 +146,57 @@ unsigned char io_reg[16] = {GWENESIS_IO_VERSION, /* 0x1 Version */
 
 void gwenesis_io_pad_release_button(int pad, int button)
 {
-    button_state[pad] |= (1 << button);
+    if (button >= PAD_Z)
+        button_state_ext[pad] |= (1 << (button - PAD_Z));
+    else
+        button_state[pad] |= (1 << button);
 }
 
 void gwenesis_io_pad_press_button(int pad, int button)
 {
-    button_state[pad] &= ~(1 << button);
+    if (button >= PAD_Z)
+        button_state_ext[pad] &= ~(1 << (button - PAD_Z));
+    else
+        button_state[pad] &= ~(1 << button);
+}
+
+void gwenesis_io_set_pad_type(int pad, int type)
+{
+    if (pad < 0 || pad > 2 || pad_type[pad] == type)
+        return;
+    pad_type[pad] = type;
+    pad_th_falls[pad] = 0;
+}
+
+void gwenesis_io_frame_end(int system_clock)
+{
+    for (int pad = 0; pad < 3; pad++)
+        pad_th_time[pad] -= system_clock;
+}
+
+/* Forget the TH sequence once the pad has been idle past its timeout. A
+ * negative age means the frame clock was rebased without frame_end(). */
+static inline void six_button_timeout(int pad)
+{
+    int age = m68k_cycles_master() - pad_th_time[pad];
+    if (age < 0 || age > SIX_BUTTON_TIMEOUT)
+        pad_th_falls[pad] = 0;
 }
 
 static inline void gwenesis_io_pad_write(int pad, int value)
 {
     unsigned char mask = io_reg[pad + 4];
+    unsigned char old_th = gwenesis_io_pad_state[pad] & 0x40;
 
      gwenesis_io_pad_state[pad] &= ~mask;
     gwenesis_io_pad_state[pad] |= value & mask;
- 
+
+    if (pad_type[pad] == GWENESIS_PAD_6BUTTON && old_th != (gwenesis_io_pad_state[pad] & 0x40)) {
+        six_button_timeout(pad);
+        if (old_th && pad_th_falls[pad] < 7)
+            pad_th_falls[pad]++;              /* TH 1 -> 0 */
+        pad_th_time[pad] = m68k_cycles_master();
+    }
 }
 
 static inline  unsigned char gwenesis_io_pad_read(int pad)
@@ -161,6 +208,23 @@ static inline  unsigned char gwenesis_io_pad_read(int pad)
 
     value = gwenesis_io_pad_state[pad] & 0x40;
     value |= 0x3f;
+
+    /* 6-button pad, counting TH 1->0 edges since the counter last reset:
+     *   TH=0 after the 3rd edge:  ?0SA0000   (low nibble 0 identifies the pad)
+     *   TH=1 after the 3rd edge:  ?1CBMXYZ
+     *   TH=0 after the 4th edge:  ?0SA1111
+     *   otherwise the 3-button responses below. */
+    if (pad_type[pad] == GWENESIS_PAD_6BUTTON)
+    {
+        six_button_timeout(pad);
+        unsigned char falls = pad_th_falls[pad];
+        if ((value & 0x40) && falls == 3)
+            return value & ((button_state[pad] & 0x30) | (button_state_ext[pad] & 0x0f));
+        if (!(value & 0x40) && falls == 3)
+            return value & ((button_state[pad] >> 2) & 0x30);
+        if (!(value & 0x40) && falls == 4)
+            return value & (((button_state[pad] >> 2) & 0x30) | 0x0f);
+    }
 
     if (value & 0x40)
     {

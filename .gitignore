@@ -1,11 +1,13 @@
 # === Build outputs ===
 build/
 **/build/
+**/build (*)/
 build_papp/
 **/managed_components/
 
 # === Firmware binaries (all generated) ===
 firmware/
+RetroESP32_P4_v1.bin
 
 # === ESP-IDF generated config (only .defaults are tracked) ===
 sdkconfig

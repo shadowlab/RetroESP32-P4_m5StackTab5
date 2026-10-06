@@ -15,12 +15,11 @@
 8. [Emulator Apps](#emulator-apps)
 9. [Neo Geo Cache](#neo-geo-cache)
 10. [NVS Protocol](#nvs-protocol)
-11. [HDMI Target](#hdmi-target)
-12. [SDK Configuration](#sdk-configuration)
-13. [Build & Flash](#build--flash)
-14. [Adding an Emulator](#adding-an-emulator)
-15. [Binary Sizes](#binary-sizes)
-16. [Troubleshooting](#troubleshooting)
+11. [SDK Configuration](#sdk-configuration)
+12. [Build & Flash](#build--flash)
+13. [Adding an Emulator](#adding-an-emulator)
+14. [Binary Sizes](#binary-sizes)
+15. [Troubleshooting](#troubleshooting)
 
 ---
 
@@ -58,7 +57,6 @@ the `factory` partition switches between emulators (each a separate OTA firmware
 | PSRAM | 32 MB, HEX mode, 200 MHz |
 | Internal SRAM | 768 KB |
 | Display (LCD) | 4.3" 480×800 MIPI-DSI, ST7701S |
-| Display (HDMI) | Olimex LT8912 DSI→HDMI bridge @ 640×480 (alternate target) |
 | Touch | GT911 (I2C) |
 | Audio | ES8311 codec via I2S |
 | Input | Onboard GPIO pad (pins 28–35) OR'd with USB-HID gamepad (PS3 native) |
@@ -124,9 +122,9 @@ PSRAM `.papp` apps use no partition — they live on the SD card.
 
 ```
 partitions_ota.csv              # OTA table (shared by launcher + all apps)
-build_all.ps1 / build_all_hdmi.bat   # Build all → firmware/ (LCD / HDMI)
+build_all.ps1                   # Build all → firmware/
 flash_all.ps1                   # Flash all via esptool
-generate_merged_bin[_hdmi].ps1  # Merge → RetroESP32_P4[_HDMI]_v1.bin
+generate_merged_bin.ps1         # Merge → RetroESP32_P4_v1.bin
 
 launcher/main/main.c            # Carousel UI, ROM browser, get_ota_slot(), OTA switch, PSRAM loader
 apps/<emu>/main/{main.c,<emu>_run.c}  # OTA app skeleton + per-emulator glue
@@ -137,12 +135,11 @@ components/app_common/          # Emulator lifecycle (init/exit/safe-boot)
 components/odroid/              # HAL: system, audio, display, input, sdcard, settings
 components/psram_app_loader/    # .papp loader (MMU map + services vtable)
 components/{st7701_lcd,gt911_touch,ppa_engine}/   # LCD + touch + 2D accel
-components/{lt8912,hdmi_display}/                  # HDMI path
 components/{gamepad,usb_host_hid}/                 # USB HID gamepad stack
 components/{audio,pngaux,pngdec}/                  # Audio + PNG sprite decode
 components/<core>/              # Emulator cores + native ports
 
-firmware/ firmware_hdmi/        # Build outputs
+firmware/                       # Build output
 main/                           # LEGACY monolithic main — unused
 managed_components/             # ESP-IDF component-manager deps
 ```
@@ -159,10 +156,10 @@ void app_return_to_launcher(void);            // set boot=factory, esp_restart()
 ```
 
 **`odroid`** (HAL) — `odroid_system` (I2C/PPA/USB/display/touch init), `odroid_audio` (I2S+ES8311),
-`odroid_display` (DSI/HDMI framebuffer, PPA scale/rotate), `odroid_input` (GPIO pad + USB HID),
+`odroid_display` (DSI framebuffer, PPA scale/rotate), `odroid_input` (GPIO pad + USB HID),
 `odroid_sdcard` (SDMMC/FAT32), `odroid_settings` (NVS).
 
-Other: `psram_app_loader`, `st7701_lcd`, `lt8912`/`hdmi_display`, `gt911_touch`, `ppa_engine`,
+Other: `psram_app_loader`, `st7701_lcd`, `gt911_touch`, `ppa_engine`,
 `gamepad`/`usb_host_hid`, `audio`, `pngaux`/`pngdec`. Cores: `nofrendo gnuboy smsplus spectrum stella
 prosystem handy huexpress atari800 snes9x gwenesis gngeo`. Ports: `prboom quake duke3d opentyrian`.
 
@@ -245,25 +242,10 @@ Launcher writes, emulator reads; namespace `"Odroid"`, API in `odroid_settings.h
 
 ---
 
-## HDMI Target
-
-Two board targets, built/flashed separately:
-
-| Target | Display | Build | Output |
-|--------|---------|-------|--------|
-| LCD | 480×800 ST7701S + GT911 | `build_all.ps1` | `RetroESP32_P4_v1.bin` |
-| HDMI | LT8912 DSI→HDMI @ 640×480 | `build_all_hdmi.bat` | `RetroESP32_P4_HDMI_v1.bin` |
-
-HDMI enables `CONFIG_HDMI_OUTPUT=y`, links `lt8912` + `hdmi_display`, and shares I2C between the touch
-controller and LT8912 (Phase 46.23). A stale `CONFIG_HDMI_OUTPUT=y` in an LCD app's `sdkconfig` →
-black screen + broken audio; `build_all.ps1` deletes each app's `sdkconfig` before building. See `HDMIport.md`.
-
----
-
 ## SDK Configuration
 
-Emulator apps share `apps/sdkconfig_common.defaults`; launcher uses `launcher/sdkconfig.defaults`
-(+ `sdkconfig.hdmi.defaults`). Key settings:
+Emulator apps share `apps/sdkconfig_common.defaults`; launcher uses `launcher/sdkconfig.defaults`.
+Key settings:
 
 ```ini
 CONFIG_IDF_TARGET="esp32p4"
@@ -274,7 +256,6 @@ CONFIG_PARTITION_TABLE_CUSTOM=y  CONFIG_PARTITION_TABLE_CUSTOM_FILENAME="<rel>/p
 CONFIG_FATFS_LFN_HEAP=y  CONFIG_FATFS_MAX_LFN=255      # required, else 8.3-truncated ROM names
 CONFIG_USB_HOST_HUBS_SUPPORTED=y  CONFIG_USB_HOST_HUB_MULTI_LEVEL=n   # hubs unusable (no TT)
 CONFIG_COMPILER_OPTIMIZATION_SIZE=y
-# HDMI target only: CONFIG_HDMI_OUTPUT=y
 ```
 
 ---
@@ -285,7 +266,7 @@ CONFIG_COMPILER_OPTIMIZATION_SIZE=y
 
 **Build all (LCD):** `.\build_all.ps1` — clean-builds launcher + 12 OTA apps into `firmware/`, then
 merges to `RetroESP32_P4_v1.bin`. Deletes each project's `build/` and `sdkconfig` first (avoids stale
-config). **HDMI:** `.\build_all_hdmi.bat` → `firmware_hdmi/`.
+config).
 
 **Single app:**
 ```powershell
@@ -314,7 +295,7 @@ python -m esptool --chip esp32p4 -p COM5 -b 460800 --before default_reset --afte
 3. **Register extensions** in `get_ota_slot()` (and the browser's accepted-extension logic) in `launcher/main/main.c`.
 4. **Check size** against the target slot in `partitions_ota.csv`; if it won't fit, resize and shift
    all later offsets (+ update `flash_all.ps1`).
-5. **Add to** `build_all.ps1` (+ `build_all_hdmi.bat`) and `flash_all.ps1`.
+5. **Add to** `build_all.ps1` and `flash_all.ps1`.
 
 For a native port, build a `.papp` from `ESP32_P4_PAPP_Template/` instead — no partition, no script changes.
 
@@ -334,7 +315,6 @@ On overflow: shrink the app (`-Os`, strip) or grow the partition and shift later
 | Symptom | Cause / Fix |
 |---------|-------------|
 | Stuck on a broken emulator | Hold **A** during the first second of boot → safe-boot to launcher |
-| Black screen + broken audio after build | Stale `CONFIG_HDMI_OUTPUT` in the app's `sdkconfig`; delete `sdkconfig` + `build/`, rebuild |
 | Gamepad works direct but not via hub | ESP-IDF has no Transaction Translator; FS HID behind a HS hub can't enumerate (Phase 47). Connect directly |
 | Audio crackles / distorts | Audio strategy is per-emulator (Phase 48); a fixed samples/frame at <60 FPS underruns the I2S DMA |
 | Phantom / stuck button | A GPIO pad pin floating HIGH (Phase 49, e.g. GPIO 30 → R); `odroid_input.c` stuck detection, board-dependent |

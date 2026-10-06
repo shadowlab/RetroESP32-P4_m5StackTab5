@@ -1,0 +1,33 @@
+menu "Tab5 controller boards (RetroPad)"
+
+    config TAB5_CTRL_ENABLE
+        bool "Enable Tab5 keyboard-port controller boards"
+        default n
+        help
+            Poll a controller board plugged into the M5Stack Tab5 keyboard
+            port (Ext.Port1). Works with RetroPad console boards and with the
+            stock M5Stack Tab5 Keyboard. Buttons are OR'd with the USB and GPIO
+            gamepads. See hardware/tab5_controller/README.md.
+
+    config TAB5_CTRL_I2C_SDA
+        int "I2C SDA GPIO"
+        default 0
+        depends on TAB5_CTRL_ENABLE
+
+    config TAB5_CTRL_I2C_SCL
+        int "I2C SCL GPIO"
+        default 1
+        depends on TAB5_CTRL_ENABLE
+
+    config TAB5_CTRL_I2C_ADDR
+        hex "I2C address"
+        default 0x6D
+        depends on TAB5_CTRL_ENABLE
+
+    config TAB5_CTRL_POLL_MS
+        int "Poll period (ms)"
+        default 4
+        range 1 50
+        depends on TAB5_CTRL_ENABLE
+
+endmenu

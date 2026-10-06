@@ -12,12 +12,11 @@
  *    3. A TICK      — LVGL needs a millisecond clock; we use svc->get_time_us().
  *
  *  ── Why a 400x240 canvas (and not the native framebuffer)? ─────────────────
- *  The native framebuffer is 800x480 on the LCD build but 640x480 on the HDMI
- *  build, and the service table has no "get framebuffer size" call. So a PAPP
- *  that wants to run unmodified on BOTH targets should render a fixed-size
- *  canvas and let display_write_frame_custom() scale it. 400x240 at scale 2.0
- *  maps exactly onto 800x480 and is letterboxed sensibly on HDMI. It is also
- *  4x less pixel work than native, which keeps LVGL's software renderer smooth.
+ *  The service table has no "get framebuffer size" call, so a PAPP that wants
+ *  to run unmodified on every target should render a fixed-size canvas and let
+ *  display_write_frame_custom() scale it. 400x240 at scale 2.0 maps exactly
+ *  onto the 800x480 LCD framebuffer. It is also 4x less pixel work than
+ *  native, which keeps LVGL's software renderer smooth.
  *
  *  ── Touch coordinate mapping ───────────────────────────────────────────────
  *  svc->touch_read() reports LANDSCAPE NATIVE coordinates (x:0..799, y:0..479).
@@ -157,7 +156,7 @@ static void tick_timer_cb(lv_timer_t *t)
     /* ── Sample the PHYSICAL analog wheel ────────────────────────────────
      * The paddle potentiometer reports raw 12-bit (0..4095); we scale it to
      * the arc's 0..100 range, drive the gauge with it, and trace it on the
-     * chart. If the wheel is unavailable (older launcher, or HDMI build) we
+     * chart. If the wheel is unavailable (older launcher, or no paddle wired) we
      * fall back to whatever the on-screen arc is set to, so the demo still
      * works. The switch pauses charting. */
     int32_t plot;
@@ -383,8 +382,7 @@ int app_entry(const app_services_t *svc)
 
     /* Probe the physical analog wheel. paddle_read sits in the ABI's
      * append-only zone, so an older launcher will not have it at all; and
-     * even a current launcher returns -1 on the HDMI build, where no paddle
-     * is wired. Either way we fall back to the touch-driven dial. */
+     * a current launcher returns -1 where no paddle is wired. Either way we fall back to the touch-driven dial. */
     if (svc->paddle_read) {
         /* The first call initialises the ADC. The reading itself is only
          * refreshed inside input_gamepad_read(), so each sample must be

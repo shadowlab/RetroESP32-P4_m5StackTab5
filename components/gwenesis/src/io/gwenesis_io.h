@@ -21,8 +21,29 @@ __license__ = "GPLv3"
 
 #pragma once
 
+/* Pad type per port. 3-button is the default; a 6-button pad answers the
+ * TH-counter sequence games use to detect it and to read X/Y/Z/MODE. */
+enum gwenesis_pad_type {
+    GWENESIS_PAD_3BUTTON = 0,
+    GWENESIS_PAD_6BUTTON = 1,
+};
+
+/* Extra 6-button pad buttons, numbered after PAD_S (gwenesis_bus.h). */
+enum gwenesis_pad_button_ext {
+    PAD_Z = 8,
+    PAD_Y,
+    PAD_X,
+    PAD_MODE,
+};
+
 void gwenesis_io_pad_press_button(int pad, int button);
 void gwenesis_io_pad_release_button(int pad, int button);
+void gwenesis_io_set_pad_type(int pad, int type);
+
+/* Call once per frame with the master-clock cycles the frame consumed, after
+ * the M68K cycle counter has been rebased (keeps the 6-button timeout exact
+ * across frame boundaries). */
+void gwenesis_io_frame_end(int system_clock);
 
 void gwenesis_io_write_ctrl(unsigned int address, unsigned int value);
 unsigned int gwenesis_io_read_ctrl(unsigned int address);
