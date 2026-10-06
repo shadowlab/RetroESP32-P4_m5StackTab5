@@ -7,6 +7,8 @@ goes. Every board:
 * wires each button to its own MCU pin (switch to GND, internal pull-up), so there is no key
   matrix and no diodes;
 * runs the same firmware, [`../firmware_avrdd`](../firmware_avrdd), programmed over UPDI;
+* uses 0805 resistors and capacitors with KiCad's hand-solder pads, so the boards can be
+  assembled by hand;
 * identifies itself through its console-ID straps, so the firmware maps its buttons for the
   emulator that is running.
 
