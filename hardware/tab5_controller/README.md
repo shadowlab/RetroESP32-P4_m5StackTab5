@@ -105,7 +105,7 @@ This is P1 in M5Stack's keyboard schematic (`SCH_Tab5_Keyboard_SCH_V1.0`): a 2×
 
 | Pin | Net | Board side | | Pin | Net | Board side |
 |---|---|---|---|---|---|---|
-| 10 | G9 | **not connected** (optional 0 Ω to UPDI, unfitted) | | 9 | INT_G50 | **not connected** |
+| 10 | G9 | **not connected** | | 9 | INT_G50 | **not connected** |
 | 8 | SDA_G0 | PA2 (TWI0 SDA), 4.7 kΩ pull-up | | 7 | SCL_G1 | PA3 (TWI0 SCL), 4.7 kΩ pull-up |
 | 6 | SYS_EXT5V | **not connected** | | 5 | VCC_3V3 | Board supply |
 | 4 | GND | GND | | 3 | GND | GND |
@@ -113,9 +113,8 @@ This is P1 in M5Stack's keyboard schematic (`SCH_Tab5_Keyboard_SCH_V1.0`): a 2×
 
 * The whole board runs from the Tab5's 3.3 V on pin 5. Leave SYS_VIN and SYS_EXT5V open, as
   M5Stack does.
-* G9 (pin 10) is unused on the keyboard. It is the only spare line to the Tab5. The boards
-  carry an unfitted 0 Ω from UPDI to it, as an experiment towards letting the Tab5 reprogram
-  a board; G9's suitability isn't verified.
+* G9 (pin 10) is unused, as on the keyboard. The Tab5 never reprograms a board; firmware goes
+  on over the board's own UPDI header.
 * INT is not wired. The host driver polls the board, and the AVR32DD28 has no pin left for it.
 
 ### 2.2 MCU and reference circuit
