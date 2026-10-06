@@ -166,7 +166,7 @@ first field and must equal `PAPP_ABI_VERSION`.
 
 | Function | Signature | Purpose |
 |----------|-----------|---------|
-| `display_get_framebuffer` | `uint16_t *(void)` | Pointer to the native **800×480** RGB565 framebuffer (640×480 on HDMI) — draw here directly, no rotation |
+| `display_get_framebuffer` | `uint16_t *(void)` | Pointer to the native **800×480** RGB565 framebuffer — draw here directly, no rotation |
 | `display_get_emu_buffer` | `uint16_t *(void)` | Pointer to the launcher's shared **320×240** emulator intermediate buffer (not your app's canvas — see §5) |
 | `display_flush` | `void(void)` | Flush the native FB (with rotate+scale) |
 | `display_emu_flush` | `void(void)` | Flush the emu buffer |
@@ -239,7 +239,7 @@ if (svc->paddle_read) {
 }
 ```
 
-Returns `-1` on the **HDMI build** (no paddle is wired) and on older launchers the pointer itself is
+Returns `-1` when no paddle is wired, and on older launchers the pointer itself is
 `NULL` — so always provide a fallback path. To tell a real pot from a floating pin, sample a few
 times and check the spread, as the Atari cores do.
 
@@ -309,7 +309,7 @@ how Quake gets its 256 KB stack. A FreeRTOS task **must never return** — loop 
 ## 5. Display Model
 
 **Three buffers, don't confuse them:**
-- **Native framebuffer** — `display_get_framebuffer()`, **800×480** (640×480 HDMI). The real LCD
+- **Native framebuffer** — `display_get_framebuffer()`, **800×480**. The real LCD
   memory; draw here directly if you want no rotation.
 - **Emu intermediate buffer** — `display_get_emu_buffer()`, **320×240**. Launcher-owned, used by the
   OTA emulator scaling pipeline. Available to apps, but usually not what you want.
@@ -496,14 +496,14 @@ Executable mapping at: 0x4a000000     <- matches the link base
 
 ### 9.4 Resolution and touch mapping
 
-The native framebuffer is **800×480 on LCD but 640×480 on HDMI**, and there is no "get framebuffer
-size" service. So a portable PAPP renders a **fixed 400×240 canvas** and lets the launcher scale it:
+There is no "get framebuffer size" service, and other targets may not use the 800×480 LCD
+framebuffer. So a portable PAPP renders a **fixed 400×240 canvas** and lets the launcher scale it:
 
 ```c
 svc->display_write_frame_custom(px_map, 400, 240, 2.0f, /*byte_swap=*/false);
 ```
 
-400×240 × 2.0 maps exactly onto 800×480, letterboxes sensibly on HDMI, and is 4× less pixel work
+400×240 × 2.0 maps exactly onto 800×480 and is 4× less pixel work
 than native — which keeps LVGL's software renderer smooth. `svc->touch_read()` reports **native**
 coordinates, so the canvas mapping is simply `canvas = native / 2`.
 

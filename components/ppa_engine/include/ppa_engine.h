@@ -246,7 +246,7 @@ esp_err_t ppa_rotate_scale_rgb565_to(const void *in_buf, uint32_t in_w, uint32_t
  * @brief Scale an RGB565 image to RGB888 output using PPA hardware (single operation)
  *
  * Performs scale + color format conversion (RGB565→RGB888) in one PPA SRM call.
- * No rotation is applied. Useful for HDMI output where the display is native landscape.
+ * No rotation is applied. Useful for a display that is native landscape.
  *
  * @param in_buf       Input RGB565 buffer (DMA-capable, cache-line aligned)
  * @param in_w         Input width in pixels

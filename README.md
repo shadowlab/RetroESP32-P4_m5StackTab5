@@ -12,7 +12,7 @@
 
 ---
 
-RetroESP32-P4 is an open-source retro-gaming and application platform built on the **ESP32-P4** — a dual-core RISC-V microcontroller with no dedicated GPU. Grown out of a revival of the original [RetroESP32](https://github.com/retro-esp32/RetroESP32), it brings a modern touchscreen launcher, **HDMI output**, **15 emulators**, and **native apps that execute from PSRAM** — including full Doom and Quake.
+RetroESP32-P4 is an open-source retro-gaming and application platform built on the **ESP32-P4** — a dual-core RISC-V microcontroller with no dedicated GPU. Grown out of a revival of the original [RetroESP32](https://github.com/retro-esp32/RetroESP32), it brings a modern touchscreen launcher, **15 emulators**, and **native apps that execute from PSRAM** — including full Doom and Quake.
 
 The headline: SNES, Genesis/Mega Drive and the mighty **NeoGeo** all run at **60 FPS**.
 
@@ -23,7 +23,7 @@ The headline: SNES, Genesis/Mega Drive and the mighty **NeoGeo** all run at **60
 - 🎮 **15 emulators** — NES through NeoGeo, all with save/load states
 - ⚡ **60 FPS** on the 16-bit heavyweights (SNES, Genesis, NeoGeo)
 - 🧩 **Native apps from PSRAM** — Doom, Quake, Duke Nukem 3D, OpenTyrian
-- 🖥️ **Two builds from one firmware** — 4.3″ touchscreen handheld *or* HDMI console
+- 🖥️ **4.3″ touchscreen handheld** — the Guition ESP32-P4 LCD module
 - 🎛️ **Any USB gamepad** — auto-detected and auto-mapped on first use
 - 💾 **Save states** on every core, some accessible in-game
 - 📦 **Everything included** — firmware, source, SD files, apps, PCB, schematic, and case STLs
@@ -41,7 +41,7 @@ The headline: SNES, Genesis/Mega Drive and the mighty **NeoGeo** all run at **60
 
 ⭐ = hand-tuned to hold **60 FPS** on the P4.
 
-> Atari 2600 and 800XL/5200 support paddle controllers for Breakout, Kaboom! and the like in console (HDMI) mode.
+> Atari 2600 and 800XL/5200 support paddle controllers for Breakout, Kaboom! and the like.
 
 ### ⚡ Performance
 
@@ -61,8 +61,6 @@ Plug in **any** USB controller and automatic button mapping starts on first use.
 
 ![USB controllers — SNES-style and PS3-style](images/image-20260419093753500.png)
 
-> On the **HDMI** build, SNES and Genesis map Menu and Volume to **L2/R2**, so a PS3-style pad works best. Inexpensive clones are widely available.
-
 ---
 
 ## 🖥️ Supported Hardware
@@ -72,21 +70,6 @@ Plug in **any** USB controller and automatic button mapping starts on first use.
 A single [480×800 touchscreen module](https://www.guition.com/esp32p4-display-module/esp32p4-display) becomes a full handheld (the one pictured up top, in a 3D-printed shell). Available on AliExpress or from Guition.
 
 ![Guition ESP32-P4 4.3-inch display module](images/image-20260419091837418.png)
-
-### 2. HDMI Version — the console
-
-Drive a TV by pairing the Guition ESP32-P4 board with an **Olimex LT8912 MIPI-DSI-to-HDMI bridge**.
-
-![Guition ESP32-P4 development board](images/image-20260419091605829.png)
-
-- [Guition ESP32-P4 board](https://www.guition.com/esp32p4-display-module/esp32p4-display-module)
-- [Olimex LT8912 DSI-to-HDMI bridge](https://www.olimex.com/Products/IoT/ESP32-P4/MIPI-HDMI/open-source-hardware)
-
-![Olimex LT8912 MIPI-to-HDMI bridge](images/image-20260419091951743.png)
-
-> ⚠️ **Use the correct DSI flat cable** — a mismatched ribbon will not work. Buy it from Olimex: [FPC-15-1.0-150](https://www.olimex.com/Products/IoT/ESP32-P4/FPC-15-1.0-150/).
-
-![FPC-15 flat cable](images/image-20260419093151284.png)
 
 ---
 
@@ -131,7 +114,7 @@ Included:
 
 ## 📦 Repository Contents
 
-- Firmware binaries (LCD + HDMI)
+- Firmware build scripts
 - Full source code
 - SD-card files
 - Native apps + PAPP template

@@ -15,12 +15,11 @@
 8. [Emulator Apps](#emulator-apps)
 9. [Neo Geo Cache](#neo-geo-cache)
 10. [NVS Protocol](#nvs-protocol)
-11. [HDMI Target](#hdmi-target)
-12. [SDK Configuration](#sdk-configuration)
-13. [Build & Flash](#build--flash)
-14. [Adding an Emulator](#adding-an-emulator)
-15. [Binary Sizes](#binary-sizes)
-16. [Troubleshooting](#troubleshooting)
+11. [SDK Configuration](#sdk-configuration)
+12. [Build & Flash](#build--flash)
+13. [Adding an Emulator](#adding-an-emulator)
+14. [Binary Sizes](#binary-sizes)
+15. [Troubleshooting](#troubleshooting)
 
 ---
 
@@ -58,7 +57,6 @@ the `factory` partition switches between emulators (each a separate OTA firmware
 | PSRAM | 32 MB, HEX mode, 200 MHz |
 | Internal SRAM | 768 KB |
 | Display (LCD) | 4.3" 480×800 MIPI-DSI, ST7701S |
-| Display (HDMI) | Olimex LT8912 DSI→HDMI bridge @ 640×480 (alternate target) |
 | Touch | GT911 (I2C) |
 | Audio | ES8311 codec via I2S |
 | Input | Onboard GPIO pad (pins 28–35) OR'd with USB-HID gamepad (PS3 native) |
@@ -137,7 +135,6 @@ components/app_common/          # Emulator lifecycle (init/exit/safe-boot)
 components/odroid/              # HAL: system, audio, display, input, sdcard, settings
 components/psram_app_loader/    # .papp loader (MMU map + services vtable)
 components/{st7701_lcd,gt911_touch,ppa_engine}/   # LCD + touch + 2D accel
-components/{lt8912,hdmi_display}/                  # HDMI path (no build script; see HDMI Target)
 components/{gamepad,usb_host_hid}/                 # USB HID gamepad stack
 components/{audio,pngaux,pngdec}/                  # Audio + PNG sprite decode
 components/<core>/              # Emulator cores + native ports
@@ -159,10 +156,10 @@ void app_return_to_launcher(void);            // set boot=factory, esp_restart()
 ```
 
 **`odroid`** (HAL) — `odroid_system` (I2C/PPA/USB/display/touch init), `odroid_audio` (I2S+ES8311),
-`odroid_display` (DSI/HDMI framebuffer, PPA scale/rotate), `odroid_input` (GPIO pad + USB HID),
+`odroid_display` (DSI framebuffer, PPA scale/rotate), `odroid_input` (GPIO pad + USB HID),
 `odroid_sdcard` (SDMMC/FAT32), `odroid_settings` (NVS).
 
-Other: `psram_app_loader`, `st7701_lcd`, `lt8912`/`hdmi_display`, `gt911_touch`, `ppa_engine`,
+Other: `psram_app_loader`, `st7701_lcd`, `gt911_touch`, `ppa_engine`,
 `gamepad`/`usb_host_hid`, `audio`, `pngaux`/`pngdec`. Cores: `nofrendo gnuboy smsplus spectrum stella
 prosystem handy huexpress atari800 snes9x gwenesis gngeo`. Ports: `prboom quake duke3d opentyrian`.
 
@@ -245,21 +242,6 @@ Launcher writes, emulator reads; namespace `"Odroid"`, API in `odroid_settings.h
 
 ---
 
-## HDMI Target
-
-The upstream project also had an HDMI console target (Olimex LT8912 DSI→HDMI bridge @ 640×480).
-The Tab5 has no HDMI output, so its build scripts, `launcher/sdkconfig.hdmi.defaults` and the
-`firmware_hdmi/` outputs were removed. The `lt8912` / `hdmi_display` components and
-`CONFIG_HDMI_OUTPUT` are still in the tree but no script builds them. A stale `CONFIG_HDMI_OUTPUT=y`
-in an app's `sdkconfig` → black screen + broken audio; `build_all.ps1` deletes each app's
-`sdkconfig` before building.
-
-| Target | Display | Build | Output |
-|--------|---------|-------|--------|
-| LCD | 480×800 ST7701S + GT911 | `build_all.ps1` | `RetroESP32_P4_v1.bin` |
-
----
-
 ## SDK Configuration
 
 Emulator apps share `apps/sdkconfig_common.defaults`; launcher uses `launcher/sdkconfig.defaults`.
@@ -333,7 +315,6 @@ On overflow: shrink the app (`-Os`, strip) or grow the partition and shift later
 | Symptom | Cause / Fix |
 |---------|-------------|
 | Stuck on a broken emulator | Hold **A** during the first second of boot → safe-boot to launcher |
-| Black screen + broken audio after build | Stale `CONFIG_HDMI_OUTPUT` in the app's `sdkconfig`; delete `sdkconfig` + `build/`, rebuild |
 | Gamepad works direct but not via hub | ESP-IDF has no Transaction Translator; FS HID behind a HS hub can't enumerate (Phase 47). Connect directly |
 | Audio crackles / distorts | Audio strategy is per-emulator (Phase 48); a fixed samples/frame at <60 FPS underruns the I2S DMA |
 | Phantom / stuck button | A GPIO pad pin floating HIGH (Phase 49, e.g. GPIO 30 → R); `odroid_input.c` stuck detection, board-dependent |
