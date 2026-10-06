@@ -196,7 +196,7 @@ class Builder:
         z.SetLocalClearance(pcbnew.FromMM(0.3))
         z.SetMinThickness(pcbnew.FromMM(0.25))
         # Thermal reliefs on through-hole pads only; small SMD pads connect solidly
-        # (a 0603 pad squeezed by tracks can otherwise end up with one spoke).
+        # (a small SMD pad squeezed by tracks can otherwise end up with one spoke).
         z.SetPadConnection(pcbnew.ZONE_CONNECTION_THT_THERMAL)
         ol = z.Outline()
         ol.NewOutline()
@@ -215,15 +215,15 @@ def build_core(b):
     for pin, netname in pins.items():
         b.connect(u, pin, netname)
 
-    def passive(ref, value, x, y, a, c, rot=0.0, fp="R_0603_1608Metric", lib="Resistor_SMD"):
+    def passive(ref, value, x, y, a, c, rot=0.0, fp="R_0805_2012Metric_Pad1.20x1.40mm_HandSolder", lib="Resistor_SMD"):
         f = b.place(lib, fp, ref, value, x, y, rot, back=True)
         b.connect(f, 1, a)
         b.connect(f, 2, c)
         return f
 
-    cap = dict(fp="C_0603_1608Metric", lib="Capacitor_SMD")
+    cap = dict(fp="C_0805_2012Metric_Pad1.18x1.45mm_HandSolder", lib="Capacitor_SMD")
     passive("C1", "100nF", 52.0, 44.0, "+3V3", "GND", 90.0, **cap)    # VDD (pin 14)
-    passive("C2", "100nF", 62.1, 54.3, "+3V3", "GND", 90.0, **cap)    # VDD (pin 20)
+    passive("C2", "100nF", 62.1, 54.3, "+3V3", "GND", 0.0, **cap)     # VDD (pin 20)
     passive("C3", "100nF", 66.0, 38.4, "+3V3", "GND", 0.0, **cap)     # VDDIO2 (pin 6)
     passive("C4", "4.7uF", 76.0, 49.5, "+3V3", "GND", 90.0, **cap)    # bulk
     passive("R1", "4.7k", 46.0, 47.0, "+3V3", "SCL", 90.0)

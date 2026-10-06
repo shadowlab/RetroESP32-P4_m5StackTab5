@@ -1397,7 +1397,7 @@
     (property "Value" "100nF" (at 162.56 130.81 0) (effects (font (size 1.27 1.27)) (justify left)))
     (property
       "Footprint"
-      "Capacitor_SMD:C_0603_1608Metric"
+      "Capacitor_SMD:C_0805_2012Metric_Pad1.18x1.45mm_HandSolder"
       (at 160.02 129.54 0)
       (effects (font (size 1.27 1.27)) hide))
     (property "Datasheet" "~" (at 160.02 129.54 0) (effects (font (size 1.27 1.27)) hide))
@@ -1469,7 +1469,7 @@
     (property "Value" "100nF" (at 177.8 130.81 0) (effects (font (size 1.27 1.27)) (justify left)))
     (property
       "Footprint"
-      "Capacitor_SMD:C_0603_1608Metric"
+      "Capacitor_SMD:C_0805_2012Metric_Pad1.18x1.45mm_HandSolder"
       (at 175.26 129.54 0)
       (effects (font (size 1.27 1.27)) hide))
     (property "Datasheet" "~" (at 175.26 129.54 0) (effects (font (size 1.27 1.27)) hide))
@@ -1541,7 +1541,7 @@
     (property "Value" "100nF" (at 193.04 130.81 0) (effects (font (size 1.27 1.27)) (justify left)))
     (property
       "Footprint"
-      "Capacitor_SMD:C_0603_1608Metric"
+      "Capacitor_SMD:C_0805_2012Metric_Pad1.18x1.45mm_HandSolder"
       (at 190.5 129.54 0)
       (effects (font (size 1.27 1.27)) hide))
     (property "Datasheet" "~" (at 190.5 129.54 0) (effects (font (size 1.27 1.27)) hide))
@@ -1613,7 +1613,7 @@
     (property "Value" "4.7uF" (at 207.01 130.81 0) (effects (font (size 1.27 1.27)) (justify left)))
     (property
       "Footprint"
-      "Capacitor_SMD:C_0603_1608Metric"
+      "Capacitor_SMD:C_0805_2012Metric_Pad1.18x1.45mm_HandSolder"
       (at 204.47 129.54 0)
       (effects (font (size 1.27 1.27)) hide))
     (property "Datasheet" "~" (at 204.47 129.54 0) (effects (font (size 1.27 1.27)) hide))
@@ -1685,7 +1685,7 @@
     (property "Value" "4.7k" (at 162.56 156.21 0) (effects (font (size 1.27 1.27)) (justify left)))
     (property
       "Footprint"
-      "Resistor_SMD:R_0603_1608Metric"
+      "Resistor_SMD:R_0805_2012Metric_Pad1.20x1.40mm_HandSolder"
       (at 160.02 154.94 0)
       (effects (font (size 1.27 1.27)) hide))
     (property "Datasheet" "~" (at 160.02 154.94 0) (effects (font (size 1.27 1.27)) hide))
@@ -1748,7 +1748,7 @@
     (property "Value" "4.7k" (at 177.8 156.21 0) (effects (font (size 1.27 1.27)) (justify left)))
     (property
       "Footprint"
-      "Resistor_SMD:R_0603_1608Metric"
+      "Resistor_SMD:R_0805_2012Metric_Pad1.20x1.40mm_HandSolder"
       (at 175.26 154.94 0)
       (effects (font (size 1.27 1.27)) hide))
     (property "Datasheet" "~" (at 175.26 154.94 0) (effects (font (size 1.27 1.27)) hide))
@@ -1811,7 +1811,7 @@
     (property "Value" "10k" (at 193.04 156.21 0) (effects (font (size 1.27 1.27)) (justify left)))
     (property
       "Footprint"
-      "Resistor_SMD:R_0603_1608Metric"
+      "Resistor_SMD:R_0805_2012Metric_Pad1.20x1.40mm_HandSolder"
       (at 190.5 154.94 0)
       (effects (font (size 1.27 1.27)) hide))
     (property "Datasheet" "~" (at 190.5 154.94 0) (effects (font (size 1.27 1.27)) hide))
@@ -1879,7 +1879,7 @@
     (property "Value" "0R" (at 162.56 191.77 0) (effects (font (size 1.27 1.27)) (justify left)))
     (property
       "Footprint"
-      "Resistor_SMD:R_0603_1608Metric"
+      "Resistor_SMD:R_0805_2012Metric_Pad1.20x1.40mm_HandSolder"
       (at 160.02 190.5 0)
       (effects (font (size 1.27 1.27)) hide))
     (property "Datasheet" "~" (at 160.02 190.5 0) (effects (font (size 1.27 1.27)) hide))
@@ -1942,7 +1942,7 @@
     (property "Value" "DNP" (at 177.8 191.77 0) (effects (font (size 1.27 1.27)) (justify left)))
     (property
       "Footprint"
-      "Resistor_SMD:R_0603_1608Metric"
+      "Resistor_SMD:R_0805_2012Metric_Pad1.20x1.40mm_HandSolder"
       (at 175.26 190.5 0)
       (effects (font (size 1.27 1.27)) hide))
     (property "Datasheet" "~" (at 175.26 190.5 0) (effects (font (size 1.27 1.27)) hide))
@@ -2005,7 +2005,7 @@
     (property "Value" "0R" (at 193.04 191.77 0) (effects (font (size 1.27 1.27)) (justify left)))
     (property
       "Footprint"
-      "Resistor_SMD:R_0603_1608Metric"
+      "Resistor_SMD:R_0805_2012Metric_Pad1.20x1.40mm_HandSolder"
       (at 190.5 190.5 0)
       (effects (font (size 1.27 1.27)) hide))
     (property "Datasheet" "~" (at 190.5 190.5 0) (effects (font (size 1.27 1.27)) hide))
@@ -2068,7 +2068,7 @@
     (property "Value" "DNP" (at 207.01 191.77 0) (effects (font (size 1.27 1.27)) (justify left)))
     (property
       "Footprint"
-      "Resistor_SMD:R_0603_1608Metric"
+      "Resistor_SMD:R_0805_2012Metric_Pad1.20x1.40mm_HandSolder"
       (at 204.47 190.5 0)
       (effects (font (size 1.27 1.27)) hide))
     (property "Datasheet" "~" (at 204.47 190.5 0) (effects (font (size 1.27 1.27)) hide))
