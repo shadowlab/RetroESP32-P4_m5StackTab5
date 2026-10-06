@@ -37,7 +37,7 @@ picks its console with a button and an RGB LED (see [Console select](#console-se
 |---|---|
 | [`layout.py`](layout.py) | Button positions for every console, the console IDs, and clearance checks (switch bodies, pads, footprint courtyards, M3 holes, wall margin, latch arms). It also draws `<console>/layout.svg`. |
 | [`kicad_gen/gen_pcb.py`](kicad_gen/gen_pcb.py) | Builds the PCB: switches and the 2×5 header on the front; MCU, support parts, console-ID straps and the UPDI header on the back. It routes with Freerouting, pours GND, runs DRC and writes a BOM. |
-| [`kicad_gen/gen_sch.py`](kicad_gen/gen_sch.py) | Builds the schematic from the same board data, so it can't drift from the PCB. |
+| [`kicad_gen/gen_sch.py`](kicad_gen/gen_sch.py) | Builds the schematic from the same board data, so it can't drift from the PCB. Every net, GND and +3V3 included, is a global label rather than a KiCad power symbol, so EasyEDA's import keeps the names (it would turn `power:GND` into `power_GND`). |
 | [`kicad_gen/check_netlist.py`](kicad_gen/check_netlist.py) | Compares the schematic netlist with the PCB pad by pad |
 | [`kicad_gen/render.py`](kicad_gen/render.py) | Writes the front/back/schematic PNGs and the schematic PDF |
 | [`kicad_gen/gen_avrdd_pinmap.py`](kicad_gen/gen_avrdd_pinmap.py) | Writes `../firmware_avrdd/pinmap.h`, the per-console button slot table |

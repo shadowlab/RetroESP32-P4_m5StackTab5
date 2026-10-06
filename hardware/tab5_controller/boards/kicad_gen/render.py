@@ -28,8 +28,9 @@ def main():
             subprocess.run(["kicad-cli", "pcb", "export", "svg", "--exclude-drawing-sheet", "--page-size-mode", "2",
                             "-l", layers, "-o", svg, pcb] + extra, check=True, capture_output=True)
             svg_to_png(svg, os.path.join(cfg.dir, side + ".png"), 1200)
-        subprocess.run(["kicad-cli", "sch", "export", "svg", "-o", tmp, sch], check=True, capture_output=True)
-        svg_to_png(glob.glob(os.path.join(tmp, "*.svg"))[0], os.path.join(cfg.dir, "schematic.png"), 1600)
+        sch_dir = os.path.join(tmp, "sch")      # own folder: tmp also holds front/back.svg
+        subprocess.run(["kicad-cli", "sch", "export", "svg", "-o", sch_dir, sch], check=True, capture_output=True)
+        svg_to_png(glob.glob(os.path.join(sch_dir, "*.svg"))[0], os.path.join(cfg.dir, "schematic.png"), 1600)
     subprocess.run(["kicad-cli", "sch", "export", "pdf", "-o",
                     os.path.join(cfg.dir, cfg.base + "_schematic.pdf"), sch], check=True, capture_output=True)
     print("rendered", cfg.dir)
