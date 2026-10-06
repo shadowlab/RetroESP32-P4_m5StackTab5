@@ -14,9 +14,9 @@ fully routed board, linked to each other. It was made with KiCad 7 and opens in 
 | `retropad_snes.kicad_pro` | The KiCad project; open this |
 | `retropad_snes.kicad_sch` / `retropad_snes_schematic.pdf` | Schematic (one A3 sheet) and a PDF of it |
 | `retropad_snes.kicad_pcb` | The routed board |
-| `retropad_snes_bom.csv` | Bill of materials. R8–R10 are listed as DNP (not fitted). |
+| `retropad_snes_bom.csv` | Bill of materials. R8 and R9 are listed as DNP (not fitted). |
 | `retropad_snes_drc.rpt` | KiCad DRC report for this board |
-| [`../../kicad_gen/`](../../kicad_gen) | Shared generators: `gen_pcb.py`, `gen_sch.py` and `check_netlist.py` for every console board |
+| [`../../kicad_gen/`](../../kicad_gen) | Shared generators: `gen_pcb.py`, `gen_sch.py`, `check_netlist.py` and `gen_avrdd_pinmap.py` for every console board |
 
 ## What's on it
 
@@ -28,16 +28,15 @@ fully routed board, linked to each other. It was made with KiCad 7 and opens in 
   * The 2×5 right-angle header J1 to the Tab5. Its pins point up out of the top edge, centred
     26 mm from the left edge.
 * **Back:**
-  * STM32F030C8T6 with the support circuit copied from M5Stack's keyboard: 4.7 k I2C pull-ups,
-    10 k INT, NRST and BOOT0 resistors, 100 nF decoupling plus 4.7 µF bulk.
-  * One 1N4148W per switch (anode to the row, cathode to the switch).
-  * Console-ID resistors R6–R10: 0 Ω on ID0 and ID1 for SNES, R8–R10 not fitted.
-  * SWD pads J2, ordered 3V3, SWCLK, SWDIO, NRST, GND as on the keyboard.
-* **Matrix:** each switch is wired to its RetroPad bit's position (main README §2.3), so the
-  stock RetroPad firmware needs no changes:
-  * UP, DOWN, LEFT, RIGHT, A, B, X: rows 0–7 on COL0
-  * Y, L, R, START, SELECT: COL1
-  * MENU: COL2
+  * AVR32DD28-I/SO (SOIC-28) with 100 nF on each VDD pin and on VDDIO2, 4.7 µF bulk, 4.7 k
+    I2C pull-ups and a 10 k RESET pull-up.
+  * Console-ID resistors R6–R9: 0 Ω on ID0 and ID1 for SNES, R8 and R9 not fitted.
+  * UPDI header J2: 3V3, UPDI, GND.
+* **Buttons:** each switch connects its own MCU pin to GND, with the MCU's internal pull-up.
+  No matrix, no diodes. The slot order (PD1–PD7, PC0–PC3, PF0–PF1) follows the layout's
+  button order and matches `firmware_avrdd/pinmap.h`; the table is in
+  [`../README.md`](../README.md#pcb-and-schematic). J1 pin 9 (INT) and pin 10 (G9) are not
+  connected; the host polls.
 * **Outline:**
   * 125 × 55 mm, inset 1.5 mm from the case on each side.
   * Notched 3 mm in at the top corners above y = 46 to clear the latch arms.
@@ -53,25 +52,25 @@ fully routed board, linked to each other. It was made with KiCad 7 and opens in 
   silkscreen warnings (labels overlapping pads or running past the edge where L/R overhang),
   plus "library not configured" notes that only appear on a machine without KiCad's library
   table. All are cosmetic.
-* **Schematic vs board:** `check_netlist.py` reports the same 39 nets on each side with 0
+* **Schematic vs board:** `check_netlist.py` reports the same 25 nets on each side with 0
   differences.
-* **Netlist check:** every switch is on the right row and column, diode polarity matches
-  KiCad's convention (pad 1 = cathode), all MCU pins match the firmware's pin map, and J1
-  carries M5Stack's P1 pinout.
+* **Wiring vs firmware:** every switch lands on the MCU pin the firmware's pin map gives it
+  for console ID 3, the straps encode ID 3, and J1 carries M5Stack's P1 pinout.
 * **Gerber and drill export:** both succeed.
 
 ## Schematic
 
 The schematic covers the same circuit on one A3 sheet:
-* **MCU:** the STM32F030C8T6.
-* **Tab5 header and SWD:** P1/P2 order as on the keyboard.
-* **Support parts:** decoupling, pull-ups, reset and BOOT0.
-* **Console-ID straps:** R8–R10 are marked DNP.
+* **MCU:** the AVR32DD28. KiCad 7 has no AVR DD symbol, so the schematic embeds one derived
+  from the pin-compatible AVR32DB28, with pins 13/14/15/19 renamed (PD7, VDD, GND, UPDI/PF7).
+* **Tab5 header and UPDI header.**
+* **Support parts:** decoupling, I2C pull-ups and the RESET pull-up.
+* **Console-ID straps:** R8 and R9 are marked DNP.
 * **Mounting holes.**
-* **Button matrix:** one line per button, ROWn → diode → switch → COLn.
+* **Buttons:** one line per button, K_<button> → switch → GND.
 
-Nets are named with global labels, so the net names match the board exactly (ROW0–7,
-COL0–3, K_UP and so on, SCL, SDA, INT, ID0–ID3, +3V3, GND).
+Nets are named with global labels, so the net names match the board exactly (K_UP and so on,
+SCL, SDA, ID0–ID3, AN0/AN1, RESET, UPDI, +3V3, GND).
 
 How it stays in step with the board:
 * `gen_sch.py` doesn't keep its own list of connections. It builds the board in memory
@@ -79,7 +78,7 @@ How it stays in step with the board:
 * Each footprint carries its symbol's UUID, so in KiCad **Tools → Update PCB from
   Schematic** matches every part and reports no changes.
 * `check_netlist.py snes` exports the schematic netlist with `kicad-cli` and compares it with the
-  board pad by pad. Current result: 39 nets on each side, 0 differences.
+  board pad by pad. Current result: 25 nets on each side, 0 differences.
 
 You can now edit the design in KiCad the normal way, schematic first. Just remember that
 re-running the generator scripts overwrites the `.kicad_sch` and `.kicad_pcb` files. Once you
@@ -96,7 +95,7 @@ the Tab5's 5 V rail (pin 6) onto this board's 3.3 V supply:
 
 1. **J1 orientation.** The two header rows end up at different heights once the pins are bent
    up, and either end of the 5-pin row could be pin 1. On a real keyboard, use a multimeter to
-   find **pin 5 (3V3)**: it connects to the STM32's VDD pins and the 100 nF capacitors. Also
+   find **pin 5 (3V3)**: it connects to the keyboard MCU's VDD pins and the 100 nF capacitors. Also
    find **pins 2/3/4 (GND)**. Note which physical pin positions they are, seen from the front,
    and compare with J1's pin 1 marker here. In the board as drawn, pin 1 is the lower-left pin
    (front view) and the odd row is the one farther from the edge. If yours differs, flip

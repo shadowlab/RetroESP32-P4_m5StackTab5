@@ -37,6 +37,7 @@
 #include "odroid_system.h"
 #include "odroid_display.h"
 #include "odroid_sdcard.h"
+#include "tab5_ctrl.h"
 #include "st7701_lcd.h"
 
 static const char *TAG = "GENESIS_RUN";
@@ -213,6 +214,53 @@ void saveGwenesisStateSetBuffer(SaveState* state, const char* tagName, const voi
 void gwenesis_io_get_buttons(void)
 {
     /* Input is handled in the main emulation loop instead */
+}
+
+/* ─── 6-button pad from a Genesis RetroPad board ─────────────────
+ * Port 1 behaves as a 6-button pad while a Genesis board is on the Tab5
+ * keyboard port, and as a 3-button pad otherwise. As on the real pad, holding
+ * MODE while the board is connected (or when the game starts) keeps it in
+ * 3-button mode, for the few games that misread a 6-button pad. A/B/C/START
+ * reach the core through odroid_input like every other pad. */
+static bool s_six_button;
+static bool s_six_button_refused;     /* MODE was held when the board appeared */
+
+static void genesis_six_button_update(void)
+{
+    tab5_ctrl_info_t info;
+    tab5_ctrl_get_info(&info);
+    bool board = info.present && info.retropad && info.console == RP_CONSOLE_GENESIS;
+    uint32_t b = board ? tab5_ctrl_get_buttons() : 0;
+
+    if (!board) {
+        if (s_six_button)
+            ESP_LOGI(TAG, "Genesis board removed: 3-button pad");
+        gwenesis_io_set_pad_type(0, GWENESIS_PAD_3BUTTON);
+        s_six_button = s_six_button_refused = false;
+        return;
+    }
+    if (!s_six_button && !s_six_button_refused) {
+        if (b & RP_BIT(RP_BTN_SELECT)) {          /* MODE */
+            s_six_button_refused = true;
+            ESP_LOGI(TAG, "MODE held: Genesis board stays a 3-button pad");
+            return;
+        }
+        gwenesis_io_set_pad_type(0, GWENESIS_PAD_6BUTTON);
+        s_six_button = true;
+        ESP_LOGI(TAG, "Genesis board attached: 6-button pad");
+    }
+    if (!s_six_button)
+        return;
+
+    static const struct { uint8_t rp; uint8_t pad; } ext[] = {
+        { RP_BTN_X, PAD_X }, { RP_BTN_Y, PAD_Y }, { RP_BTN_Z, PAD_Z }, { RP_BTN_SELECT, PAD_MODE },
+    };
+    for (size_t i = 0; i < sizeof(ext) / sizeof(ext[0]); i++) {
+        if (b & RP_BIT(ext[i].rp))
+            gwenesis_io_pad_press_button(0, ext[i].pad);
+        else
+            gwenesis_io_pad_release_button(0, ext[i].pad);
+    }
 }
 
 /* ─── Minimal 5×5 bitmap font (A-Z) for menu/volume overlay ──── */
@@ -1076,6 +1124,7 @@ void genesis_run(const char *rom_path)
         if (gp.values[ODROID_INPUT_X])      gwenesis_io_pad_press_button(0, PAD_A);     /* X button → Genesis A */
         if (gp.values[ODROID_INPUT_Y])      gwenesis_io_pad_press_button(0, PAD_A);     /* Y button → Genesis A (alt) */
         if (gp.values[ODROID_INPUT_START])  gwenesis_io_pad_press_button(0, PAD_S);     /* Start → Genesis Start */
+        genesis_six_button_update();                                                   /* X/Y/Z/MODE */
 
         gp_prev = gp;
 
@@ -1156,6 +1205,7 @@ void genesis_run(const char *rom_path)
 
         /* Reset M68K cycle counter for next frame */
         m68k->cycles -= system_clock;
+        gwenesis_io_frame_end(system_clock);   /* keep the 6-button timeout on the same base */
 
         prof_m68k_acc += fr_m68k;
         prof_z80_acc  += fr_z80;
