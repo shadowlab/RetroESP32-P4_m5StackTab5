@@ -619,48 +619,67 @@
         "MountingHole_0_1"
         (circle (center 0 0) (radius 1.27) (stroke (width 1.27) (type default)) (fill (type none)))))
     (symbol
-      "Switch:SW_Push"
-      (pin_numbers hide)
+      "RetroPad:SW_Push_4pin"
       (pin_names (offset 1.016) hide)
       (in_bom yes)
       (on_board yes)
-      (property "Reference" "SW" (at 1.27 2.54 0) (effects (font (size 1.27 1.27)) (justify left)))
-      (property "Value" "SW_Push" (at 0 -1.524 0) (effects (font (size 1.27 1.27))))
-      (property "Footprint" "" (at 0 5.08 0) (effects (font (size 1.27 1.27)) hide))
-      (property "Datasheet" "~" (at 0 5.08 0) (effects (font (size 1.27 1.27)) hide))
-      (property
-        "ki_keywords"
-        "switch normally-open pushbutton push-button"
-        (at 0 0 0)
-        (effects (font (size 1.27 1.27)) hide))
+      (property "Reference" "SW" (at 0 5.08 0) (effects (font (size 1.27 1.27))))
+      (property "Value" "SW_Push_4pin" (at 0 -5.08 0) (effects (font (size 1.27 1.27))))
+      (property "Footprint" "" (at 0 0 0) (effects (font (size 1.27 1.27)) hide))
+      (property "Datasheet" "~" (at 0 0 0) (effects (font (size 1.27 1.27)) hide))
       (property
         "ki_description"
-        "Push button switch, generic, two pins"
+        "Push button, 4-leg tact switch: 1-2 and 3-4 tied"
         (at 0 0 0)
         (effects (font (size 1.27 1.27)) hide))
       (symbol
-        "SW_Push_0_1"
-        (circle (center -2.032 0) (radius 0.508) (stroke (width 0) (type default)) (fill (type none)))
-        (polyline (pts (xy 0 1.27) (xy 0 3.048)) (stroke (width 0) (type default)) (fill (type none)))
+        "SW_Push_4pin_0_1"
         (polyline
-          (pts (xy 2.54 1.27) (xy -2.54 1.27))
+          (pts (xy -2.54 2.54) (xy 2.54 2.54))
           (stroke (width 0) (type default))
           (fill (type none)))
-        (circle (center 2.032 0) (radius 0.508) (stroke (width 0) (type default)) (fill (type none)))
+        (polyline
+          (pts (xy -2.54 -2.54) (xy 2.54 -2.54))
+          (stroke (width 0) (type default))
+          (fill (type none)))
+        (polyline (pts (xy 0 2.54) (xy 0 1.524)) (stroke (width 0) (type default)) (fill (type none)))
+        (polyline (pts (xy 0 -2.54) (xy 0 -1.524)) (stroke (width 0) (type default)) (fill (type none)))
+        (circle (center 0 1.016) (radius 0.508) (stroke (width 0) (type default)) (fill (type none)))
+        (circle (center 0 -1.016) (radius 0.508) (stroke (width 0) (type default)) (fill (type none)))
+        (polyline
+          (pts (xy -0.254 -1.27) (xy -1.778 1.778))
+          (stroke (width 0) (type default))
+          (fill (type none))))
+      (symbol
+        "SW_Push_4pin_1_1"
         (pin
           passive
           line
-          (at -5.08 0 0)
+          (at -5.08 2.54 0)
           (length 2.54)
           (name "1" (effects (font (size 1.27 1.27))))
           (number "1" (effects (font (size 1.27 1.27)))))
         (pin
           passive
           line
-          (at 5.08 0 180)
+          (at 5.08 2.54 180)
           (length 2.54)
           (name "2" (effects (font (size 1.27 1.27))))
-          (number "2" (effects (font (size 1.27 1.27))))))))
+          (number "2" (effects (font (size 1.27 1.27)))))
+        (pin
+          passive
+          line
+          (at 5.08 -2.54 180)
+          (length 2.54)
+          (name "3" (effects (font (size 1.27 1.27))))
+          (number "3" (effects (font (size 1.27 1.27)))))
+        (pin
+          passive
+          line
+          (at -5.08 -2.54 0)
+          (length 2.54)
+          (name "4" (effects (font (size 1.27 1.27))))
+          (number "4" (effects (font (size 1.27 1.27))))))))
   (text
     "MCU — AVR32DD28 (SOIC-28) running firmware_avrdd (I2C client 0x6D, RetroPad protocol)"
     (at 30 25 0)
@@ -2110,7 +2129,7 @@
     (effects (font (size 1.5 1.5)) (justify left))
     (uuid "271f701a-1b2a-5c87-ac40-807e2314eef2"))
   (symbol
-    (lib_id "Switch:SW_Push")
+    (lib_id "RetroPad:SW_Push_4pin")
     (at 299.72 39.37 0)
     (unit 1)
     (in_bom yes)
@@ -2118,42 +2137,28 @@
     (dnp no)
     (uuid "4930d59f-291e-567b-818b-7bed9c2d63c4")
     (property "Reference" "SW1" (at 297.18 34.29 0) (effects (font (size 1.27 1.27)) (justify left)))
-    (property "Value" "UP" (at 297.18 43.18 0) (effects (font (size 1.27 1.27)) (justify left)))
+    (property "Value" "UP" (at 297.18 44.45 0) (effects (font (size 1.27 1.27)) (justify left)))
     (property
       "Footprint"
-      "Button_Switch_THT:SW_PUSH_6mm"
+      "RetroPad:SW_PUSH_6mm_4pin"
       (at 299.72 39.37 0)
       (effects (font (size 1.27 1.27)) hide))
     (property "Datasheet" "~" (at 299.72 39.37 0) (effects (font (size 1.27 1.27)) hide))
     (pin "1" (uuid "dc595e4f-bcf1-524d-85e8-f7c77d9a03e8"))
     (pin "2" (uuid "44508c30-feeb-5262-884c-eea7e0b0c52e"))
+    (pin "3" (uuid "ac94ae56-3911-5cbd-8cf6-d8d7a4d53578"))
+    (pin "4" (uuid "bae18ae2-622e-5b0d-a9a3-a44d28613bfa"))
     (instances
       (project
         "retropad_nes_gb"
         (path "/3ba6fbae-d46c-5be5-af7e-2637f842a48f" (reference "SW1") (unit 1)))))
   (wire
-    (pts (xy 294.64 39.37) (xy 292.1 39.37))
+    (pts (xy 294.64 36.83) (xy 292.1 36.83))
     (stroke (width 0) (type default))
-    (uuid "1fc3f006-2e49-5fd2-8028-67f35ebcd73d"))
-  (global_label
-    "K_UP"
-    (shape bidirectional)
-    (at 292.1 39.37 180)
-    (fields_autoplaced)
-    (effects (font (size 1.27 1.27)) (justify right))
-    (uuid "4a627b1b-756e-5790-b0fe-73a898c27f19")
-    (property
-      "Intersheetrefs"
-      "${INTERSHEET_REFS}"
-      (at 292.1 39.37 0)
-      (effects (font (size 1.27 1.27)) hide)))
-  (wire
-    (pts (xy 304.8 39.37) (xy 307.34 39.37))
-    (stroke (width 0) (type default))
-    (uuid "0029d5f8-05c7-52ab-a912-845a6b8c4d4c"))
+    (uuid "7267cd18-352f-595b-aa25-74a0dd6cc2ec"))
   (symbol
     (lib_id "power:GND")
-    (at 307.34 39.37 90)
+    (at 292.1 36.83 270)
     (unit 1)
     (in_bom no)
     (on_board yes)
@@ -2162,39 +2167,98 @@
     (property
       "Reference"
       "#PWR18"
-      (at 309.88 38.1 0)
+      (at 294.64 35.56 0)
       (effects (font (size 1.27 1.27)) (justify left) hide))
-    (property "Value" "GND" (at 309.88 40.64 0) (effects (font (size 1.27 1.27)) (justify left)))
-    (property "Footprint" "" (at 307.34 39.37 0) (effects (font (size 1.27 1.27)) hide))
-    (property "Datasheet" "~" (at 307.34 39.37 0) (effects (font (size 1.27 1.27)) hide))
+    (property "Value" "GND" (at 294.64 38.1 0) (effects (font (size 1.27 1.27)) (justify left)))
+    (property "Footprint" "" (at 292.1 36.83 0) (effects (font (size 1.27 1.27)) hide))
+    (property "Datasheet" "~" (at 292.1 36.83 0) (effects (font (size 1.27 1.27)) hide))
     (pin "1" (uuid "9119d142-a5fc-515c-b96a-83948b86e1bb"))
     (instances
       (project
         "retropad_nes_gb"
         (path "/3ba6fbae-d46c-5be5-af7e-2637f842a48f" (reference "#PWR18") (unit 1)))))
+  (wire
+    (pts (xy 304.8 36.83) (xy 307.34 36.83))
+    (stroke (width 0) (type default))
+    (uuid "28e8ca93-8f69-5d1d-b08c-b3e838ca6157"))
+  (symbol
+    (lib_id "power:GND")
+    (at 307.34 36.83 90)
+    (unit 1)
+    (in_bom no)
+    (on_board yes)
+    (dnp no)
+    (uuid "dc27dc00-b0d8-5c8f-9256-87211bada8c9")
+    (property
+      "Reference"
+      "#PWR19"
+      (at 309.88 35.56 0)
+      (effects (font (size 1.27 1.27)) (justify left) hide))
+    (property "Value" "GND" (at 309.88 38.1 0) (effects (font (size 1.27 1.27)) (justify left)))
+    (property "Footprint" "" (at 307.34 36.83 0) (effects (font (size 1.27 1.27)) hide))
+    (property "Datasheet" "~" (at 307.34 36.83 0) (effects (font (size 1.27 1.27)) hide))
+    (pin "1" (uuid "1b6714d3-4d46-5c24-85ff-74c847516471"))
+    (instances
+      (project
+        "retropad_nes_gb"
+        (path "/3ba6fbae-d46c-5be5-af7e-2637f842a48f" (reference "#PWR19") (unit 1)))))
+  (wire
+    (pts (xy 304.8 41.91) (xy 307.34 41.91))
+    (stroke (width 0) (type default))
+    (uuid "b921f10d-8506-5fc1-a87a-ddf6806e7061"))
+  (global_label
+    "K_UP"
+    (shape bidirectional)
+    (at 307.34 41.91 0)
+    (fields_autoplaced)
+    (effects (font (size 1.27 1.27)) (justify left))
+    (uuid "f40f0007-a8a6-5071-bee0-da53841f83a4")
+    (property
+      "Intersheetrefs"
+      "${INTERSHEET_REFS}"
+      (at 307.34 41.91 0)
+      (effects (font (size 1.27 1.27)) hide)))
+  (wire
+    (pts (xy 294.64 41.91) (xy 292.1 41.91))
+    (stroke (width 0) (type default))
+    (uuid "041e7824-b8ee-55dc-ac3a-f44cd657b6fd"))
+  (global_label
+    "K_UP"
+    (shape bidirectional)
+    (at 292.1 41.91 180)
+    (fields_autoplaced)
+    (effects (font (size 1.27 1.27)) (justify right))
+    (uuid "90fcc2eb-4281-5a99-94b9-3c4bd6757410")
+    (property
+      "Intersheetrefs"
+      "${INTERSHEET_REFS}"
+      (at 292.1 41.91 0)
+      (effects (font (size 1.27 1.27)) hide)))
   (text
     "UP"
     (at 320.04 38.1 0)
     (effects (font (size 1.27 1.27)) (justify left))
     (uuid "ea182236-101a-5098-a2d5-488fa60e6dd2"))
   (symbol
-    (lib_id "Switch:SW_Push")
-    (at 299.72 52.07 0)
+    (lib_id "RetroPad:SW_Push_4pin")
+    (at 299.72 54.61 0)
     (unit 1)
     (in_bom yes)
     (on_board yes)
     (dnp no)
     (uuid "1d399912-e2eb-5323-84e8-c53d36b31ae9")
-    (property "Reference" "SW2" (at 297.18 46.99 0) (effects (font (size 1.27 1.27)) (justify left)))
-    (property "Value" "DOWN" (at 297.18 55.88 0) (effects (font (size 1.27 1.27)) (justify left)))
+    (property "Reference" "SW2" (at 297.18 49.53 0) (effects (font (size 1.27 1.27)) (justify left)))
+    (property "Value" "DOWN" (at 297.18 59.69 0) (effects (font (size 1.27 1.27)) (justify left)))
     (property
       "Footprint"
-      "Button_Switch_THT:SW_PUSH_6mm"
-      (at 299.72 52.07 0)
+      "RetroPad:SW_PUSH_6mm_4pin"
+      (at 299.72 54.61 0)
       (effects (font (size 1.27 1.27)) hide))
-    (property "Datasheet" "~" (at 299.72 52.07 0) (effects (font (size 1.27 1.27)) hide))
+    (property "Datasheet" "~" (at 299.72 54.61 0) (effects (font (size 1.27 1.27)) hide))
     (pin "1" (uuid "d280a42b-b87c-5dd5-886f-78e9886688a9"))
     (pin "2" (uuid "475283e3-2d5c-569d-8f8d-4102c957a4da"))
+    (pin "3" (uuid "70add606-117d-5c39-969f-3134955505e8"))
+    (pin "4" (uuid "007dc4e3-b552-5221-ae48-596269e58f3a"))
     (instances
       (project
         "retropad_nes_gb"
@@ -2203,18 +2267,27 @@
     (pts (xy 294.64 52.07) (xy 292.1 52.07))
     (stroke (width 0) (type default))
     (uuid "43fca67a-6658-5a73-85ab-18bddacf08cb"))
-  (global_label
-    "K_DOWN"
-    (shape bidirectional)
-    (at 292.1 52.07 180)
-    (fields_autoplaced)
-    (effects (font (size 1.27 1.27)) (justify right))
-    (uuid "25434d58-aae0-5518-92bd-f13b8fcfd1b7")
+  (symbol
+    (lib_id "power:GND")
+    (at 292.1 52.07 270)
+    (unit 1)
+    (in_bom no)
+    (on_board yes)
+    (dnp no)
+    (uuid "163d5fb2-99ad-5a42-9c19-e785db49f27c")
     (property
-      "Intersheetrefs"
-      "${INTERSHEET_REFS}"
-      (at 292.1 52.07 0)
-      (effects (font (size 1.27 1.27)) hide)))
+      "Reference"
+      "#PWR20"
+      (at 294.64 50.8 0)
+      (effects (font (size 1.27 1.27)) (justify left) hide))
+    (property "Value" "GND" (at 294.64 53.34 0) (effects (font (size 1.27 1.27)) (justify left)))
+    (property "Footprint" "" (at 292.1 52.07 0) (effects (font (size 1.27 1.27)) hide))
+    (property "Datasheet" "~" (at 292.1 52.07 0) (effects (font (size 1.27 1.27)) hide))
+    (pin "1" (uuid "bd428879-f066-58cb-bdf4-b9b8af325e39"))
+    (instances
+      (project
+        "retropad_nes_gb"
+        (path "/3ba6fbae-d46c-5be5-af7e-2637f842a48f" (reference "#PWR20") (unit 1)))))
   (wire
     (pts (xy 304.8 52.07) (xy 307.34 52.07))
     (stroke (width 0) (type default))
@@ -2226,206 +2299,88 @@
     (in_bom no)
     (on_board yes)
     (dnp no)
-    (uuid "dc27dc00-b0d8-5c8f-9256-87211bada8c9")
+    (uuid "c568f1ba-6cfb-596b-90fc-64b2b934c09c")
     (property
       "Reference"
-      "#PWR19"
+      "#PWR21"
       (at 309.88 50.8 0)
       (effects (font (size 1.27 1.27)) (justify left) hide))
     (property "Value" "GND" (at 309.88 53.34 0) (effects (font (size 1.27 1.27)) (justify left)))
     (property "Footprint" "" (at 307.34 52.07 0) (effects (font (size 1.27 1.27)) hide))
     (property "Datasheet" "~" (at 307.34 52.07 0) (effects (font (size 1.27 1.27)) hide))
-    (pin "1" (uuid "1b6714d3-4d46-5c24-85ff-74c847516471"))
-    (instances
-      (project
-        "retropad_nes_gb"
-        (path "/3ba6fbae-d46c-5be5-af7e-2637f842a48f" (reference "#PWR19") (unit 1)))))
-  (text
-    "DOWN"
-    (at 320.04 50.8 0)
-    (effects (font (size 1.27 1.27)) (justify left))
-    (uuid "d5df87fb-bf0e-5928-9daa-97975b89859f"))
-  (symbol
-    (lib_id "Switch:SW_Push")
-    (at 299.72 64.77 0)
-    (unit 1)
-    (in_bom yes)
-    (on_board yes)
-    (dnp no)
-    (uuid "4eaa4c7a-93b8-57af-9a17-9eb702df1fe4")
-    (property "Reference" "SW3" (at 297.18 59.69 0) (effects (font (size 1.27 1.27)) (justify left)))
-    (property "Value" "LEFT" (at 297.18 68.58 0) (effects (font (size 1.27 1.27)) (justify left)))
-    (property
-      "Footprint"
-      "Button_Switch_THT:SW_PUSH_6mm"
-      (at 299.72 64.77 0)
-      (effects (font (size 1.27 1.27)) hide))
-    (property "Datasheet" "~" (at 299.72 64.77 0) (effects (font (size 1.27 1.27)) hide))
-    (pin "1" (uuid "798a4e34-b02a-5f79-a593-bc97dac68949"))
-    (pin "2" (uuid "fa7acb4c-67d3-5ed8-abdc-c29401e08873"))
-    (instances
-      (project
-        "retropad_nes_gb"
-        (path "/3ba6fbae-d46c-5be5-af7e-2637f842a48f" (reference "SW3") (unit 1)))))
-  (wire
-    (pts (xy 294.64 64.77) (xy 292.1 64.77))
-    (stroke (width 0) (type default))
-    (uuid "512537b3-5c27-58b9-a934-ebd046da85df"))
-  (global_label
-    "K_LEFT"
-    (shape bidirectional)
-    (at 292.1 64.77 180)
-    (fields_autoplaced)
-    (effects (font (size 1.27 1.27)) (justify right))
-    (uuid "90a6a2fc-d203-5f23-a9ba-f0809e7a9424")
-    (property
-      "Intersheetrefs"
-      "${INTERSHEET_REFS}"
-      (at 292.1 64.77 0)
-      (effects (font (size 1.27 1.27)) hide)))
-  (wire
-    (pts (xy 304.8 64.77) (xy 307.34 64.77))
-    (stroke (width 0) (type default))
-    (uuid "f52c2333-d1b2-55dc-97e9-91e899939a73"))
-  (symbol
-    (lib_id "power:GND")
-    (at 307.34 64.77 90)
-    (unit 1)
-    (in_bom no)
-    (on_board yes)
-    (dnp no)
-    (uuid "163d5fb2-99ad-5a42-9c19-e785db49f27c")
-    (property
-      "Reference"
-      "#PWR20"
-      (at 309.88 63.5 0)
-      (effects (font (size 1.27 1.27)) (justify left) hide))
-    (property "Value" "GND" (at 309.88 66.04 0) (effects (font (size 1.27 1.27)) (justify left)))
-    (property "Footprint" "" (at 307.34 64.77 0) (effects (font (size 1.27 1.27)) hide))
-    (property "Datasheet" "~" (at 307.34 64.77 0) (effects (font (size 1.27 1.27)) hide))
-    (pin "1" (uuid "bd428879-f066-58cb-bdf4-b9b8af325e39"))
-    (instances
-      (project
-        "retropad_nes_gb"
-        (path "/3ba6fbae-d46c-5be5-af7e-2637f842a48f" (reference "#PWR20") (unit 1)))))
-  (text
-    "LEFT"
-    (at 320.04 63.5 0)
-    (effects (font (size 1.27 1.27)) (justify left))
-    (uuid "79020429-28b2-5e24-b2a7-0171602f4fd5"))
-  (symbol
-    (lib_id "Switch:SW_Push")
-    (at 299.72 77.47 0)
-    (unit 1)
-    (in_bom yes)
-    (on_board yes)
-    (dnp no)
-    (uuid "370bdcc7-9885-5f06-a552-fee40365ca92")
-    (property "Reference" "SW4" (at 297.18 72.39 0) (effects (font (size 1.27 1.27)) (justify left)))
-    (property "Value" "RIGHT" (at 297.18 81.28 0) (effects (font (size 1.27 1.27)) (justify left)))
-    (property
-      "Footprint"
-      "Button_Switch_THT:SW_PUSH_6mm"
-      (at 299.72 77.47 0)
-      (effects (font (size 1.27 1.27)) hide))
-    (property "Datasheet" "~" (at 299.72 77.47 0) (effects (font (size 1.27 1.27)) hide))
-    (pin "1" (uuid "8e12cbc4-63db-57f7-9de5-06899abf9242"))
-    (pin "2" (uuid "6dca0e4e-de6e-54f8-aadc-d2f7e27af409"))
-    (instances
-      (project
-        "retropad_nes_gb"
-        (path "/3ba6fbae-d46c-5be5-af7e-2637f842a48f" (reference "SW4") (unit 1)))))
-  (wire
-    (pts (xy 294.64 77.47) (xy 292.1 77.47))
-    (stroke (width 0) (type default))
-    (uuid "38f01c0c-6678-5868-8f51-21de31baf5fa"))
-  (global_label
-    "K_RIGHT"
-    (shape bidirectional)
-    (at 292.1 77.47 180)
-    (fields_autoplaced)
-    (effects (font (size 1.27 1.27)) (justify right))
-    (uuid "0c84b40c-b66e-5509-ad6e-17a51ee0aa2b")
-    (property
-      "Intersheetrefs"
-      "${INTERSHEET_REFS}"
-      (at 292.1 77.47 0)
-      (effects (font (size 1.27 1.27)) hide)))
-  (wire
-    (pts (xy 304.8 77.47) (xy 307.34 77.47))
-    (stroke (width 0) (type default))
-    (uuid "f3a02e0d-6e50-5f2b-8737-e23d498eadc0"))
-  (symbol
-    (lib_id "power:GND")
-    (at 307.34 77.47 90)
-    (unit 1)
-    (in_bom no)
-    (on_board yes)
-    (dnp no)
-    (uuid "c568f1ba-6cfb-596b-90fc-64b2b934c09c")
-    (property
-      "Reference"
-      "#PWR21"
-      (at 309.88 76.2 0)
-      (effects (font (size 1.27 1.27)) (justify left) hide))
-    (property "Value" "GND" (at 309.88 78.74 0) (effects (font (size 1.27 1.27)) (justify left)))
-    (property "Footprint" "" (at 307.34 77.47 0) (effects (font (size 1.27 1.27)) hide))
-    (property "Datasheet" "~" (at 307.34 77.47 0) (effects (font (size 1.27 1.27)) hide))
     (pin "1" (uuid "29bd830b-f396-5b3c-8017-2cfc9aa83ceb"))
     (instances
       (project
         "retropad_nes_gb"
         (path "/3ba6fbae-d46c-5be5-af7e-2637f842a48f" (reference "#PWR21") (unit 1)))))
-  (text
-    "RIGHT"
-    (at 320.04 76.2 0)
+  (wire
+    (pts (xy 304.8 57.15) (xy 307.34 57.15))
+    (stroke (width 0) (type default))
+    (uuid "5d90d1f1-7c56-5a01-aede-cef2542a5fc9"))
+  (global_label
+    "K_DOWN"
+    (shape bidirectional)
+    (at 307.34 57.15 0)
+    (fields_autoplaced)
     (effects (font (size 1.27 1.27)) (justify left))
-    (uuid "04b50fcb-4eb5-5d3f-9189-83f583ae8ca1"))
+    (uuid "61ff1b95-290a-5ccb-b23d-2d6f192c6a8a")
+    (property
+      "Intersheetrefs"
+      "${INTERSHEET_REFS}"
+      (at 307.34 57.15 0)
+      (effects (font (size 1.27 1.27)) hide)))
+  (wire
+    (pts (xy 294.64 57.15) (xy 292.1 57.15))
+    (stroke (width 0) (type default))
+    (uuid "d93cda9d-700a-5ae8-836d-50ef44771945"))
+  (global_label
+    "K_DOWN"
+    (shape bidirectional)
+    (at 292.1 57.15 180)
+    (fields_autoplaced)
+    (effects (font (size 1.27 1.27)) (justify right))
+    (uuid "afde41bc-6241-5b24-809d-b8601a35caa7")
+    (property
+      "Intersheetrefs"
+      "${INTERSHEET_REFS}"
+      (at 292.1 57.15 0)
+      (effects (font (size 1.27 1.27)) hide)))
+  (text
+    "DOWN"
+    (at 320.04 53.34 0)
+    (effects (font (size 1.27 1.27)) (justify left))
+    (uuid "d5df87fb-bf0e-5928-9daa-97975b89859f"))
   (symbol
-    (lib_id "Switch:SW_Push")
-    (at 299.72 90.17 0)
+    (lib_id "RetroPad:SW_Push_4pin")
+    (at 299.72 69.85 0)
     (unit 1)
     (in_bom yes)
     (on_board yes)
     (dnp no)
-    (uuid "b33348d5-5605-556c-9f89-a56e4f99c12a")
-    (property "Reference" "SW5" (at 297.18 85.09 0) (effects (font (size 1.27 1.27)) (justify left)))
-    (property "Value" "B" (at 297.18 93.98 0) (effects (font (size 1.27 1.27)) (justify left)))
+    (uuid "4eaa4c7a-93b8-57af-9a17-9eb702df1fe4")
+    (property "Reference" "SW3" (at 297.18 64.77 0) (effects (font (size 1.27 1.27)) (justify left)))
+    (property "Value" "LEFT" (at 297.18 74.93 0) (effects (font (size 1.27 1.27)) (justify left)))
     (property
       "Footprint"
-      "Button_Switch_THT:SW_PUSH-12mm"
-      (at 299.72 90.17 0)
+      "RetroPad:SW_PUSH_6mm_4pin"
+      (at 299.72 69.85 0)
       (effects (font (size 1.27 1.27)) hide))
-    (property "Datasheet" "~" (at 299.72 90.17 0) (effects (font (size 1.27 1.27)) hide))
-    (pin "1" (uuid "a865a1c9-6649-595b-b847-cc7411effd86"))
-    (pin "2" (uuid "7611a637-68ea-5fb1-b59a-09854ff22cc5"))
+    (property "Datasheet" "~" (at 299.72 69.85 0) (effects (font (size 1.27 1.27)) hide))
+    (pin "1" (uuid "798a4e34-b02a-5f79-a593-bc97dac68949"))
+    (pin "2" (uuid "fa7acb4c-67d3-5ed8-abdc-c29401e08873"))
+    (pin "3" (uuid "d77f7ba9-0794-5a49-85a9-4327583c4c30"))
+    (pin "4" (uuid "419ebf31-7d25-54cc-8d82-c3622574441a"))
     (instances
       (project
         "retropad_nes_gb"
-        (path "/3ba6fbae-d46c-5be5-af7e-2637f842a48f" (reference "SW5") (unit 1)))))
+        (path "/3ba6fbae-d46c-5be5-af7e-2637f842a48f" (reference "SW3") (unit 1)))))
   (wire
-    (pts (xy 294.64 90.17) (xy 292.1 90.17))
+    (pts (xy 294.64 67.31) (xy 292.1 67.31))
     (stroke (width 0) (type default))
-    (uuid "28b78451-14a3-5397-92f6-eaae0685ddc9"))
-  (global_label
-    "K_B"
-    (shape bidirectional)
-    (at 292.1 90.17 180)
-    (fields_autoplaced)
-    (effects (font (size 1.27 1.27)) (justify right))
-    (uuid "b4c9abaa-22b5-5e23-bf85-1851d9088c27")
-    (property
-      "Intersheetrefs"
-      "${INTERSHEET_REFS}"
-      (at 292.1 90.17 0)
-      (effects (font (size 1.27 1.27)) hide)))
-  (wire
-    (pts (xy 304.8 90.17) (xy 307.34 90.17))
-    (stroke (width 0) (type default))
-    (uuid "5b487375-ecf3-5e65-988f-16ea8151e475"))
+    (uuid "fd618214-a76f-588e-b672-2acf0800c912"))
   (symbol
     (lib_id "power:GND")
-    (at 307.34 90.17 90)
+    (at 292.1 67.31 270)
     (unit 1)
     (in_bom no)
     (on_board yes)
@@ -2434,66 +2389,23 @@
     (property
       "Reference"
       "#PWR22"
-      (at 309.88 88.9 0)
+      (at 294.64 66.04 0)
       (effects (font (size 1.27 1.27)) (justify left) hide))
-    (property "Value" "GND" (at 309.88 91.44 0) (effects (font (size 1.27 1.27)) (justify left)))
-    (property "Footprint" "" (at 307.34 90.17 0) (effects (font (size 1.27 1.27)) hide))
-    (property "Datasheet" "~" (at 307.34 90.17 0) (effects (font (size 1.27 1.27)) hide))
+    (property "Value" "GND" (at 294.64 68.58 0) (effects (font (size 1.27 1.27)) (justify left)))
+    (property "Footprint" "" (at 292.1 67.31 0) (effects (font (size 1.27 1.27)) hide))
+    (property "Datasheet" "~" (at 292.1 67.31 0) (effects (font (size 1.27 1.27)) hide))
     (pin "1" (uuid "27e2378a-e0bc-5d84-b551-592d54c7ab6b"))
     (instances
       (project
         "retropad_nes_gb"
         (path "/3ba6fbae-d46c-5be5-af7e-2637f842a48f" (reference "#PWR22") (unit 1)))))
-  (text
-    "B"
-    (at 320.04 88.9 0)
-    (effects (font (size 1.27 1.27)) (justify left))
-    (uuid "917c5460-4a56-5dd8-a24e-322f94322059"))
-  (symbol
-    (lib_id "Switch:SW_Push")
-    (at 299.72 102.87 0)
-    (unit 1)
-    (in_bom yes)
-    (on_board yes)
-    (dnp no)
-    (uuid "233cf54f-776e-5d65-8c51-6f0d2576669f")
-    (property "Reference" "SW6" (at 297.18 97.79 0) (effects (font (size 1.27 1.27)) (justify left)))
-    (property "Value" "A" (at 297.18 106.68 0) (effects (font (size 1.27 1.27)) (justify left)))
-    (property
-      "Footprint"
-      "Button_Switch_THT:SW_PUSH-12mm"
-      (at 299.72 102.87 0)
-      (effects (font (size 1.27 1.27)) hide))
-    (property "Datasheet" "~" (at 299.72 102.87 0) (effects (font (size 1.27 1.27)) hide))
-    (pin "1" (uuid "2831537f-c3fe-5c7b-91bc-13ee7d1c55a4"))
-    (pin "2" (uuid "0f3932f7-1c77-58ed-869f-a689cc53d59a"))
-    (instances
-      (project
-        "retropad_nes_gb"
-        (path "/3ba6fbae-d46c-5be5-af7e-2637f842a48f" (reference "SW6") (unit 1)))))
   (wire
-    (pts (xy 294.64 102.87) (xy 292.1 102.87))
+    (pts (xy 304.8 67.31) (xy 307.34 67.31))
     (stroke (width 0) (type default))
-    (uuid "e6224e07-ddaa-5be3-a855-e1a2a910fc9a"))
-  (global_label
-    "K_A"
-    (shape bidirectional)
-    (at 292.1 102.87 180)
-    (fields_autoplaced)
-    (effects (font (size 1.27 1.27)) (justify right))
-    (uuid "a4f3533b-7a20-5aee-bab0-20b3f5b03a0d")
-    (property
-      "Intersheetrefs"
-      "${INTERSHEET_REFS}"
-      (at 292.1 102.87 0)
-      (effects (font (size 1.27 1.27)) hide)))
-  (wire
-    (pts (xy 304.8 102.87) (xy 307.34 102.87))
-    (stroke (width 0) (type default))
-    (uuid "a90aa51b-4772-5dd8-bee8-86f883443ff8"))
+    (uuid "31eca701-07f7-54a0-bbb7-9fce1be21e60"))
   (symbol
     (lib_id "power:GND")
-    (at 307.34 102.87 90)
+    (at 307.34 67.31 90)
     (unit 1)
     (in_bom no)
     (on_board yes)
@@ -2502,66 +2414,84 @@
     (property
       "Reference"
       "#PWR23"
-      (at 309.88 101.6 0)
+      (at 309.88 66.04 0)
       (effects (font (size 1.27 1.27)) (justify left) hide))
-    (property "Value" "GND" (at 309.88 104.14 0) (effects (font (size 1.27 1.27)) (justify left)))
-    (property "Footprint" "" (at 307.34 102.87 0) (effects (font (size 1.27 1.27)) hide))
-    (property "Datasheet" "~" (at 307.34 102.87 0) (effects (font (size 1.27 1.27)) hide))
+    (property "Value" "GND" (at 309.88 68.58 0) (effects (font (size 1.27 1.27)) (justify left)))
+    (property "Footprint" "" (at 307.34 67.31 0) (effects (font (size 1.27 1.27)) hide))
+    (property "Datasheet" "~" (at 307.34 67.31 0) (effects (font (size 1.27 1.27)) hide))
     (pin "1" (uuid "4f609f24-af05-56a8-8fae-469fb99b695b"))
     (instances
       (project
         "retropad_nes_gb"
         (path "/3ba6fbae-d46c-5be5-af7e-2637f842a48f" (reference "#PWR23") (unit 1)))))
-  (text
-    "A"
-    (at 320.04 101.6 0)
+  (wire
+    (pts (xy 304.8 72.39) (xy 307.34 72.39))
+    (stroke (width 0) (type default))
+    (uuid "a24bbc7a-b314-5926-84e0-13331d1a6c34"))
+  (global_label
+    "K_LEFT"
+    (shape bidirectional)
+    (at 307.34 72.39 0)
+    (fields_autoplaced)
     (effects (font (size 1.27 1.27)) (justify left))
-    (uuid "48a0fc1c-4c4a-51a2-a934-9b9b8eca9d71"))
+    (uuid "e3a9e40b-abaa-5b66-8ffd-3b67688d7e25")
+    (property
+      "Intersheetrefs"
+      "${INTERSHEET_REFS}"
+      (at 307.34 72.39 0)
+      (effects (font (size 1.27 1.27)) hide)))
+  (wire
+    (pts (xy 294.64 72.39) (xy 292.1 72.39))
+    (stroke (width 0) (type default))
+    (uuid "927d4f60-def1-57b1-ba69-91a67a2174fc"))
+  (global_label
+    "K_LEFT"
+    (shape bidirectional)
+    (at 292.1 72.39 180)
+    (fields_autoplaced)
+    (effects (font (size 1.27 1.27)) (justify right))
+    (uuid "c64cec9a-3c35-5740-89bd-505594f32a03")
+    (property
+      "Intersheetrefs"
+      "${INTERSHEET_REFS}"
+      (at 292.1 72.39 0)
+      (effects (font (size 1.27 1.27)) hide)))
+  (text
+    "LEFT"
+    (at 320.04 68.58 0)
+    (effects (font (size 1.27 1.27)) (justify left))
+    (uuid "79020429-28b2-5e24-b2a7-0171602f4fd5"))
   (symbol
-    (lib_id "Switch:SW_Push")
-    (at 299.72 115.57 0)
+    (lib_id "RetroPad:SW_Push_4pin")
+    (at 299.72 85.09 0)
     (unit 1)
     (in_bom yes)
     (on_board yes)
     (dnp no)
-    (uuid "faf9cef4-a3cb-567d-90b8-7edb529a55e5")
-    (property "Reference" "SW7" (at 297.18 110.49 0) (effects (font (size 1.27 1.27)) (justify left)))
-    (property "Value" "SELECT" (at 297.18 119.38 0) (effects (font (size 1.27 1.27)) (justify left)))
+    (uuid "370bdcc7-9885-5f06-a552-fee40365ca92")
+    (property "Reference" "SW4" (at 297.18 80.01 0) (effects (font (size 1.27 1.27)) (justify left)))
+    (property "Value" "RIGHT" (at 297.18 90.17 0) (effects (font (size 1.27 1.27)) (justify left)))
     (property
       "Footprint"
-      "Button_Switch_THT:SW_PUSH_6mm"
-      (at 299.72 115.57 0)
+      "RetroPad:SW_PUSH_6mm_4pin"
+      (at 299.72 85.09 0)
       (effects (font (size 1.27 1.27)) hide))
-    (property "Datasheet" "~" (at 299.72 115.57 0) (effects (font (size 1.27 1.27)) hide))
-    (pin "1" (uuid "a1e39e8e-f74f-5254-9d75-0a92c30301c0"))
-    (pin "2" (uuid "5c2e4b17-f1ad-5800-9135-69a8a99519da"))
+    (property "Datasheet" "~" (at 299.72 85.09 0) (effects (font (size 1.27 1.27)) hide))
+    (pin "1" (uuid "8e12cbc4-63db-57f7-9de5-06899abf9242"))
+    (pin "2" (uuid "6dca0e4e-de6e-54f8-aadc-d2f7e27af409"))
+    (pin "3" (uuid "bca9ada5-a9f9-576b-88e2-a1ced7a9a77d"))
+    (pin "4" (uuid "650b61b5-8477-538d-882d-4fdb80c3038f"))
     (instances
       (project
         "retropad_nes_gb"
-        (path "/3ba6fbae-d46c-5be5-af7e-2637f842a48f" (reference "SW7") (unit 1)))))
+        (path "/3ba6fbae-d46c-5be5-af7e-2637f842a48f" (reference "SW4") (unit 1)))))
   (wire
-    (pts (xy 294.64 115.57) (xy 292.1 115.57))
+    (pts (xy 294.64 82.55) (xy 292.1 82.55))
     (stroke (width 0) (type default))
-    (uuid "bdae82c3-ff86-507f-bd89-17cf21ea88f0"))
-  (global_label
-    "K_SELECT"
-    (shape bidirectional)
-    (at 292.1 115.57 180)
-    (fields_autoplaced)
-    (effects (font (size 1.27 1.27)) (justify right))
-    (uuid "66ea2bb6-c55a-55c4-83d4-8fee0068e118")
-    (property
-      "Intersheetrefs"
-      "${INTERSHEET_REFS}"
-      (at 292.1 115.57 0)
-      (effects (font (size 1.27 1.27)) hide)))
-  (wire
-    (pts (xy 304.8 115.57) (xy 307.34 115.57))
-    (stroke (width 0) (type default))
-    (uuid "386f9517-c83a-5041-aa07-6f33c83e1e35"))
+    (uuid "2a9a3f73-1faf-59b8-bf5e-50a24cc62efc"))
   (symbol
     (lib_id "power:GND")
-    (at 307.34 115.57 90)
+    (at 292.1 82.55 270)
     (unit 1)
     (in_bom no)
     (on_board yes)
@@ -2570,59 +2500,349 @@
     (property
       "Reference"
       "#PWR24"
-      (at 309.88 114.3 0)
+      (at 294.64 81.28 0)
       (effects (font (size 1.27 1.27)) (justify left) hide))
-    (property "Value" "GND" (at 309.88 116.84 0) (effects (font (size 1.27 1.27)) (justify left)))
-    (property "Footprint" "" (at 307.34 115.57 0) (effects (font (size 1.27 1.27)) hide))
-    (property "Datasheet" "~" (at 307.34 115.57 0) (effects (font (size 1.27 1.27)) hide))
+    (property "Value" "GND" (at 294.64 83.82 0) (effects (font (size 1.27 1.27)) (justify left)))
+    (property "Footprint" "" (at 292.1 82.55 0) (effects (font (size 1.27 1.27)) hide))
+    (property "Datasheet" "~" (at 292.1 82.55 0) (effects (font (size 1.27 1.27)) hide))
     (pin "1" (uuid "9ee56631-0a51-573a-82f3-8e47b8b5df6b"))
     (instances
       (project
         "retropad_nes_gb"
         (path "/3ba6fbae-d46c-5be5-af7e-2637f842a48f" (reference "#PWR24") (unit 1)))))
-  (text
-    "SELECT"
-    (at 320.04 114.3 0)
-    (effects (font (size 1.27 1.27)) (justify left))
-    (uuid "3af04471-7718-51cf-8181-39fd8bb08db9"))
+  (wire
+    (pts (xy 304.8 82.55) (xy 307.34 82.55))
+    (stroke (width 0) (type default))
+    (uuid "a8755a54-cf94-5a2b-8434-73aa9acc6746"))
   (symbol
-    (lib_id "Switch:SW_Push")
-    (at 299.72 128.27 0)
+    (lib_id "power:GND")
+    (at 307.34 82.55 90)
+    (unit 1)
+    (in_bom no)
+    (on_board yes)
+    (dnp no)
+    (uuid "7099f697-0fe2-588f-bd60-9f5e78da7975")
+    (property
+      "Reference"
+      "#PWR25"
+      (at 309.88 81.28 0)
+      (effects (font (size 1.27 1.27)) (justify left) hide))
+    (property "Value" "GND" (at 309.88 83.82 0) (effects (font (size 1.27 1.27)) (justify left)))
+    (property "Footprint" "" (at 307.34 82.55 0) (effects (font (size 1.27 1.27)) hide))
+    (property "Datasheet" "~" (at 307.34 82.55 0) (effects (font (size 1.27 1.27)) hide))
+    (pin "1" (uuid "48295a3d-9be8-58b0-a34a-c700718c61de"))
+    (instances
+      (project
+        "retropad_nes_gb"
+        (path "/3ba6fbae-d46c-5be5-af7e-2637f842a48f" (reference "#PWR25") (unit 1)))))
+  (wire
+    (pts (xy 304.8 87.63) (xy 307.34 87.63))
+    (stroke (width 0) (type default))
+    (uuid "67090ed2-cb56-5e91-8581-d3e457b9ea57"))
+  (global_label
+    "K_RIGHT"
+    (shape bidirectional)
+    (at 307.34 87.63 0)
+    (fields_autoplaced)
+    (effects (font (size 1.27 1.27)) (justify left))
+    (uuid "27b7db2c-e578-50e5-8b0f-518b4471edd2")
+    (property
+      "Intersheetrefs"
+      "${INTERSHEET_REFS}"
+      (at 307.34 87.63 0)
+      (effects (font (size 1.27 1.27)) hide)))
+  (wire
+    (pts (xy 294.64 87.63) (xy 292.1 87.63))
+    (stroke (width 0) (type default))
+    (uuid "4cc2e14a-aa44-5884-80ca-2996b12820cb"))
+  (global_label
+    "K_RIGHT"
+    (shape bidirectional)
+    (at 292.1 87.63 180)
+    (fields_autoplaced)
+    (effects (font (size 1.27 1.27)) (justify right))
+    (uuid "45c1f269-5ad7-53a7-9b2e-f9e86c06810f")
+    (property
+      "Intersheetrefs"
+      "${INTERSHEET_REFS}"
+      (at 292.1 87.63 0)
+      (effects (font (size 1.27 1.27)) hide)))
+  (text
+    "RIGHT"
+    (at 320.04 83.82 0)
+    (effects (font (size 1.27 1.27)) (justify left))
+    (uuid "04b50fcb-4eb5-5d3f-9189-83f583ae8ca1"))
+  (symbol
+    (lib_id "RetroPad:SW_Push_4pin")
+    (at 299.72 100.33 0)
     (unit 1)
     (in_bom yes)
     (on_board yes)
     (dnp no)
-    (uuid "e96812a6-574a-51c4-b16e-588e2f9dbbf7")
-    (property "Reference" "SW8" (at 297.18 123.19 0) (effects (font (size 1.27 1.27)) (justify left)))
-    (property "Value" "START" (at 297.18 132.08 0) (effects (font (size 1.27 1.27)) (justify left)))
+    (uuid "b33348d5-5605-556c-9f89-a56e4f99c12a")
+    (property "Reference" "SW5" (at 297.18 95.25 0) (effects (font (size 1.27 1.27)) (justify left)))
+    (property "Value" "B" (at 297.18 105.41 0) (effects (font (size 1.27 1.27)) (justify left)))
     (property
       "Footprint"
-      "Button_Switch_THT:SW_PUSH_6mm"
-      (at 299.72 128.27 0)
+      "RetroPad:SW_PUSH-12mm_4pin"
+      (at 299.72 100.33 0)
       (effects (font (size 1.27 1.27)) hide))
-    (property "Datasheet" "~" (at 299.72 128.27 0) (effects (font (size 1.27 1.27)) hide))
-    (pin "1" (uuid "9bd1975b-a278-50ea-8673-d8dd057983ff"))
-    (pin "2" (uuid "965fb5d2-7840-5ce1-a1f5-b97c56792b3e"))
+    (property "Datasheet" "~" (at 299.72 100.33 0) (effects (font (size 1.27 1.27)) hide))
+    (pin "1" (uuid "a865a1c9-6649-595b-b847-cc7411effd86"))
+    (pin "2" (uuid "7611a637-68ea-5fb1-b59a-09854ff22cc5"))
+    (pin "3" (uuid "951bf771-a9da-5be1-9bed-7b84db82d0ad"))
+    (pin "4" (uuid "a6faad34-324a-5cf9-bc16-96519d892fc5"))
     (instances
       (project
         "retropad_nes_gb"
-        (path "/3ba6fbae-d46c-5be5-af7e-2637f842a48f" (reference "SW8") (unit 1)))))
+        (path "/3ba6fbae-d46c-5be5-af7e-2637f842a48f" (reference "SW5") (unit 1)))))
+  (wire
+    (pts (xy 294.64 97.79) (xy 292.1 97.79))
+    (stroke (width 0) (type default))
+    (uuid "1d4f17ad-7df3-5d22-a466-60f468dd7adf"))
+  (symbol
+    (lib_id "power:GND")
+    (at 292.1 97.79 270)
+    (unit 1)
+    (in_bom no)
+    (on_board yes)
+    (dnp no)
+    (uuid "df4dd7e8-b942-5442-8db4-bc4e6482d59e")
+    (property
+      "Reference"
+      "#PWR26"
+      (at 294.64 96.52 0)
+      (effects (font (size 1.27 1.27)) (justify left) hide))
+    (property "Value" "GND" (at 294.64 99.06 0) (effects (font (size 1.27 1.27)) (justify left)))
+    (property "Footprint" "" (at 292.1 97.79 0) (effects (font (size 1.27 1.27)) hide))
+    (property "Datasheet" "~" (at 292.1 97.79 0) (effects (font (size 1.27 1.27)) hide))
+    (pin "1" (uuid "a50f4e10-199d-5015-aba8-53b7f586243d"))
+    (instances
+      (project
+        "retropad_nes_gb"
+        (path "/3ba6fbae-d46c-5be5-af7e-2637f842a48f" (reference "#PWR26") (unit 1)))))
+  (wire
+    (pts (xy 304.8 97.79) (xy 307.34 97.79))
+    (stroke (width 0) (type default))
+    (uuid "6e06cb5c-713b-5911-8aad-b89fd05e84e4"))
+  (symbol
+    (lib_id "power:GND")
+    (at 307.34 97.79 90)
+    (unit 1)
+    (in_bom no)
+    (on_board yes)
+    (dnp no)
+    (uuid "9d6b0a22-5927-5563-a343-0472b060a37f")
+    (property
+      "Reference"
+      "#PWR27"
+      (at 309.88 96.52 0)
+      (effects (font (size 1.27 1.27)) (justify left) hide))
+    (property "Value" "GND" (at 309.88 99.06 0) (effects (font (size 1.27 1.27)) (justify left)))
+    (property "Footprint" "" (at 307.34 97.79 0) (effects (font (size 1.27 1.27)) hide))
+    (property "Datasheet" "~" (at 307.34 97.79 0) (effects (font (size 1.27 1.27)) hide))
+    (pin "1" (uuid "e325978d-4058-5956-91fd-6294e24df0e7"))
+    (instances
+      (project
+        "retropad_nes_gb"
+        (path "/3ba6fbae-d46c-5be5-af7e-2637f842a48f" (reference "#PWR27") (unit 1)))))
+  (wire
+    (pts (xy 304.8 102.87) (xy 307.34 102.87))
+    (stroke (width 0) (type default))
+    (uuid "a90aa51b-4772-5dd8-bee8-86f883443ff8"))
+  (global_label
+    "K_B"
+    (shape bidirectional)
+    (at 307.34 102.87 0)
+    (fields_autoplaced)
+    (effects (font (size 1.27 1.27)) (justify left))
+    (uuid "7633585c-32ed-53c4-9608-48a2714808a0")
+    (property
+      "Intersheetrefs"
+      "${INTERSHEET_REFS}"
+      (at 307.34 102.87 0)
+      (effects (font (size 1.27 1.27)) hide)))
+  (wire
+    (pts (xy 294.64 102.87) (xy 292.1 102.87))
+    (stroke (width 0) (type default))
+    (uuid "e6224e07-ddaa-5be3-a855-e1a2a910fc9a"))
+  (global_label
+    "K_B"
+    (shape bidirectional)
+    (at 292.1 102.87 180)
+    (fields_autoplaced)
+    (effects (font (size 1.27 1.27)) (justify right))
+    (uuid "27d15500-f1b0-509f-9cd0-0dcec432acf7")
+    (property
+      "Intersheetrefs"
+      "${INTERSHEET_REFS}"
+      (at 292.1 102.87 0)
+      (effects (font (size 1.27 1.27)) hide)))
+  (text
+    "B"
+    (at 320.04 99.06 0)
+    (effects (font (size 1.27 1.27)) (justify left))
+    (uuid "917c5460-4a56-5dd8-a24e-322f94322059"))
+  (symbol
+    (lib_id "RetroPad:SW_Push_4pin")
+    (at 299.72 115.57 0)
+    (unit 1)
+    (in_bom yes)
+    (on_board yes)
+    (dnp no)
+    (uuid "233cf54f-776e-5d65-8c51-6f0d2576669f")
+    (property "Reference" "SW6" (at 297.18 110.49 0) (effects (font (size 1.27 1.27)) (justify left)))
+    (property "Value" "A" (at 297.18 120.65 0) (effects (font (size 1.27 1.27)) (justify left)))
+    (property
+      "Footprint"
+      "RetroPad:SW_PUSH-12mm_4pin"
+      (at 299.72 115.57 0)
+      (effects (font (size 1.27 1.27)) hide))
+    (property "Datasheet" "~" (at 299.72 115.57 0) (effects (font (size 1.27 1.27)) hide))
+    (pin "1" (uuid "2831537f-c3fe-5c7b-91bc-13ee7d1c55a4"))
+    (pin "2" (uuid "0f3932f7-1c77-58ed-869f-a689cc53d59a"))
+    (pin "3" (uuid "b444485f-510d-5cf2-8884-bb24d35bf42d"))
+    (pin "4" (uuid "f012a49d-9d4b-5299-9544-41ae27d0df21"))
+    (instances
+      (project
+        "retropad_nes_gb"
+        (path "/3ba6fbae-d46c-5be5-af7e-2637f842a48f" (reference "SW6") (unit 1)))))
+  (wire
+    (pts (xy 294.64 113.03) (xy 292.1 113.03))
+    (stroke (width 0) (type default))
+    (uuid "7bd1de91-0088-5b85-a030-5d9da85f46b2"))
+  (symbol
+    (lib_id "power:GND")
+    (at 292.1 113.03 270)
+    (unit 1)
+    (in_bom no)
+    (on_board yes)
+    (dnp no)
+    (uuid "b5941c78-e971-5d17-ad73-c73c40a68892")
+    (property
+      "Reference"
+      "#PWR28"
+      (at 294.64 111.76 0)
+      (effects (font (size 1.27 1.27)) (justify left) hide))
+    (property "Value" "GND" (at 294.64 114.3 0) (effects (font (size 1.27 1.27)) (justify left)))
+    (property "Footprint" "" (at 292.1 113.03 0) (effects (font (size 1.27 1.27)) hide))
+    (property "Datasheet" "~" (at 292.1 113.03 0) (effects (font (size 1.27 1.27)) hide))
+    (pin "1" (uuid "88304ee8-729a-52d2-84d6-0c8d604a3ec4"))
+    (instances
+      (project
+        "retropad_nes_gb"
+        (path "/3ba6fbae-d46c-5be5-af7e-2637f842a48f" (reference "#PWR28") (unit 1)))))
+  (wire
+    (pts (xy 304.8 113.03) (xy 307.34 113.03))
+    (stroke (width 0) (type default))
+    (uuid "eb76f794-f0ed-5efa-9ef1-4d122a1dac6d"))
+  (symbol
+    (lib_id "power:GND")
+    (at 307.34 113.03 90)
+    (unit 1)
+    (in_bom no)
+    (on_board yes)
+    (dnp no)
+    (uuid "08a7ccd0-2b65-5f4a-a526-a6b9429ad692")
+    (property
+      "Reference"
+      "#PWR29"
+      (at 309.88 111.76 0)
+      (effects (font (size 1.27 1.27)) (justify left) hide))
+    (property "Value" "GND" (at 309.88 114.3 0) (effects (font (size 1.27 1.27)) (justify left)))
+    (property "Footprint" "" (at 307.34 113.03 0) (effects (font (size 1.27 1.27)) hide))
+    (property "Datasheet" "~" (at 307.34 113.03 0) (effects (font (size 1.27 1.27)) hide))
+    (pin "1" (uuid "b6bd31b8-8aaf-57ad-8983-9a3491311799"))
+    (instances
+      (project
+        "retropad_nes_gb"
+        (path "/3ba6fbae-d46c-5be5-af7e-2637f842a48f" (reference "#PWR29") (unit 1)))))
+  (wire
+    (pts (xy 304.8 118.11) (xy 307.34 118.11))
+    (stroke (width 0) (type default))
+    (uuid "bf27079c-ad1e-55f8-b8ab-f45bb4656d74"))
+  (global_label
+    "K_A"
+    (shape bidirectional)
+    (at 307.34 118.11 0)
+    (fields_autoplaced)
+    (effects (font (size 1.27 1.27)) (justify left))
+    (uuid "a73900b0-69d1-5dfb-959f-e6e29cca71a2")
+    (property
+      "Intersheetrefs"
+      "${INTERSHEET_REFS}"
+      (at 307.34 118.11 0)
+      (effects (font (size 1.27 1.27)) hide)))
+  (wire
+    (pts (xy 294.64 118.11) (xy 292.1 118.11))
+    (stroke (width 0) (type default))
+    (uuid "98bda7c9-c445-5a4c-b6d5-7e6f851a8de8"))
+  (global_label
+    "K_A"
+    (shape bidirectional)
+    (at 292.1 118.11 180)
+    (fields_autoplaced)
+    (effects (font (size 1.27 1.27)) (justify right))
+    (uuid "2758b7e8-6dd0-521b-9e8d-a110ab9d750b")
+    (property
+      "Intersheetrefs"
+      "${INTERSHEET_REFS}"
+      (at 292.1 118.11 0)
+      (effects (font (size 1.27 1.27)) hide)))
+  (text
+    "A"
+    (at 320.04 114.3 0)
+    (effects (font (size 1.27 1.27)) (justify left))
+    (uuid "48a0fc1c-4c4a-51a2-a934-9b9b8eca9d71"))
+  (symbol
+    (lib_id "RetroPad:SW_Push_4pin")
+    (at 299.72 130.81 0)
+    (unit 1)
+    (in_bom yes)
+    (on_board yes)
+    (dnp no)
+    (uuid "faf9cef4-a3cb-567d-90b8-7edb529a55e5")
+    (property "Reference" "SW7" (at 297.18 125.73 0) (effects (font (size 1.27 1.27)) (justify left)))
+    (property "Value" "SELECT" (at 297.18 135.89 0) (effects (font (size 1.27 1.27)) (justify left)))
+    (property
+      "Footprint"
+      "RetroPad:SW_PUSH_6mm_4pin"
+      (at 299.72 130.81 0)
+      (effects (font (size 1.27 1.27)) hide))
+    (property "Datasheet" "~" (at 299.72 130.81 0) (effects (font (size 1.27 1.27)) hide))
+    (pin "1" (uuid "a1e39e8e-f74f-5254-9d75-0a92c30301c0"))
+    (pin "2" (uuid "5c2e4b17-f1ad-5800-9135-69a8a99519da"))
+    (pin "3" (uuid "4c0f4696-6521-5406-ad15-5302d9d33a04"))
+    (pin "4" (uuid "38db7c1d-a2f8-51d9-953e-aff12a6efc1a"))
+    (instances
+      (project
+        "retropad_nes_gb"
+        (path "/3ba6fbae-d46c-5be5-af7e-2637f842a48f" (reference "SW7") (unit 1)))))
   (wire
     (pts (xy 294.64 128.27) (xy 292.1 128.27))
     (stroke (width 0) (type default))
     (uuid "c1d1c317-ce83-5c60-b3c7-f16ca65d7a48"))
-  (global_label
-    "K_START"
-    (shape bidirectional)
-    (at 292.1 128.27 180)
-    (fields_autoplaced)
-    (effects (font (size 1.27 1.27)) (justify right))
-    (uuid "efebe0d6-d715-5dce-a863-93fe03617993")
+  (symbol
+    (lib_id "power:GND")
+    (at 292.1 128.27 270)
+    (unit 1)
+    (in_bom no)
+    (on_board yes)
+    (dnp no)
+    (uuid "44f6bfe7-4790-5a35-979b-57c29189167e")
     (property
-      "Intersheetrefs"
-      "${INTERSHEET_REFS}"
-      (at 292.1 128.27 0)
-      (effects (font (size 1.27 1.27)) hide)))
+      "Reference"
+      "#PWR30"
+      (at 294.64 127 0)
+      (effects (font (size 1.27 1.27)) (justify left) hide))
+    (property "Value" "GND" (at 294.64 129.54 0) (effects (font (size 1.27 1.27)) (justify left)))
+    (property "Footprint" "" (at 292.1 128.27 0) (effects (font (size 1.27 1.27)) hide))
+    (property "Datasheet" "~" (at 292.1 128.27 0) (effects (font (size 1.27 1.27)) hide))
+    (pin "1" (uuid "67abc0f4-ee1d-5d28-8c83-255e1f8712c5"))
+    (instances
+      (project
+        "retropad_nes_gb"
+        (path "/3ba6fbae-d46c-5be5-af7e-2637f842a48f" (reference "#PWR30") (unit 1)))))
   (wire
     (pts (xy 304.8 128.27) (xy 307.34 128.27))
     (stroke (width 0) (type default))
@@ -2634,91 +2854,277 @@
     (in_bom no)
     (on_board yes)
     (dnp no)
-    (uuid "7099f697-0fe2-588f-bd60-9f5e78da7975")
+    (uuid "1c957b9a-a265-55a4-ba33-f540c43fb0a1")
     (property
       "Reference"
-      "#PWR25"
+      "#PWR31"
       (at 309.88 127 0)
       (effects (font (size 1.27 1.27)) (justify left) hide))
     (property "Value" "GND" (at 309.88 129.54 0) (effects (font (size 1.27 1.27)) (justify left)))
     (property "Footprint" "" (at 307.34 128.27 0) (effects (font (size 1.27 1.27)) hide))
     (property "Datasheet" "~" (at 307.34 128.27 0) (effects (font (size 1.27 1.27)) hide))
-    (pin "1" (uuid "48295a3d-9be8-58b0-a34a-c700718c61de"))
+    (pin "1" (uuid "4630eed7-ab6c-54ad-9086-6eaa2a4ebe2d"))
     (instances
       (project
         "retropad_nes_gb"
-        (path "/3ba6fbae-d46c-5be5-af7e-2637f842a48f" (reference "#PWR25") (unit 1)))))
+        (path "/3ba6fbae-d46c-5be5-af7e-2637f842a48f" (reference "#PWR31") (unit 1)))))
+  (wire
+    (pts (xy 304.8 133.35) (xy 307.34 133.35))
+    (stroke (width 0) (type default))
+    (uuid "6e76b54f-238b-5bc6-bc7b-3f0da2e3e856"))
+  (global_label
+    "K_SELECT"
+    (shape bidirectional)
+    (at 307.34 133.35 0)
+    (fields_autoplaced)
+    (effects (font (size 1.27 1.27)) (justify left))
+    (uuid "34720bec-86fa-534d-8ee3-2ab2ff9d3782")
+    (property
+      "Intersheetrefs"
+      "${INTERSHEET_REFS}"
+      (at 307.34 133.35 0)
+      (effects (font (size 1.27 1.27)) hide)))
+  (wire
+    (pts (xy 294.64 133.35) (xy 292.1 133.35))
+    (stroke (width 0) (type default))
+    (uuid "4dd27d42-0e20-5574-989b-0b76318d0a85"))
+  (global_label
+    "K_SELECT"
+    (shape bidirectional)
+    (at 292.1 133.35 180)
+    (fields_autoplaced)
+    (effects (font (size 1.27 1.27)) (justify right))
+    (uuid "7a9f0b40-4c1e-5f39-9886-5974e5f74cde")
+    (property
+      "Intersheetrefs"
+      "${INTERSHEET_REFS}"
+      (at 292.1 133.35 0)
+      (effects (font (size 1.27 1.27)) hide)))
+  (text
+    "SELECT"
+    (at 320.04 129.54 0)
+    (effects (font (size 1.27 1.27)) (justify left))
+    (uuid "3af04471-7718-51cf-8181-39fd8bb08db9"))
+  (symbol
+    (lib_id "RetroPad:SW_Push_4pin")
+    (at 299.72 146.05 0)
+    (unit 1)
+    (in_bom yes)
+    (on_board yes)
+    (dnp no)
+    (uuid "e96812a6-574a-51c4-b16e-588e2f9dbbf7")
+    (property "Reference" "SW8" (at 297.18 140.97 0) (effects (font (size 1.27 1.27)) (justify left)))
+    (property "Value" "START" (at 297.18 151.13 0) (effects (font (size 1.27 1.27)) (justify left)))
+    (property
+      "Footprint"
+      "RetroPad:SW_PUSH_6mm_4pin"
+      (at 299.72 146.05 0)
+      (effects (font (size 1.27 1.27)) hide))
+    (property "Datasheet" "~" (at 299.72 146.05 0) (effects (font (size 1.27 1.27)) hide))
+    (pin "1" (uuid "9bd1975b-a278-50ea-8673-d8dd057983ff"))
+    (pin "2" (uuid "965fb5d2-7840-5ce1-a1f5-b97c56792b3e"))
+    (pin "3" (uuid "bcc046ae-3a89-52e9-a4fe-115748e8a57c"))
+    (pin "4" (uuid "b996dccc-ef7b-54d1-8ba2-65f238f6b235"))
+    (instances
+      (project
+        "retropad_nes_gb"
+        (path "/3ba6fbae-d46c-5be5-af7e-2637f842a48f" (reference "SW8") (unit 1)))))
+  (wire
+    (pts (xy 294.64 143.51) (xy 292.1 143.51))
+    (stroke (width 0) (type default))
+    (uuid "e47e362d-8cd8-5285-81b4-10e8d68fd929"))
+  (symbol
+    (lib_id "power:GND")
+    (at 292.1 143.51 270)
+    (unit 1)
+    (in_bom no)
+    (on_board yes)
+    (dnp no)
+    (uuid "96a08304-8472-58f6-a70e-6b4ee730186e")
+    (property
+      "Reference"
+      "#PWR32"
+      (at 294.64 142.24 0)
+      (effects (font (size 1.27 1.27)) (justify left) hide))
+    (property "Value" "GND" (at 294.64 144.78 0) (effects (font (size 1.27 1.27)) (justify left)))
+    (property "Footprint" "" (at 292.1 143.51 0) (effects (font (size 1.27 1.27)) hide))
+    (property "Datasheet" "~" (at 292.1 143.51 0) (effects (font (size 1.27 1.27)) hide))
+    (pin "1" (uuid "750ced75-aaa6-51bb-8d54-9bd4479ee3be"))
+    (instances
+      (project
+        "retropad_nes_gb"
+        (path "/3ba6fbae-d46c-5be5-af7e-2637f842a48f" (reference "#PWR32") (unit 1)))))
+  (wire
+    (pts (xy 304.8 143.51) (xy 307.34 143.51))
+    (stroke (width 0) (type default))
+    (uuid "de2c71bd-9afa-5453-8fde-4aff9b4d837e"))
+  (symbol
+    (lib_id "power:GND")
+    (at 307.34 143.51 90)
+    (unit 1)
+    (in_bom no)
+    (on_board yes)
+    (dnp no)
+    (uuid "419093e0-5205-509f-b91a-e4538879961e")
+    (property
+      "Reference"
+      "#PWR33"
+      (at 309.88 142.24 0)
+      (effects (font (size 1.27 1.27)) (justify left) hide))
+    (property "Value" "GND" (at 309.88 144.78 0) (effects (font (size 1.27 1.27)) (justify left)))
+    (property "Footprint" "" (at 307.34 143.51 0) (effects (font (size 1.27 1.27)) hide))
+    (property "Datasheet" "~" (at 307.34 143.51 0) (effects (font (size 1.27 1.27)) hide))
+    (pin "1" (uuid "28f55e0a-4e92-5e6a-ac8b-882751b95ded"))
+    (instances
+      (project
+        "retropad_nes_gb"
+        (path "/3ba6fbae-d46c-5be5-af7e-2637f842a48f" (reference "#PWR33") (unit 1)))))
+  (wire
+    (pts (xy 304.8 148.59) (xy 307.34 148.59))
+    (stroke (width 0) (type default))
+    (uuid "4fbde17d-5236-5072-891b-ab86300381e0"))
+  (global_label
+    "K_START"
+    (shape bidirectional)
+    (at 307.34 148.59 0)
+    (fields_autoplaced)
+    (effects (font (size 1.27 1.27)) (justify left))
+    (uuid "fb95079a-c764-59b0-8597-ffc48bd84039")
+    (property
+      "Intersheetrefs"
+      "${INTERSHEET_REFS}"
+      (at 307.34 148.59 0)
+      (effects (font (size 1.27 1.27)) hide)))
+  (wire
+    (pts (xy 294.64 148.59) (xy 292.1 148.59))
+    (stroke (width 0) (type default))
+    (uuid "b0354a75-1ebd-52ac-b59a-088cfbcbddbd"))
+  (global_label
+    "K_START"
+    (shape bidirectional)
+    (at 292.1 148.59 180)
+    (fields_autoplaced)
+    (effects (font (size 1.27 1.27)) (justify right))
+    (uuid "44f2fad9-ceb2-54f0-97a4-3b7d4156967d")
+    (property
+      "Intersheetrefs"
+      "${INTERSHEET_REFS}"
+      (at 292.1 148.59 0)
+      (effects (font (size 1.27 1.27)) hide)))
   (text
     "START"
-    (at 320.04 127 0)
+    (at 320.04 144.78 0)
     (effects (font (size 1.27 1.27)) (justify left))
     (uuid "49d4d216-c84c-535e-9b31-7f205df8a467"))
   (symbol
-    (lib_id "Switch:SW_Push")
-    (at 299.72 140.97 0)
+    (lib_id "RetroPad:SW_Push_4pin")
+    (at 299.72 161.29 0)
     (unit 1)
     (in_bom yes)
     (on_board yes)
     (dnp no)
     (uuid "b404030c-2d61-5725-ba9c-2f59497bc7c8")
-    (property "Reference" "SW9" (at 297.18 135.89 0) (effects (font (size 1.27 1.27)) (justify left)))
-    (property "Value" "MENU" (at 297.18 144.78 0) (effects (font (size 1.27 1.27)) (justify left)))
+    (property "Reference" "SW9" (at 297.18 156.21 0) (effects (font (size 1.27 1.27)) (justify left)))
+    (property "Value" "MENU" (at 297.18 166.37 0) (effects (font (size 1.27 1.27)) (justify left)))
     (property
       "Footprint"
-      "Button_Switch_THT:SW_PUSH_6mm"
-      (at 299.72 140.97 0)
+      "RetroPad:SW_PUSH_6mm_4pin"
+      (at 299.72 161.29 0)
       (effects (font (size 1.27 1.27)) hide))
-    (property "Datasheet" "~" (at 299.72 140.97 0) (effects (font (size 1.27 1.27)) hide))
+    (property "Datasheet" "~" (at 299.72 161.29 0) (effects (font (size 1.27 1.27)) hide))
     (pin "1" (uuid "f20ba506-cc1a-553f-afb6-d46bb8efdd14"))
     (pin "2" (uuid "1c425a56-a417-5af3-a39a-1701cd615125"))
+    (pin "3" (uuid "271d7ce6-21f0-51d5-8ce4-fe2be5a387fc"))
+    (pin "4" (uuid "40e4353a-6b6f-53d3-b80b-855986e46558"))
     (instances
       (project
         "retropad_nes_gb"
         (path "/3ba6fbae-d46c-5be5-af7e-2637f842a48f" (reference "SW9") (unit 1)))))
   (wire
-    (pts (xy 294.64 140.97) (xy 292.1 140.97))
+    (pts (xy 294.64 158.75) (xy 292.1 158.75))
     (stroke (width 0) (type default))
-    (uuid "bdf00dfd-cf6a-59fd-b77d-abe0ec350024"))
-  (global_label
-    "K_MENU"
-    (shape bidirectional)
-    (at 292.1 140.97 180)
-    (fields_autoplaced)
-    (effects (font (size 1.27 1.27)) (justify right))
-    (uuid "08cb60fc-ec26-561d-b76b-a70e43555553")
-    (property
-      "Intersheetrefs"
-      "${INTERSHEET_REFS}"
-      (at 292.1 140.97 0)
-      (effects (font (size 1.27 1.27)) hide)))
-  (wire
-    (pts (xy 304.8 140.97) (xy 307.34 140.97))
-    (stroke (width 0) (type default))
-    (uuid "220e6889-39ca-5d94-a8b2-d9c6edaa1a18"))
+    (uuid "b4cfb69a-cfec-5d44-ac1f-01b3d850b426"))
   (symbol
     (lib_id "power:GND")
-    (at 307.34 140.97 90)
+    (at 292.1 158.75 270)
     (unit 1)
     (in_bom no)
     (on_board yes)
     (dnp no)
-    (uuid "df4dd7e8-b942-5442-8db4-bc4e6482d59e")
+    (uuid "e9081b2d-b8b4-5e9c-9d60-1a2052b39f1c")
     (property
       "Reference"
-      "#PWR26"
-      (at 309.88 139.7 0)
+      "#PWR34"
+      (at 294.64 157.48 0)
       (effects (font (size 1.27 1.27)) (justify left) hide))
-    (property "Value" "GND" (at 309.88 142.24 0) (effects (font (size 1.27 1.27)) (justify left)))
-    (property "Footprint" "" (at 307.34 140.97 0) (effects (font (size 1.27 1.27)) hide))
-    (property "Datasheet" "~" (at 307.34 140.97 0) (effects (font (size 1.27 1.27)) hide))
-    (pin "1" (uuid "a50f4e10-199d-5015-aba8-53b7f586243d"))
+    (property "Value" "GND" (at 294.64 160.02 0) (effects (font (size 1.27 1.27)) (justify left)))
+    (property "Footprint" "" (at 292.1 158.75 0) (effects (font (size 1.27 1.27)) hide))
+    (property "Datasheet" "~" (at 292.1 158.75 0) (effects (font (size 1.27 1.27)) hide))
+    (pin "1" (uuid "dbd977c4-c9f5-5a49-92ca-a2743a0710ae"))
     (instances
       (project
         "retropad_nes_gb"
-        (path "/3ba6fbae-d46c-5be5-af7e-2637f842a48f" (reference "#PWR26") (unit 1)))))
+        (path "/3ba6fbae-d46c-5be5-af7e-2637f842a48f" (reference "#PWR34") (unit 1)))))
+  (wire
+    (pts (xy 304.8 158.75) (xy 307.34 158.75))
+    (stroke (width 0) (type default))
+    (uuid "98401575-541f-5a53-997b-ad84e045cd06"))
+  (symbol
+    (lib_id "power:GND")
+    (at 307.34 158.75 90)
+    (unit 1)
+    (in_bom no)
+    (on_board yes)
+    (dnp no)
+    (uuid "91db8beb-ca86-567a-851c-6e31d22ad5df")
+    (property
+      "Reference"
+      "#PWR35"
+      (at 309.88 157.48 0)
+      (effects (font (size 1.27 1.27)) (justify left) hide))
+    (property "Value" "GND" (at 309.88 160.02 0) (effects (font (size 1.27 1.27)) (justify left)))
+    (property "Footprint" "" (at 307.34 158.75 0) (effects (font (size 1.27 1.27)) hide))
+    (property "Datasheet" "~" (at 307.34 158.75 0) (effects (font (size 1.27 1.27)) hide))
+    (pin "1" (uuid "560bbdbd-9886-5f32-9faf-aa0f317c2f3a"))
+    (instances
+      (project
+        "retropad_nes_gb"
+        (path "/3ba6fbae-d46c-5be5-af7e-2637f842a48f" (reference "#PWR35") (unit 1)))))
+  (wire
+    (pts (xy 304.8 163.83) (xy 307.34 163.83))
+    (stroke (width 0) (type default))
+    (uuid "25393647-934c-55b5-b6d0-60a94c1c51a9"))
+  (global_label
+    "K_MENU"
+    (shape bidirectional)
+    (at 307.34 163.83 0)
+    (fields_autoplaced)
+    (effects (font (size 1.27 1.27)) (justify left))
+    (uuid "d760943d-df7e-551c-878e-8d1b6be30814")
+    (property
+      "Intersheetrefs"
+      "${INTERSHEET_REFS}"
+      (at 307.34 163.83 0)
+      (effects (font (size 1.27 1.27)) hide)))
+  (wire
+    (pts (xy 294.64 163.83) (xy 292.1 163.83))
+    (stroke (width 0) (type default))
+    (uuid "5511fd4a-c8e8-5ce9-a0f8-cca9123e3b19"))
+  (global_label
+    "K_MENU"
+    (shape bidirectional)
+    (at 292.1 163.83 180)
+    (fields_autoplaced)
+    (effects (font (size 1.27 1.27)) (justify right))
+    (uuid "2ba8f7d7-acd9-5b8c-8ad1-eb7ec79927f0")
+    (property
+      "Intersheetrefs"
+      "${INTERSHEET_REFS}"
+      (at 292.1 163.83 0)
+      (effects (font (size 1.27 1.27)) hide)))
   (text
     "MENU"
-    (at 320.04 139.7 0)
+    (at 320.04 160.02 0)
     (effects (font (size 1.27 1.27)) (justify left))
     (uuid "5eb6dd56-aca8-5fdf-a29f-16722e97790a"))
   (sheet_instances (path "/" (page "1"))))

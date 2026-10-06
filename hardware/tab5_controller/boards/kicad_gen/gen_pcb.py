@@ -29,6 +29,49 @@ import layout  # noqa: E402
 
 FP = "/usr/share/kicad/footprints"
 
+# Project footprint library (kicad_lib/RetroPad.pretty): 4-pin versions of
+# KiCad's tact-switch footprints, written by make_switch_footprints().
+LIB_DIR = os.path.join(BOARDS_DIR, "kicad_lib")
+LOCAL_LIB = "RetroPad"
+
+# 4-leg tact switches: KiCad's footprints give each internally tied pair one
+# number (1, 1, 2, 2). The 4-pin copies number the legs 1-4 like the parts'
+# own symbols: pad 1 top-left, then clockwise. 1-2 and 3-4 are the tied pairs
+# (the legs 6.5 / 12.5 mm apart); the contact joins the two pairs.
+SWITCH_4PIN = {
+    "SW_PUSH_6mm_4pin": ("SW_PUSH_6mm", {(0.0, 0.0): "1", (6.5, 0.0): "2", (6.5, 4.5): "3", (0.0, 4.5): "4"}),
+    "SW_PUSH-12mm_4pin": ("SW_PUSH-12mm", {(0.0, 0.0): "1", (12.5, 0.0): "2", (12.5, 5.0): "3", (0.0, 5.0): "4"}),
+}
+
+
+def make_switch_footprints():
+    """Write the 4-pin switch footprints into kicad_lib/RetroPad.pretty."""
+    import re
+    out_dir = os.path.join(LIB_DIR, LOCAL_LIB + ".pretty")
+    os.makedirs(out_dir, exist_ok=True)
+    for name, (src, numbers) in SWITCH_4PIN.items():
+        text = open(os.path.join(FP, "Button_Switch_THT.pretty", src + ".kicad_mod")).read()
+        text = text.replace('(footprint "%s"' % src, '(footprint "%s"' % name, 1)
+        text = text.replace('(module %s ' % src, '(module %s ' % name, 1)
+
+        def renumber(m):
+            key = (float(m.group(3)), float(m.group(4)))
+            return '(pad "%s" %s(at %s %s' % (numbers[key], m.group(2), m.group(3), m.group(4))
+        text, n = re.subn(r'\(pad "(\d)" (thru_hole \w+ )\(at ([-\d.]+) ([-\d.]+)', renumber, text)
+        assert n == 4, (name, n)
+        text = re.sub(r'\(descr "([^"]*)"\)', r'(descr "\1; 4-pin numbering 1-4, tied pairs 1-2 and 3-4")', text, 1)
+        with open(os.path.join(out_dir, name + ".kicad_mod"), "w") as f:
+            f.write(text)
+    return out_dir
+
+
+def write_lib_tables(board_dir):
+    """Point each board's KiCad project at the RetroPad footprint library."""
+    rel = os.path.relpath(os.path.join(LIB_DIR, LOCAL_LIB + ".pretty"), board_dir)
+    with open(os.path.join(board_dir, "fp-lib-table"), "w") as f:
+        f.write('(fp_lib_table\n  (version 7)\n  (lib (name "%s")(type "KiCad")(uri "${KIPRJMOD}/%s")'
+                '(options "")(descr "RetroPad 4-pin switch footprints"))\n)\n' % (LOCAL_LIB, rel))
+
 # Footprints carry the UUID of their schematic symbol (gen_sch.py derives the
 # same ones), which is what links each PCB to its schematic.
 UUID_NS = uuid.UUID("8d3c5a62-1f0e-4f7e-9a51-5e7a0b2c9d11")
@@ -140,7 +183,8 @@ class Builder:
 
     def place(self, lib, name, ref, value, x, y, rot=0.0, back=False, anchor="origin"):
         """Place a footprint. anchor='pads' centres the numbered pads on (x, y)."""
-        fp = pcbnew.FootprintLoad(os.path.join(FP, lib + ".pretty"), name)
+        lib_dir = os.path.join(LIB_DIR, lib + ".pretty") if lib == LOCAL_LIB else os.path.join(FP, lib + ".pretty")
+        fp = pcbnew.FootprintLoad(lib_dir, name)
         fp.SetFPID(pcbnew.LIB_ID(lib, name))
         fp.SetReference(ref)
         fp.SetValue(value)
@@ -277,7 +321,9 @@ def build():
     b.text(pcbnew.F_SilkS, 64, 49.5, "RetroPad %s  (console ID %d)" % (CFG.title, CFG.id), 1.2)
     b.text(pcbnew.B_SilkS, 100, 53.5, "RetroPad %s rev 0.1" % CFG.name.upper(), 1.0, mirror=True)
 
-    # Buttons (front): one MCU pin each, switch to GND, internal pull-up in the MCU
+    # Buttons (front): one MCU pin each, switch to GND, internal pull-up in the MCU.
+    # 4-leg tact switches: tied pair 1-2 to GND, tied pair 3-4 to K_<button>.
+    make_switch_footprints()
     for n, (name, _rp, x, y, kind, rot) in enumerate(buttons, start=1):
         sref = f"SW{n}"
         if kind == "ra":
@@ -287,13 +333,16 @@ def build():
             px = (WALL + 2.59) if left else (layout.CASE_W - WALL - 2.59)
             # Pin 2 sits 4.5 mm from pin 1 along the edge (above it on the left
             # edge, below it on the right), so offset pin 1 to centre the pins on y.
+            # Two contacts (pads 1 and 2); the other two legs are mounting pegs
             sw = b.place("Button_Switch_THT", "SW_Tactile_SPST_Angled_PTS645Vx31-2LFS", sref, name,
                          px, y - 2.25 if left else y + 2.25, frot)
+            b.connect(sw, 1, f"K_{name}")
+            b.connect(sw, 2, "GND")
         else:
-            fpn = "SW_PUSH_6mm" if kind == 6 else "SW_PUSH-12mm"
-            sw = b.place("Button_Switch_THT", fpn, sref, name, x, y, rot, anchor="pads")
-        b.connect(sw, 1, f"K_{name}")
-        b.connect(sw, 2, "GND")
+            fpn = "SW_PUSH_6mm_4pin" if kind == 6 else "SW_PUSH-12mm_4pin"
+            sw = b.place(LOCAL_LIB, fpn, sref, name, x, y, rot, anchor="pads")
+            for pin, netname in ((1, "GND"), (2, "GND"), (3, f"K_{name}"), (4, f"K_{name}")):
+                b.connect(sw, pin, netname)
 
     build_core(b)
     return b
@@ -374,13 +423,13 @@ def import_ses(board, path):
 
 
 # Orderable parts for the switch and Tab5-header footprints. The KiCad footprints were drawn for
-# these families: SW_PUSH_6mm = 6x6 mm THT tact (6.5 x 4.5 mm pins),
-# SW_PUSH-12mm = Omron B3F-40xx (12.5 x 5.0 mm pins), and the angled footprint
+# these families: SW_PUSH_6mm(_4pin) = 6x6 mm THT tact (6.5 x 4.5 mm pins),
+# SW_PUSH-12mm(_4pin) = Omron B3F-40xx (12.5 x 5.0 mm pins), and the angled footprint
 # is named after the C&K PTS645Vx31. A DigiKey number is filled in only where it
 # was checked against DigiKey's own listing; otherwise search DigiKey by MPN.
 PARTS = {
-    "SW_PUSH_6mm": ("C&K", "PTS645SM43-2 LFS", ""),
-    "SW_PUSH-12mm": ("Omron", "B3F-4055", "SW414-ND"),
+    "SW_PUSH_6mm_4pin": ("C&K", "PTS645SM43-2 LFS", ""),
+    "SW_PUSH-12mm_4pin": ("Omron", "B3F-4055", "SW414-ND"),
     "SW_Tactile_SPST_Angled_PTS645Vx31-2LFS": ("C&K", "PTS645VL31-2 LFS", "CKN9094-ND"),
     # J1 to the Tab5: 2x5 right-angle male, 5.84 mm mating pins. Confirm the pin
     # length against M5Stack's keyboard before ordering (see README checklist).
@@ -420,6 +469,7 @@ def main():
         print("BOM:", write_bom(pcbnew.LoadBoard(OUT), os.path.join(CFG.dir, CFG.base + "_bom.csv")))
         return
     route = "--route" in sys.argv
+    write_lib_tables(CFG.dir)
     b = build()
     pcbnew.SaveBoard(OUT_UNROUTED, b.board)
     print("saved", OUT_UNROUTED)

@@ -7,17 +7,17 @@ Qty,References,Value,Footprint,Side,Fit,Manufacturer,MPN,DigiKey
 1,R3,10k,R_0805_2012Metric_Pad1.20x1.40mm_HandSolder,back,yes,,,
 2,R6 R8,0R,R_0805_2012Metric_Pad1.20x1.40mm_HandSolder,back,yes,,,
 0,R7 R9,DNP,R_0805_2012Metric_Pad1.20x1.40mm_HandSolder,back,DNP,,,
-1,SW1,UP,SW_PUSH_6mm,front,yes,C&K,PTS645SM43-2 LFS,
-1,SW2,DOWN,SW_PUSH_6mm,front,yes,C&K,PTS645SM43-2 LFS,
-1,SW3,LEFT,SW_PUSH_6mm,front,yes,C&K,PTS645SM43-2 LFS,
-1,SW4,RIGHT,SW_PUSH_6mm,front,yes,C&K,PTS645SM43-2 LFS,
-1,SW5,A,SW_PUSH-12mm,front,yes,Omron,B3F-4055,SW414-ND
-1,SW6,X,SW_PUSH-12mm,front,yes,Omron,B3F-4055,SW414-ND
-1,SW7,B,SW_PUSH-12mm,front,yes,Omron,B3F-4055,SW414-ND
-1,SW8,Y,SW_PUSH-12mm,front,yes,Omron,B3F-4055,SW414-ND
-1,SW9,C,SW_PUSH-12mm,front,yes,Omron,B3F-4055,SW414-ND
-1,SW10,Z,SW_PUSH-12mm,front,yes,Omron,B3F-4055,SW414-ND
-1,SW11,MODE,SW_PUSH_6mm,front,yes,C&K,PTS645SM43-2 LFS,
-1,SW12,START,SW_PUSH_6mm,front,yes,C&K,PTS645SM43-2 LFS,
-1,SW13,MENU,SW_PUSH_6mm,front,yes,C&K,PTS645SM43-2 LFS,
+1,SW1,UP,SW_PUSH_6mm_4pin,front,yes,C&K,PTS645SM43-2 LFS,
+1,SW2,DOWN,SW_PUSH_6mm_4pin,front,yes,C&K,PTS645SM43-2 LFS,
+1,SW3,LEFT,SW_PUSH_6mm_4pin,front,yes,C&K,PTS645SM43-2 LFS,
+1,SW4,RIGHT,SW_PUSH_6mm_4pin,front,yes,C&K,PTS645SM43-2 LFS,
+1,SW5,A,SW_PUSH-12mm_4pin,front,yes,Omron,B3F-4055,SW414-ND
+1,SW6,X,SW_PUSH-12mm_4pin,front,yes,Omron,B3F-4055,SW414-ND
+1,SW7,B,SW_PUSH-12mm_4pin,front,yes,Omron,B3F-4055,SW414-ND
+1,SW8,Y,SW_PUSH-12mm_4pin,front,yes,Omron,B3F-4055,SW414-ND
+1,SW9,C,SW_PUSH-12mm_4pin,front,yes,Omron,B3F-4055,SW414-ND
+1,SW10,Z,SW_PUSH-12mm_4pin,front,yes,Omron,B3F-4055,SW414-ND
+1,SW11,MODE,SW_PUSH_6mm_4pin,front,yes,C&K,PTS645SM43-2 LFS,
+1,SW12,START,SW_PUSH_6mm_4pin,front,yes,C&K,PTS645SM43-2 LFS,
+1,SW13,MENU,SW_PUSH_6mm_4pin,front,yes,C&K,PTS645SM43-2 LFS,
 1,U1,AVR32DD28-I/SO,SOIC-28W_7.5x17.9mm_P1.27mm,back,yes,,,

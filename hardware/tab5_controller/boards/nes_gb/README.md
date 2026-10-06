@@ -45,11 +45,12 @@ routed two-layer PCB, a BOM and the DRC report.
 | Check | Result |
 |---|---|
 | DRC | 0 unconnected pads, no clearance/short/edge/courtyard errors (silkscreen warnings only) |
-| Routing | 233 track segments, 4 vias, GND pour on both layers |
+| Routing | 208 track segments, 6 vias, GND pour on both layers |
 | Schematic vs PCB | 21 schematic nets, 21 PCB nets, 0 differences |
 | Wiring vs firmware | every switch is on the MCU pin `firmware_avrdd/pinmap.h` gives it for console ID 1 |
 
-Each switch connects its own AVR32DD28 pin to GND (internal pull-up, no diodes):
+Each switch connects its own AVR32DD28 pin to GND (internal pull-up, no diodes). The 4-leg
+switches have legs 1–2 on GND and 3–4 on the MCU pin (see [Switches](../README.md#switches)):
 
 | Button | MCU pin | RetroPad bit |
 |---|---|---|

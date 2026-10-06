@@ -115,9 +115,51 @@ def _avrdd_symbol():
     return sym
 
 
+# 4-leg tact switch, drawn and numbered like the parts' own symbols: pins 1-2
+# tied (top), 4-3 tied (bottom), one contact between the pairs. KiCad's
+# Switch:SW_Push_Dual has four pins too, but it is a two-contact switch
+# (1-2 and 3-4 each switched), so it does not fit these parts.
+SWITCH4_SYMBOL = "RetroPad:SW_Push_4pin"
+
+
+def _pin(num, x, y, ang):
+    return ('(pin passive line (at %s %s %s) (length 2.54) (name "%s" (effects (font (size 1.27 1.27)))) '
+            '(number "%s" (effects (font (size 1.27 1.27)))))' % (x, y, ang, num, num))
+
+
+def _line(*pts):
+    return ('(polyline (pts %s) (stroke (width 0) (type default)) (fill (type none)))'
+            % " ".join("(xy %s %s)" % p for p in pts))
+
+
+def _switch4_symbol():
+    body = [
+        _line((-2.54, 2.54), (2.54, 2.54)),           # 1-2 tied
+        _line((-2.54, -2.54), (2.54, -2.54)),         # 4-3 tied
+        _line((0, 2.54), (0, 1.524)),
+        _line((0, -2.54), (0, -1.524)),
+        '(circle (center 0 1.016) (radius 0.508) (stroke (width 0) (type default)) (fill (type none)))',
+        '(circle (center 0 -1.016) (radius 0.508) (stroke (width 0) (type default)) (fill (type none)))',
+        _line((-0.254, -1.27), (-1.778, 1.778)),      # contact lever
+    ]
+    pins = [_pin(1, -5.08, 2.54, 0), _pin(2, 5.08, 2.54, 180), _pin(3, 5.08, -2.54, 180), _pin(4, -5.08, -2.54, 0)]
+    text = ('(symbol "%s" (pin_names (offset 1.016) hide) (in_bom yes) (on_board yes) '
+            '(property "Reference" "SW" (at 0 5.08 0) (effects (font (size 1.27 1.27)))) '
+            '(property "Value" "SW_Push_4pin" (at 0 -5.08 0) (effects (font (size 1.27 1.27)))) '
+            '(property "Footprint" "" (at 0 0 0) (effects (font (size 1.27 1.27)) hide)) '
+            '(property "Datasheet" "~" (at 0 0 0) (effects (font (size 1.27 1.27)) hide)) '
+            '(property "ki_description" "Push button, 4-leg tact switch: 1-2 and 3-4 tied" (at 0 0 0) '
+            '(effects (font (size 1.27 1.27)) hide)) '
+            '(symbol "SW_Push_4pin_0_1" %s) (symbol "SW_Push_4pin_1_1" %s))'
+            % (SWITCH4_SYMBOL, " ".join(body), " ".join(pins)))
+    return parse(text)
+
+
 def lib_symbol(lib_id):
     if lib_id == AVRDD_SYMBOL:
         return _avrdd_symbol()
+    if lib_id == SWITCH4_SYMBOL:
+        return _switch4_symbol()
     lib, name = lib_id.split(":")
     if lib not in _libs:
         _libs[lib] = parse(open(os.path.join(SYMS, lib + ".kicad_sym")).read())
@@ -258,7 +300,8 @@ def lib_for(fp):
     if ref.startswith("U"):
         return AVRDD_SYMBOL
     if ref.startswith("SW"):
-        return "Switch:SW_Push"
+        n = sum(1 for p in fp.Pads() if p.GetNumber())
+        return SWITCH4_SYMBOL if n == 4 else "Switch:SW_Push"
     if ref.startswith("C"):
         return "Device:C"
     if ref.startswith("R"):
@@ -342,17 +385,17 @@ def build():
     place("H1", 160, 220)
     place("H2", 175, 220)
 
-    # One pin per button: K_<button> label -> switch -> GND
+    # One pin per button: K_<button> label -> switch -> GND (4-leg switches: 1-2 GND, 3-4 K_<button>)
     sh.text("Buttons — one MCU pin each, switch to GND (internal pull-up); slot table in "
             "firmware_avrdd/pinmap.h", 260, 25, 1.5)
     for i, (name, *_r) in enumerate(pcb.CFG.buttons()):
         sref = "SW%d" % (i + 1)
-        y = g(40 + i * 12.7)
+        y = g(40 + i * 15.24)
         sp = sh.symbol(lib_for(fps[sref]), sref, fps[sref].GetValue(), g(300), y, 0, footprint=fpid(sref),
-                       ref_at=(-2.54, -5.08), val_at=(-2.54, 3.81))
+                       ref_at=(-2.54, -5.08), val_at=(-2.54, 5.08))
         sn = nets(sref)
-        sh.terminate(sp["1"], sn["1"])
-        sh.terminate(sp["2"], sn["2"])
+        for num in sorted(sp):
+            sh.terminate(sp[num], sn[num])
         sh.text(name, g(320), y - 1.27, 1.27)
     return sh
 

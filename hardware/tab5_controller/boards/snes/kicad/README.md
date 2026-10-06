@@ -33,7 +33,8 @@ fully routed board, linked to each other. It was made with KiCad 7 and opens in 
   * Console-ID resistors R6–R9: 0 Ω on ID0 and ID1 for SNES, R8 and R9 not fitted.
   * UPDI header J2: 3V3, UPDI, GND.
 * **Buttons:** each switch connects its own MCU pin to GND, with the MCU's internal pull-up.
-  No matrix, no diodes. The slot order (PD1–PD7, PC0–PC3, PF0–PF1) follows the layout's
+  No matrix, no diodes. The 6×6 and 12×12 switches use all four legs: 1–2 to GND, 3–4 to the
+  MCU pin (see [Switches](../../README.md#switches)); L and R have two contacts. The slot order (PD1–PD7, PC0–PC3, PF0–PF1) follows the layout's
   button order and matches `firmware_avrdd/pinmap.h`; the table is in
   [`../README.md`](../README.md#pcb-and-schematic). J1 pin 9 (INT) and pin 10 (G9) are not
   connected; the host polls.
@@ -67,7 +68,8 @@ The schematic covers the same circuit on one A3 sheet:
 * **Support parts:** decoupling, I2C pull-ups and the RESET pull-up.
 * **Console-ID straps:** R8 and R9 are marked DNP.
 * **Mounting holes.**
-* **Buttons:** one line per button, K_<button> → switch → GND.
+* **Buttons:** one line per button. 4-leg switches show all four pins: 1–2 to GND, 4–3 to
+  K_<button>. L and R are 2-pin: K_<button> → switch → GND.
 
 Nets are named with global labels, so the net names match the board exactly (K_UP and so on,
 SCL, SDA, ID0–ID3, AN0/AN1, RESET, UPDI, +3V3, GND).

@@ -41,11 +41,39 @@ A 4 mm above B, between the NES pad's level buttons and the Game Boy's diagonal.
 | [`kicad_gen/check_netlist.py`](kicad_gen/check_netlist.py) | Compares the schematic netlist with the PCB pad by pad |
 | [`kicad_gen/render.py`](kicad_gen/render.py) | Writes the front/back/schematic PNGs and the schematic PDF |
 | [`kicad_gen/gen_avrdd_pinmap.py`](kicad_gen/gen_avrdd_pinmap.py) | Writes `../firmware_avrdd/pinmap.h`, the per-console button slot table |
+| [`kicad_lib/RetroPad.pretty`](kicad_lib/RetroPad.pretty) | 4-pin tact-switch footprints, written by `gen_pcb.py` (see [Switches](#switches)) |
 
 A board has 13 button slots (PD1–PD7, PC0–PC3, PF0–PF1). A console's buttons fill them in
 the order its layout lists them. `gen_pcb.py` wires that order, and `gen_avrdd_pinmap.py`
 writes it into the firmware's pin map, keyed by console ID. The firmware is therefore the same
 for every console; only the ID straps differ.
+
+### Switches
+
+The 6×6 and 12×12 tact switches are 4-leg parts, so the schematics and footprints use all
+four pins, numbered like the parts' own symbols:
+
+```
+  1 ───┬─── 2      1–2: tied inside the switch  → GND
+       /
+  4 ───┴─── 3      4–3: tied inside the switch  → K_<button> (MCU pin)
+```
+
+* **Footprints:** `RetroPad:SW_PUSH_6mm_4pin` and `RetroPad:SW_PUSH-12mm_4pin` are KiCad's
+  `SW_PUSH_6mm` / `SW_PUSH-12mm` with the pads renumbered 1–4. Pad 1 is top-left, then
+  clockwise. The tied pairs are the legs 6.5 mm (12.5 mm) apart, as in KiCad's original
+  numbering.
+* **Symbol:** `RetroPad:SW_Push_4pin`, embedded in each schematic. KiCad's own 4-pin
+  `Switch:SW_Push_Dual` is a two-contact switch (1–2 and 3–4 each switched), so it doesn't
+  match these parts.
+* **L / R (right angle):** two contacts plus two mounting legs, so they keep KiCad's 2-pin
+  `SW_Push` and the stock PTS645Vx31 footprint.
+* **Other EDA tools:** a vendor's own symbol and footprint can number the legs differently, and
+  some parts tie 1–3 / 2–4 instead. Before wiring a part, check its datasheet's
+  internal-connection drawing. GND and the MCU pin must go to opposite sides of the contact.
+  If they share a tied pair, the button always reads as pressed.
+
+Each board's `kicad/fp-lib-table` points KiCad at `kicad_lib/RetroPad.pretty`.
 
 ### Regenerating
 
@@ -76,8 +104,8 @@ BOMs list the orderable switches and Tab5 header (Manufacturer / MPN / DigiKey c
 
 | Footprint | Part | DigiKey |
 |---|---|---|
-| `SW_PUSH_6mm` | C&K PTS645SM43-2 LFS (6×6 mm, 4.3 mm, ~160 gf) | search by MPN |
-| `SW_PUSH-12mm` | Omron B3F-4055 (12×12 mm, 7.3 mm, 260 gf, takes B32 caps) | SW414-ND |
+| `SW_PUSH_6mm_4pin` | C&K PTS645SM43-2 LFS (6×6 mm, 4.3 mm, ~160 gf) | search by MPN |
+| `SW_PUSH-12mm_4pin` | Omron B3F-4055 (12×12 mm, 7.3 mm, 260 gf, takes B32 caps) | SW414-ND |
 | `SW_Tactile_SPST_Angled_PTS645Vx31-2LFS` | C&K PTS645VL31-2 LFS (right angle) | CKN9094-ND |
 | `PinHeader_2x05_P2.54mm_Horizontal` (J1, to the Tab5) | Samtec TSW-105-08-G-D-RA (2×5 right angle, 5.84 mm mating pins); check the pin length against M5Stack's keyboard first | SAM1037-05-ND |
 

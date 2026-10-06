@@ -1,7 +1,7 @@
 ** Drc report for /home/user/RetroESP32-P4_m5StackTab5/hardware/tab5_controller/boards/nes_gb/kicad/retropad_nes_gb.kicad_pcb **
-** Created on 2026-10-06 03:38:31 **
+** Created on 2026-10-06 05:10:20 **
 
-** Found 48 DRC violations **
+** Found 39 DRC violations **
 [silk_overlap]: Silkscreen overlap
     Rule: board setup constraints silk; Severity: warning
     @(140.0000 mm, 86.5000 mm): PCB Text 'RetroPad NES_GB rev 0.1' on B.Silkscreen
@@ -52,81 +52,54 @@
 [silk_over_copper]: Silkscreen clipped by solder mask
     Local override; Severity: warning
     @(85.6500 mm, 93.0000 mm): Reference 'R2'
-[lib_footprint_issues]: The current configuration does not include the library 'MountingHole'.
-    Local override; Severity: warning
-    @(152.0000 mm, 95.0000 mm): Footprint H2
-[lib_footprint_issues]: The current configuration does not include the library 'Button_Switch_THT'.
-    Local override; Severity: warning
-    @(143.5300 mm, 120.2500 mm): Footprint SW6
-[lib_footprint_issues]: The current configuration does not include the library 'Button_Switch_THT'.
-    Local override; Severity: warning
-    @(66.7200 mm, 99.5000 mm): Footprint SW1
-[lib_footprint_issues]: The current configuration does not include the library 'MountingHole'.
-    Local override; Severity: warning
-    @(56.0000 mm, 95.0000 mm): Footprint H1
 [lib_footprint_issues]: The current configuration does not include the library 'Connector_PinHeader_2.54mm'.
     Local override; Severity: warning
     @(60.9200 mm, 90.0800 mm): Footprint J1
-[lib_footprint_issues]: The current configuration does not include the library 'Button_Switch_THT'.
+[lib_footprint_issues]: The current configuration does not include the library 'MountingHole'.
     Local override; Severity: warning
-    @(94.5250 mm, 116.7300 mm): Footprint SW7
-[lib_footprint_issues]: The current configuration does not include the library 'Button_Switch_THT'.
+    @(152.0000 mm, 95.0000 mm): Footprint H2
+[lib_footprint_issues]: The current configuration does not include the library 'MountingHole'.
     Local override; Severity: warning
-    @(54.2200 mm, 111.7500 mm): Footprint SW3
-[lib_footprint_issues]: The current configuration does not include the library 'Button_Switch_THT'.
+    @(56.0000 mm, 95.0000 mm): Footprint H1
+[lib_footprint_issues]: The current configuration does not include the library 'Capacitor_SMD'.
     Local override; Severity: warning
-    @(127.5300 mm, 124.2500 mm): Footprint SW5
-[lib_footprint_issues]: The current configuration does not include the library 'Button_Switch_THT'.
+    @(106.0000 mm, 101.6000 mm): Footprint C3
+[lib_footprint_issues]: The current configuration does not include the library 'Capacitor_SMD'.
     Local override; Severity: warning
-    @(79.2200 mm, 111.7500 mm): Footprint SW4
-[lib_footprint_issues]: The current configuration does not include the library 'Button_Switch_THT'.
-    Local override; Severity: warning
-    @(106.9750 mm, 116.7300 mm): Footprint SW8
-[lib_footprint_issues]: The current configuration does not include the library 'Button_Switch_THT'.
-    Local override; Severity: warning
-    @(100.1109 mm, 109.7071 mm): Footprint SW9
-[lib_footprint_issues]: The current configuration does not include the library 'Button_Switch_THT'.
-    Local override; Severity: warning
-    @(66.7200 mm, 124.2500 mm): Footprint SW2
+    @(102.1000 mm, 85.7000 mm): Footprint C2
 [lib_footprint_issues]: The current configuration does not include the library 'Resistor_SMD'.
     Local override; Severity: warning
-    @(97.6000 mm, 85.7000 mm): Footprint R3
+    @(121.0000 mm, 99.0000 mm): Footprint R6
+[lib_footprint_issues]: The current configuration does not include the library 'Capacitor_SMD'.
+    Local override; Severity: warning
+    @(116.0000 mm, 90.5000 mm): Footprint C4
+[lib_footprint_issues]: The current configuration does not include the library 'Capacitor_SMD'.
+    Local override; Severity: warning
+    @(92.0000 mm, 96.0000 mm): Footprint C1
 [lib_footprint_issues]: The current configuration does not include the library 'Resistor_SMD'.
     Local override; Severity: warning
-    @(84.0000 mm, 93.0000 mm): Footprint R2
+    @(127.0000 mm, 99.0000 mm): Footprint R8
+[lib_footprint_issues]: The current configuration does not include the library 'Connector_PinHeader_2.54mm'.
+    Local override; Severity: warning
+    @(130.0000 mm, 86.5000 mm): Footprint J2
 [lib_footprint_issues]: The current configuration does not include the library 'Package_SO'.
     Local override; Severity: warning
     @(104.0000 mm, 93.5000 mm): Footprint U1
 [lib_footprint_issues]: The current configuration does not include the library 'Resistor_SMD'.
     Local override; Severity: warning
+    @(84.0000 mm, 93.0000 mm): Footprint R2
+[lib_footprint_issues]: The current configuration does not include the library 'Resistor_SMD'.
+    Local override; Severity: warning
     @(130.0000 mm, 99.0000 mm): Footprint R9
 [lib_footprint_issues]: The current configuration does not include the library 'Resistor_SMD'.
     Local override; Severity: warning
-    @(127.0000 mm, 99.0000 mm): Footprint R8
+    @(97.6000 mm, 85.7000 mm): Footprint R3
 [lib_footprint_issues]: The current configuration does not include the library 'Resistor_SMD'.
     Local override; Severity: warning
     @(124.0000 mm, 99.0000 mm): Footprint R7
-[lib_footprint_issues]: The current configuration does not include the library 'Capacitor_SMD'.
-    Local override; Severity: warning
-    @(92.0000 mm, 96.0000 mm): Footprint C1
-[lib_footprint_issues]: The current configuration does not include the library 'Capacitor_SMD'.
-    Local override; Severity: warning
-    @(116.0000 mm, 90.5000 mm): Footprint C4
 [lib_footprint_issues]: The current configuration does not include the library 'Resistor_SMD'.
     Local override; Severity: warning
     @(86.0000 mm, 93.0000 mm): Footprint R1
-[lib_footprint_issues]: The current configuration does not include the library 'Capacitor_SMD'.
-    Local override; Severity: warning
-    @(102.1000 mm, 85.7000 mm): Footprint C2
-[lib_footprint_issues]: The current configuration does not include the library 'Capacitor_SMD'.
-    Local override; Severity: warning
-    @(106.0000 mm, 101.6000 mm): Footprint C3
-[lib_footprint_issues]: The current configuration does not include the library 'Connector_PinHeader_2.54mm'.
-    Local override; Severity: warning
-    @(130.0000 mm, 86.5000 mm): Footprint J2
-[lib_footprint_issues]: The current configuration does not include the library 'Resistor_SMD'.
-    Local override; Severity: warning
-    @(121.0000 mm, 99.0000 mm): Footprint R6
 [silk_edge_clearance]: Silkscreen clipped by board edge
     Rule: board setup constraints silk; Severity: warning
     @(165.0000 mm, 83.5000 mm): Line on Edge.Cuts
