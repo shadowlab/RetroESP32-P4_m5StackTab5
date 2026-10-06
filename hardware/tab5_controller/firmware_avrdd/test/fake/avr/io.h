@@ -10,7 +10,10 @@ typedef struct { volatile uint8_t SCTRLA, SCTRLB, SSTATUS, SADDR, SDATA; } TWI_t
 typedef struct { volatile uint8_t CTRLA, CTRLB, INTFLAGS; volatile uint16_t CCMP; } TCB_t;
 typedef struct { volatile uint8_t CTRLA, CTRLC, MUXPOS, COMMAND, INTFLAGS; volatile uint16_t RES; } ADC_t;
 
+typedef struct { volatile uint8_t DIR, OUT, IN, INTFLAGS; } VPORT_t;
+
 extern PORT_t PORTA, PORTC, PORTD, PORTF;
+extern VPORT_t VPORTC;
 extern TWI_t TWI0;
 extern TCB_t TCB0;
 extern ADC_t ADC0;
@@ -25,6 +28,8 @@ extern struct { volatile uint8_t OSCHFCTRLA, MCLKCTRLB; } CLKCTRL;
 #define TCB_ENABLE_bm 0x01
 #define TCB_CAPT_bm 0x01
 static volatile uint8_t SREG;
+#define PIN2_bm 0x04
+#define PIN3_bm 0x08
 #define PORT_PULLUPEN_bm 0x08
 #define PORT_ISC_INPUT_DISABLE_gc 0x04
 #define VREF_REFSEL_VDD_gc 0x05

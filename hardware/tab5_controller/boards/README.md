@@ -15,7 +15,7 @@ goes. Every board:
 | Board | Console ID | Buttons | Layout | KiCad project |
 |---|---|---|---|---|
 | [SNES](snes/README.md) | 3 | D-pad, A B X Y, L R (side edges), SELECT START, MENU | [svg](snes/layout.svg) | [`snes/kicad`](snes/kicad) |
-| [NES / Game Boy / Master System](nes_gb_sms/README.md) | 1, 2 or 4 (slide switch) | D-pad, B A (A raised 4 mm), SELECT START, MENU | [svg](nes_gb_sms/layout.svg) | [`nes_gb_sms/kicad`](nes_gb_sms/kicad) |
+| [NES / Game Boy / Master System](nes_gb_sms/README.md) | 1, 2 or 4 (CONSOLE button) | D-pad, B A (A raised 4 mm), SELECT START, MENU | [svg](nes_gb_sms/layout.svg) | [`nes_gb_sms/kicad`](nes_gb_sms/kicad) |
 | [Genesis / Mega Drive 6-button](genesis/README.md) | 5 | D-pad, X Y Z over A B C, MODE START, MENU | [svg](genesis/layout.svg) | [`genesis/kicad`](genesis/kicad) |
 
 Every KiCad project:
@@ -29,7 +29,7 @@ Genesis (6-button) layouts follow each console's own pad, scaled the same way. X
 Genesis board reach games through the Genesis core's 6-button support (`components/gwenesis`,
 merged from https://github.com/shadowlab/RetroESP32-P4_m5StackTab5/pull/4). The NES / Game Boy / Master System
 board puts A 4 mm above B, between the NES pad's level buttons and the Game Boy's diagonal, and
-picks its console with a slide switch (see [Console-select switch](#console-select-switch)).
+picks its console with a button and an RGB LED (see [Console select](#console-select)).
 
 ## How the boards are made
 
@@ -75,30 +75,33 @@ four pins, numbered like the parts' own symbols:
 
 Each board's `kicad/fp-lib-table` points KiCad at `kicad_lib/RetroPad.pretty`.
 
-### Console-select switch
+### Console select
 
-The NES / Game Boy / Master System board has no ID straps. A 3-position slide switch (C&K
-PCM13SMTR, SP3T, right angle) grounds one ID line: NES = ID0 (console 1), Game Boy = ID1 (2),
-Master System = ID2 (4). Each console is a single ID bit, so no logic is needed. The firmware
-re-reads the ID every 100 ms, and a new position counts once two readings agree. The Tab5 then
-switches the button map and jumps the launcher to that console's games.
+The NES / Game Boy / Master System board serves three consoles. Its ID straps read 14
+(`SELECT_STRAP_ID`, never reported to the Tab5), which puts the firmware in select mode:
 
-* The switch sits on the front at the bottom edge, centred under SELECT/START, with its lever
-  about 1.2 mm past the board edge. The case's bottom wall needs a slot for it.
-* Positions, checked against C&K's PCM13SMTR datasheet (common = pin 3), seen from the front
-  with the lever at the bottom edge:
+* **CONSOLE button** (SW_SEL, 6×6 tact switch, front, below SELECT/START) on PC3. Each press
+  steps NES (1) → Game Boy (2) → Master System (4) → NES. The firmware reports the new console ID
+  at once, and the Tab5 driver re-reads it every 250 ms, so it switches the button map and the
+  launcher jumps to that console's games. The choice is saved in EEPROM and restored at power-up
+  (a blank EEPROM starts on NES).
+* **Status LED** (LED1, OPSCO SK6812MINI-E, reverse mount) shows the console: red = NES,
+  green = Game Boy, blue = Master System, at about 16% brightness. It is soldered on the back and
+  shines through a 3.3 × 2.9 mm board cutout beside the button. The pads follow the datasheet's
+  recommended land pattern (1.8 × 0.82 mm, 0.68 mm gap); a keepout keeps tracks 0.5 mm clear of
+  the cutout.
+* **LED power:** the SK6812 needs 3.7–5.5 V, so LED1 runs from the Tab5's 5 V (J1 pin 6, unused
+  on the other boards) through D1 (1N4148W). The ~4.3 V that leaves lowers the LED's input
+  threshold (0.7 × VDD ≈ 3.0 V) enough for the 3.3 V AVR to drive DIN (PC2, through R10 100 Ω)
+  in spec. C5 (100 nF) decouples it. The rest of the board stays on 3.3 V; without 5 V on the
+  header only the LED stays dark.
+* **Timing:** the firmware bit-bangs the LED from a short assembly loop at 24 MHz (0 = 0.29 µs
+  high, 1 = 0.63 µs high, 1.25 µs per bit) with interrupts off for about 35 µs. The I2C client
+  stretches the clock meanwhile. The colour is re-sent every second in case the LED powered up
+  after the MCU.
 
-  | Lever | Datasheet | Closes | ID line | Console |
-  |---|---|---|---|---|
-  | left | POS.1 | 1–3 | ID0 | NES (1) |
-  | centre | POS.2 | 2–3 | ID1 | Game Boy (2) |
-  | right | POS.3 | 3–4 | ID2 | Master System (4) |
-
-  The silkscreen reads NES, GB, SMS left to right to match. The footprint's land pattern
-  (signal pads at 1.5 / 3.0 / 1.5 mm, 0.7 mm wide; locating holes 5.0 mm apart) matches the
-  datasheet's PC mounting drawing.
-* The board's buttons serve all three consoles: Master System 1 / 2 are B / A and its START is
-  START (Pause); SELECT does nothing there.
+The console list and colours live in `CONSOLE_SELECT` in `layout.py`; `gen_avrdd_pinmap.py`
+copies them into `firmware_avrdd/pinmap.h`.
 
 ### Regenerating
 
@@ -132,7 +135,8 @@ BOMs list the orderable switches and Tab5 header (Manufacturer / MPN / DigiKey c
 | `SW_PUSH_6mm_4pin` | C&K PTS645SM43-2 LFS (6×6 mm, 4.3 mm, ~160 gf) | search by MPN |
 | `SW_PUSH-12mm_4pin` | Omron B3F-4055 (12×12 mm, 7.3 mm, 260 gf, takes B32 caps) | SW414-ND |
 | `SW_Tactile_SPST_Angled_PTS645Vx31-2LFS` | C&K PTS645VL31-2 LFS (right angle) | CKN9094-ND |
-| `SW_SP3T_PCM13` (SW_ID, NES / GB / SMS board only) | C&K PCM13SMTR (SP3T slide, right angle, SMD) | search by MPN |
+| `SK6812MINI-E_ReverseMount` (LED1, NES / GB / SMS board only) | OPSCO SK6812MINI-E (LCSC C5149201) | search by MPN |
+| `D_SOD-123` (D1, NES / GB / SMS board only) | 1N4148W | any |
 | `PinHeader_2x05_P2.54mm_Horizontal` (J1, to the Tab5) | Samtec TSW-105-08-G-D-RA (2×5 right angle, 5.84 mm mating pins); check the pin length against M5Stack's keyboard first | SAM1037-05-ND |
 
 After changing `PARTS`, run `python3 gen_pcb.py <console> --bom-only` to rewrite a BOM from

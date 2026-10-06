@@ -16,7 +16,7 @@ static const uint8_t slot_pin[SLOT_COUNT] = {1, 2, 3, 4, 5, 6, 7, 0, 1, 2, 3, 0,
 static const uint8_t slot_bit[RP_CONSOLE_COUNT][SLOT_COUNT] = {
     /*  0 no board layout yet: generic slot order UP DOWN LEFT RIGHT A B X Y L R SELECT START MENU */
     [0] = {RP_BTN_UP, RP_BTN_DOWN, RP_BTN_LEFT, RP_BTN_RIGHT, RP_BTN_A, RP_BTN_B, RP_BTN_X, RP_BTN_Y, RP_BTN_L, RP_BTN_R, RP_BTN_SELECT, RP_BTN_START, RP_BTN_MENU},
-    /*  1 NES / Game Boy / Master System: UP=PD1, DOWN=PD2, LEFT=PD3, RIGHT=PD4, B=PD5, A=PD6, SELECT=PD7, START=PC0, MENU=PC1 */
+    /*  1 same slots as the NES / Game Boy / Master System board: UP=PD1, DOWN=PD2, LEFT=PD3, RIGHT=PD4, B=PD5, A=PD6, SELECT=PD7, START=PC0, MENU=PC1 */
     [1] = {RP_BTN_UP, RP_BTN_DOWN, RP_BTN_LEFT, RP_BTN_RIGHT, RP_BTN_B, RP_BTN_A, RP_BTN_SELECT, RP_BTN_START, RP_BTN_MENU, SLOT_NONE, SLOT_NONE, SLOT_NONE, SLOT_NONE},
     /*  2 same slots as the NES / Game Boy / Master System board: UP=PD1, DOWN=PD2, LEFT=PD3, RIGHT=PD4, B=PD5, A=PD6, SELECT=PD7, START=PC0, MENU=PC1 */
     [2] = {RP_BTN_UP, RP_BTN_DOWN, RP_BTN_LEFT, RP_BTN_RIGHT, RP_BTN_B, RP_BTN_A, RP_BTN_SELECT, RP_BTN_START, RP_BTN_MENU, SLOT_NONE, SLOT_NONE, SLOT_NONE, SLOT_NONE},
@@ -42,10 +42,17 @@ static const uint8_t slot_bit[RP_CONSOLE_COUNT][SLOT_COUNT] = {
     [12] = {RP_BTN_UP, RP_BTN_DOWN, RP_BTN_LEFT, RP_BTN_RIGHT, RP_BTN_A, RP_BTN_B, RP_BTN_X, RP_BTN_Y, RP_BTN_L, RP_BTN_R, RP_BTN_SELECT, RP_BTN_START, RP_BTN_MENU},
     /* 13 no board layout yet: generic slot order UP DOWN LEFT RIGHT A B X Y L R SELECT START MENU */
     [13] = {RP_BTN_UP, RP_BTN_DOWN, RP_BTN_LEFT, RP_BTN_RIGHT, RP_BTN_A, RP_BTN_B, RP_BTN_X, RP_BTN_Y, RP_BTN_L, RP_BTN_R, RP_BTN_SELECT, RP_BTN_START, RP_BTN_MENU},
-    /* 14 no board layout yet: generic slot order UP DOWN LEFT RIGHT A B X Y L R SELECT START MENU */
-    [14] = {RP_BTN_UP, RP_BTN_DOWN, RP_BTN_LEFT, RP_BTN_RIGHT, RP_BTN_A, RP_BTN_B, RP_BTN_X, RP_BTN_Y, RP_BTN_L, RP_BTN_R, RP_BTN_SELECT, RP_BTN_START, RP_BTN_MENU},
+    /* 14 NES / Game Boy / Master System: UP=PD1, DOWN=PD2, LEFT=PD3, RIGHT=PD4, B=PD5, A=PD6, SELECT=PD7, START=PC0, MENU=PC1 */
+    [14] = {RP_BTN_UP, RP_BTN_DOWN, RP_BTN_LEFT, RP_BTN_RIGHT, RP_BTN_B, RP_BTN_A, RP_BTN_SELECT, RP_BTN_START, RP_BTN_MENU, SLOT_NONE, SLOT_NONE, SLOT_NONE, SLOT_NONE},
     /* 15 no board layout yet: generic slot order UP DOWN LEFT RIGHT A B X Y L R SELECT START MENU */
     [15] = {RP_BTN_UP, RP_BTN_DOWN, RP_BTN_LEFT, RP_BTN_RIGHT, RP_BTN_A, RP_BTN_B, RP_BTN_X, RP_BTN_Y, RP_BTN_L, RP_BTN_R, RP_BTN_SELECT, RP_BTN_START, RP_BTN_MENU},
 };
+
+/* Console-select board (NES / Game Boy / Master System): straps read SELECT_STRAP_ID; the select button
+ * (PC3) steps through select_console[], shown on the status LED (PC2) in GRB. */
+#define SELECT_STRAP_ID 14
+#define SELECT_COUNT 3
+static const uint8_t select_console[SELECT_COUNT] = {1 /* NES */, 2 /* GB */, 4 /* SMS */};
+static const uint8_t select_grb[SELECT_COUNT][3] = {{0, 40, 0}, {40, 0, 0}, {0, 0, 40}};
 
 #endif /* RETROPAD_PINMAP_H */

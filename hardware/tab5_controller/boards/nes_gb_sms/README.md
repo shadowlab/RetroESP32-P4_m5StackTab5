@@ -3,14 +3,18 @@
 ![NES / Game Boy / Master System layout inside the Tab5 Keyboard envelope](layout.svg)
 
 One board for three consoles. The NES pad, the Game Boy and the Master System pad all have a
-d-pad, two face buttons and START. A slide switch on the bottom edge picks the console the board
-reports: NES (ID 1), Game Boy (ID 2) or Master System (ID 4). When you move it, the Tab5 switches
-the button map and the launcher jumps to that console's games.
+d-pad, two face buttons and START. A CONSOLE button below SELECT/START picks the console the
+board reports: NES (ID 1), Game Boy (ID 2) or Master System (ID 4). Each press steps to the next
+one, and an RGB LED beside the button shows the choice: red = NES, green = Game Boy,
+blue = Master System. The Tab5 then switches the button map and the launcher jumps to that
+console's games. The choice is kept across power cycles.
 
 * **Master System:** button 1 is B, button 2 is A, START is START (Pause). SELECT does nothing.
-* **Switch:** C&K PCM13SMTR, SP3T. Its common goes to GND and each position grounds one ID
-  line (NES = ID0, GB = ID1, SMS = ID2), so the board has no ID straps. Lever left = NES, centre = Game Boy, right = Master System,
-  checked against the datasheet (see [Console-select switch](../README.md#console-select-switch)).
+* **CONSOLE button:** a 6×6 tact switch (SW_SEL) on PC3. The ID straps read 14, which tells the
+  firmware this is a console-select board (see [Console select](../README.md#console-select)).
+* **LED:** an SK6812MINI-E (LED1), mounted on the back and shining through a 3.3 × 2.9 mm cutout
+  next to the button. It runs from the Tab5's 5 V on J1 pin 6 through a diode (D1), and its data
+  comes from PC2.
 
 The coordinate conventions, case outline and markings are the same as on the
 [SNES board](../snes/README.md). The d-pad uses the SNES board's positions so all boards feel
@@ -47,9 +51,9 @@ routed two-layer PCB, a BOM and the DRC report.
 | Check | Result |
 |---|---|
 | DRC | 0 unconnected pads, no clearance/short/edge/courtyard errors (silkscreen warnings only) |
-| Routing | 212 track segments, 7 vias, GND pour on both layers |
-| Schematic vs PCB | 21 schematic nets, 21 PCB nets, 0 differences |
-| Wiring vs firmware | every switch is on the MCU pin `firmware_avrdd/pinmap.h` gives it for console IDs 1, 2 and 4 |
+| Routing | 260 track segments, 7 vias, GND pour on both layers, keepout around the LED cutout |
+| Schematic vs PCB | 26 schematic nets, 26 PCB nets, 0 differences |
+| Wiring vs firmware | every switch is on the MCU pin `firmware_avrdd/pinmap.h` gives it for console IDs 1, 2 and 4; straps read 14; SW_SEL on PC3, LED1 data on PC2 |
 
 Each switch connects its own AVR32DD28 pin to GND (internal pull-up, no diodes). The 4-leg
 switches have legs 1–2 on GND and 3–4 on the MCU pin (see [Switches](../README.md#switches)):
@@ -65,6 +69,8 @@ switches have legs 1–2 on GND and 3–4 on the MCU pin (see [Switches](../READ
 | SELECT | PD7 (pin 13) | `RP_BTN_SELECT` |
 | START | PC0 (pin 2) | `RP_BTN_START` |
 | MENU | PC1 (pin 3) | `RP_BTN_MENU` |
+| CONSOLE (SW_SEL) | PC3 (pin 5) | none; steps the console |
+| LED1 data (via R10) | PC2 (pin 4) | none |
 
 | Front | Back (seen from the back) |
 |---|---|

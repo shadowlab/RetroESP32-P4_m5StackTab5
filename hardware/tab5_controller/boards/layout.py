@@ -92,7 +92,8 @@ def nes_gb_sms():
 
     The slant sits between the NES pad's level A/B and the Game Boy's diagonal.
     The Master System's 1 / 2 are B / A, and its START is START (Pause); SELECT
-    is unused there. A slide switch picks which console the board reports.
+    is unused there. A select button (with an RGB status LED) picks which console
+    the board reports.
     """
     cx, cy = CASE_W / 2, KEY_H / 2
     fx = cx + 41 * _S
@@ -147,20 +148,26 @@ def avrdd_slots(name):
 
 # Console id (retropad_proto.h rp_console_t) and the name printed on each board
 CONSOLES = {
-    "nes_gb_sms": (1, "NES / Game Boy / Master System"),
+    "nes_gb_sms": (14, "NES / Game Boy / Master System"),   # 14: console-select board
     "snes":    (3, "SNES"),
     "genesis": (5, "Genesis / Mega Drive 6-button"),
 }
 
 # Console IDs with no board of their own that read a board's slots the same way:
-# the NES / Game Boy / Master System board reports ID 1, 2 or 4 from its switch.
-ALIASES = {2: "nes_gb_sms", 4: "nes_gb_sms"}
+# the NES / Game Boy / Master System board reports ID 1, 2 or 4.
+ALIASES = {1: "nes_gb_sms", 2: "nes_gb_sms", 4: "nes_gb_sms"}
 
-# Boards that select their console with a switch instead of fixed ID straps:
-# SP3T slide switch, common to GND, one throw per console-ID bit. Each entry is
-# (switch pad, ID line it grounds, console it selects).
-ID_SWITCH = {
-    "nes_gb_sms": [(1, "ID0", "NES"), (2, "ID1", "GB"), (4, "ID2", "SMS")],
+# Console-select boards: ID straps set to 14 (reserved in the protocol, never
+# reported) tell the firmware the console comes from a select button instead.
+# Each press steps through `consoles`, the choice is kept in EEPROM, and an
+# SK6812MINI-E shows it in `colours` (R, G, B). Button and LED positions are
+# layout coordinates; the LED is reverse-mounted on the back and shines through
+# a cutout to the front, next to the button.
+SELECT_STRAP_ID = 14
+CONSOLE_SELECT = {
+    "nes_gb_sms": dict(consoles=[("NES", 1), ("GB", 2), ("SMS", 4)],
+                       colours=[(255, 0, 0), (0, 255, 0), (0, 0, 255)],
+                       button=(58.0, 9.0), led=(68.0, 9.0)),
 }
 
 

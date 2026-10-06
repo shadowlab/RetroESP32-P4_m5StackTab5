@@ -12,8 +12,10 @@
  *   PA2 SDA, PA3 SCL           I2C client to the Tab5 (TWI0 default pins)
  *   PA0, PA1, PA6, PA7         console-ID straps ID0..ID3 (0R to GND = bit set)
  *   PA4, PA5                   AN0 / AN1 (AIN24 / AIN25), Atari paddle/analog boards
+ *   PC3, PC2                   console-select boards: select button, SK6812 status LED
  *   PF7 UPDI, PF6 RESET        programming
  */
+#include <avr/eeprom.h>
 #include <avr/interrupt.h>
 #include <avr/io.h>
 #include <stdbool.h>
@@ -23,7 +25,7 @@
 #include "retropad_proto.h"
 
 #define F_CPU_HZ        24000000UL
-#define FW_VERSION      0x21            /* 0x2x = AVR DD build */
+#define FW_VERSION      0x22            /* 0x2x = AVR DD build */
 #define SCAN_US         1000            /* one button scan per millisecond */
 #define DEBOUNCE_SCANS  5               /* stable for 5 ms before a change counts */
 
@@ -134,9 +136,9 @@ static uint8_t analog_read(uint8_t muxpos)
 }
 
 /* ── console ID: re-read while running ─────────────────────────────────── *
- * A board can carry a console-select switch instead of fixed straps, so the
- * ID is re-read every ID_POLL_MS. A new value takes effect after two equal
- * readings in a row, so a switch passing between positions can't flicker it. */
+ * The straps are re-read every ID_POLL_MS (not on console-select boards,
+ * whose console comes from the select button). A new value takes effect after
+ * two equal readings in a row, so a strap being reworked can't flicker it. */
 #define ID_POLL_MS 100
 
 static uint8_t s_id_candidate = 0xFF;
@@ -167,6 +169,93 @@ static bool console_id_step(uint8_t raw)
     }
     s_id_candidate = 0xFF;
     set_console(raw);
+    return true;
+}
+
+/* ── console-select boards (pinmap.h SELECT_*) ─────────────────────────── *
+ * Straps reading SELECT_STRAP_ID mark a board shared by several consoles. Each
+ * press of the select button (PC3) steps to the next entry of select_console[],
+ * which is saved to EEPROM and shown on the SK6812MINI-E on PC2 in that
+ * console's colour. The Tab5 re-reads the console ID, so the launcher follows. */
+#define SEL_DEBOUNCE_MS 20
+#define LED_REFRESH_MS  1000            /* re-send: the LED's 5 V may come up late */
+#define EE_SELECT       ((uint8_t *)0)
+
+static bool s_select;
+static uint8_t s_sel_index;
+static bool s_sel_down;
+static uint8_t s_sel_count;
+
+#ifdef __AVR__
+/* One byte to the LED, MSB first, on VPORTC.2. At 24 MHz: 0 = 7 cycles high
+ * (0.29 us), 1 = 15 cycles high (0.63 us), 30 cycles (1.25 us) per bit;
+ * SK6812: T0H 0.3, T1H 0.6, period 1.25 +-0.15 us. sbi/cbi on a VPORT take
+ * one cycle. Interrupts are off (I2C clock-stretches meanwhile). */
+static void led_byte(uint8_t byte)
+{
+    uint8_t bits;
+    __asm__ volatile(
+        "ldi  %[bits], 8\n"
+        "1:\n\t"
+        "sbi  %[port], 2\n\t"
+        "nop\n\tnop\n\tnop\n\tnop\n\tnop\n\t"
+        "sbrs %[byte], 7\n\t"
+        "cbi  %[port], 2\n\t"                     /* 0 bit ends here */
+        "lsl  %[byte]\n\t"
+        "nop\n\tnop\n\tnop\n\tnop\n\tnop\n\tnop\n\t"
+        "cbi  %[port], 2\n\t"                     /* 1 bit ends here */
+        "nop\n\tnop\n\tnop\n\tnop\n\tnop\n\tnop\n\t"
+        "nop\n\tnop\n\tnop\n\tnop\n\tnop\n\t"
+        "dec  %[bits]\n\t"
+        "brne 1b\n"
+        : [bits] "=&d"(bits), [byte] "+r"(byte)
+        : [port] "I"(_SFR_IO_ADDR(VPORTC.OUT)));
+}
+
+static void led_show(void)
+{
+    const uint8_t *grb = select_grb[s_sel_index];
+    uint8_t sreg = SREG;
+    cli();
+    led_byte(grb[0]);
+    led_byte(grb[1]);
+    led_byte(grb[2]);
+    SREG = sreg;
+}
+#else
+static uint8_t s_led_shown = 0xFF;      /* host test: index last sent to the LED */
+static void led_show(void) { s_led_shown = s_sel_index; }
+#endif
+
+static void select_init(void)
+{
+    PORTC.PIN2CTRL = 0;                   /* LED data: output, low, no pull-up */
+    VPORTC.OUT &= (uint8_t)~PIN2_bm;
+    VPORTC.DIR |= PIN2_bm;
+    uint8_t i = eeprom_read_byte(EE_SELECT);
+    s_sel_index = i < SELECT_COUNT ? i : 0;   /* blank EEPROM reads 0xFF */
+    s_select = true;
+    set_console(select_console[s_sel_index]);
+    led_show();
+}
+
+/* One 1 ms sample of the select button (true = pressed); true on a new press. */
+static bool select_step(bool pressed)
+{
+    if (pressed == s_sel_down) {
+        s_sel_count = 0;
+        return false;
+    }
+    if (++s_sel_count < SEL_DEBOUNCE_MS)
+        return false;
+    s_sel_count = 0;
+    s_sel_down = pressed;
+    if (!pressed)
+        return false;
+    s_sel_index = (uint8_t)((s_sel_index + 1) % SELECT_COUNT);
+    set_console(select_console[s_sel_index]);
+    eeprom_update_byte(EE_SELECT, s_sel_index);
+    led_show();
     return true;
 }
 
@@ -298,18 +387,29 @@ int main(void)
     clock_init();
     buttons_init();
     analog_pins_init();
-    set_console(read_console_id());
+    uint8_t straps = read_console_id();
+    if (straps == SELECT_STRAP_ID)
+        select_init();
+    else
+        set_console(straps);
     snapshot();
     timer_init();
     twi_init();
     sei();
 
-    uint8_t id_ms = 0;
+    uint16_t id_ms = 0;
     for (;;) {
         if (!timer_tick())
             continue;
         debounce_step(buttons_sample());
-        if (++id_ms >= ID_POLL_MS) {
+        ++id_ms;
+        if (s_select) {
+            select_step(!(VPORTC.IN & PIN3_bm));
+            if (id_ms >= LED_REFRESH_MS) {
+                id_ms = 0;
+                led_show();
+            }
+        } else if (id_ms >= ID_POLL_MS) {
             id_ms = 0;
             console_id_step(read_console_id());
         }

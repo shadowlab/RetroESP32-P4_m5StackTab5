@@ -19,6 +19,9 @@ OUT = os.path.join(HERE, "..", "..", "firmware_avrdd", "pinmap.h")
 
 # Console IDs without a layout (generic, Atari, PCE, Neo Geo, ...) still get a
 # full row, so no slot can fall back to 0 (= RP_BTN_UP): this generic order.
+# Status LED brightness (0-255) for the console-select colours
+LED_LEVEL = 40
+
 GENERIC = ["UP", "DOWN", "LEFT", "RIGHT", "A", "B", "X", "Y", "L", "R", "SELECT", "START", "MENU"]
 
 
@@ -59,7 +62,24 @@ def main():
             bits = ["RP_BTN_" + b for b in GENERIC]
             lines.append("    /* %2d no board layout yet: generic slot order %s */" % (cid, " ".join(GENERIC)))
         lines.append("    [%d] = {%s}," % (cid, ", ".join(bits)))
-    lines += ["};", "", "#endif /* RETROPAD_PINMAP_H */", ""]
+    lines += ["};", ""]
+
+    # Console-select board: straps read SELECT_STRAP_ID, select button on PC3,
+    # SK6812MINI-E status LED on PC2 (wired by gen_pcb.py build_console_select).
+    assert len(layout.CONSOLE_SELECT) == 1, "pinmap.h describes one console-select board"
+    (sel_name, sel), = layout.CONSOLE_SELECT.items()
+    dim = lambda c: (c * LED_LEVEL + 254) // 255                # status LED, not a torch
+    lines += [
+        "/* Console-select board (%s): straps read SELECT_STRAP_ID; the select button" % layout.CONSOLES[sel_name][1],
+        " * (PC3) steps through select_console[], shown on the status LED (PC2) in GRB. */",
+        "#define SELECT_STRAP_ID %d" % layout.SELECT_STRAP_ID,
+        "#define SELECT_COUNT %d" % len(sel["consoles"]),
+        "static const uint8_t select_console[SELECT_COUNT] = {%s};" % ", ".join(
+            "%d /* %s */" % (cid, name) for name, cid in sel["consoles"]),
+        "static const uint8_t select_grb[SELECT_COUNT][3] = {%s};" % ", ".join(
+            "{%d, %d, %d}" % (dim(g), dim(r), dim(b)) for r, g, b in sel["colours"]),
+        "",
+        "#endif /* RETROPAD_PINMAP_H */", ""]
     os.makedirs(os.path.dirname(OUT), exist_ok=True)
     with open(OUT, "w") as f:
         f.write("\n".join(lines))

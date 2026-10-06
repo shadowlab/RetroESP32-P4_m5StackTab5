@@ -65,6 +65,49 @@ def make_switch_footprints():
     return out_dir
 
 
+# SK6812MINI-E (OPSCO), reverse mount: soldered on one side with the body in a
+# board cutout, shining out of the other side. Defined as seen from the solder
+# side, from the datasheet: body 3.2 x 2.8, leads 1.34 beyond it, recommended
+# pads 1.8 x 0.82 with a 0.68 gap; 1 GND, 2 DIN, 3 VDD, 4 DOUT. The cutout is the
+# body plus 0.05 per side; the pads start 0.35 outside it (edge rule 0.3),
+# leaving about 0.9 mm of each lead on its pad.
+LED_FP = "SK6812MINI-E_ReverseMount"
+
+
+LED_CUT = (3.3, 2.9)     # cutout the LED body sits in, mm
+
+
+def make_led_footprint():
+    cut_w, cut_h = LED_CUT
+    pad_in, pad_len, pad_h, pad_y = cut_w / 2 + 0.35, 1.8, 0.82, (0.68 + 0.82) / 2
+    pads = {"3": (-1, -1), "2": (1, -1), "4": (-1, 1), "1": (1, 1)}   # VDD DIN / DOUT GND
+    px = pad_in + pad_len / 2
+    lines = ['(footprint "%s" (version 20221018) (generator gen_pcb)' % LED_FP,
+             '  (layer "F.Cu")',
+             '  (descr "OPSCO SK6812MINI-E addressable RGB LED, reverse mount through a board cutout")',
+             '  (tags "SK6812 MINI-E reverse mount")',
+             '  (attr smd)',
+             '  (fp_text reference "REF**" (at 0 -2.6) (layer "F.SilkS") (effects (font (size 0.8 0.8) (thickness 0.12))))',
+             '  (fp_text value "SK6812MINI-E" (at 0 2.6) (layer "F.Fab") (effects (font (size 0.8 0.8) (thickness 0.12))))']
+    x0, y0, x1, y1 = -cut_w / 2, -cut_h / 2, cut_w / 2, cut_h / 2
+    for a, b in (((x0, y0), (x1, y0)), ((x1, y0), (x1, y1)), ((x1, y1), (x0, y1)), ((x0, y1), (x0, y0))):
+        lines.append('  (fp_line (start %.3f %.3f) (end %.3f %.3f) (stroke (width 0.1) (type solid)) (layer "Edge.Cuts"))'
+                     % (a + b))
+    cx, cy = px + pad_len / 2 + 0.3, pad_y + pad_h / 2 + 0.3      # pin-1 (GND) marker
+    lines.append('  (fp_circle (center %.3f %.3f) (end %.3f %.3f) (stroke (width 0.2) (type solid)) (fill solid) (layer "F.SilkS"))'
+                 % (cx, cy, cx + 0.15, cy))
+    lines.append('  (fp_rect (start %.3f %.3f) (end %.3f %.3f) (stroke (width 0.05) (type solid)) (fill none) (layer "F.CrtYd"))'
+                 % (-(pad_in + pad_len + 0.25), -(cut_h / 2 + 0.25), pad_in + pad_len + 0.25, cut_h / 2 + 0.25))
+    for num, (sx, sy) in sorted(pads.items()):
+        lines.append('  (pad "%s" smd rect (at %.3f %.3f) (size %.3f %.3f) (layers "F.Cu" "F.Paste" "F.Mask"))'
+                     % (num, sx * px, sy * pad_y, pad_len, pad_h))
+    lines.append(')')
+    out_dir = os.path.join(LIB_DIR, LOCAL_LIB + ".pretty")
+    os.makedirs(out_dir, exist_ok=True)
+    with open(os.path.join(out_dir, LED_FP + ".kicad_mod"), "w") as f:
+        f.write("\n".join(lines) + "\n")
+
+
 def write_lib_tables(board_dir):
     """Point each board's KiCad project at the RetroPad footprint library."""
     rel = os.path.relpath(os.path.join(LIB_DIR, LOCAL_LIB + ".pretty"), board_dir)
@@ -88,19 +131,21 @@ class Console:
         self.pcb = os.path.join(self.dir, self.base + ".kicad_pcb")
         self.pcb_unrouted = os.path.join(self.dir, self.base + "_unrouted.kicad_pcb")
         self.sch_file = self.base + ".kicad_sch"
-        # ID0..ID3 = bits of the console id (0R fitted = bit set). Boards in
-        # layout.ID_SWITCH pick the console with a slide switch instead.
-        self.id_switch = layout.ID_SWITCH.get(name)
-        self.straps = [] if self.id_switch else \
-            [("R%d" % (6 + i), "ID%d" % i, bool(self.id >> i & 1)) for i in range(4)]
+        # ID0..ID3 = bits of the console id (0R fitted = bit set). Console-select
+        # boards (layout.CONSOLE_SELECT) strap layout.SELECT_STRAP_ID instead.
+        self.select = layout.CONSOLE_SELECT.get(name)
+        self.straps = [("R%d" % (6 + i), "ID%d" % i, bool(self.id >> i & 1)) for i in range(4)]
+        self.id_label = ("console IDs %s" % "/".join(str(i) for _n, i in self.select["consoles"])
+                         if self.select else "console ID %d" % self.id)
 
     def buttons(self):
         return layout.BOARDS[self.name]()[0]
 
     def strap_note(self):
-        if self.id_switch:
-            return "%s: console set by slide switch SW_ID (%s)" % (
-                self.title, ", ".join("%s = %s" % (c, sig) for _p, sig, c in self.id_switch))
+        if self.select:
+            fit = [r for r, _, f in self.straps if f]
+            return "%s: straps = ID %d (fit %s), console picked with SW_SEL (%s)" % (
+                self.title, self.id, ", ".join(fit), " / ".join(c for c, _ in self.select["consoles"]))
         fit = [r for r, _, f in self.straps if f]
         dnp = [r for r, _, f in self.straps if not f]
         return "%s = ID %d (fit %s; %s DNP)" % (self.title, self.id, ", ".join(fit) or "none", ", ".join(dnp))
@@ -239,6 +284,26 @@ class Builder:
             t.SetMirrored(True)
         self.board.Add(t)
 
+    def keepout(self, x0, y0, x1, y1):
+        """No tracks, vias or copper fill in a rectangle on both layers (exported to
+        Freerouting, which otherwise only sees the board outline, not cutouts)."""
+        z = pcbnew.ZONE(self.board)
+        z.SetIsRuleArea(True)
+        z.SetDoNotAllowTracks(True)
+        z.SetDoNotAllowVias(True)
+        z.SetDoNotAllowCopperPour(True)
+        z.SetDoNotAllowPads(False)
+        z.SetDoNotAllowFootprints(False)
+        ls = pcbnew.LSET()
+        ls.AddLayer(pcbnew.F_Cu)
+        ls.AddLayer(pcbnew.B_Cu)
+        z.SetLayerSet(ls)
+        ol = z.Outline()
+        ol.NewOutline()
+        for x, y in ((x0, y0), (x1, y0), (x1, y1), (x0, y1)):
+            ol.Append(mm(x, y))
+        self.board.Add(z)
+
     def zone(self, layer, netname):
         z = pcbnew.ZONE(self.board)
         z.SetLayer(layer)
@@ -290,19 +355,12 @@ def build_core(b):
             r.SetExcludedFromBOM(True)
         b.text(pcbnew.B_SilkS, x, 37.8, sig, 0.8, mirror=True)
 
-    # Console-select switch: SP3T slide (C&K PCM13), common (pad 3) to GND, one
-    # throw per ID line. Front side at the bottom edge, lever out through the
-    # case's bottom wall. PCM13SMTR datasheet: POS.1 (lever left) closes 1-3,
-    # POS.2 2-3, POS.3 3-4, so the labels read in pad order 1, 2, 4.
-    if CFG.id_switch:
-        y0 = WALL + 2.2                      # mounting tabs 0.37 mm inside the edge (rule: 0.3)
-        sw = b.place("Button_Switch_SMD", "SW_SP3T_PCM13", "SW_ID", "PCM13SMTR", 64.0, y0, 0.0)
-        b.connect(sw, 3, "GND")
-        for pad, sig, _console in CFG.id_switch:
-            b.connect(sw, pad, sig)
-        b.text(pcbnew.F_SilkS, 64.0, y0 + 6.5, "  ".join(c for _p, _s, c in CFG.id_switch), 1.0)
-
-    place_header(b, HEADER_PINS)
+    if CFG.select:
+        build_console_select(b, u, passive)
+        header = {**HEADER_PINS, 6: "+5V"}       # SYS_EXT5V feeds the status LED only
+    else:
+        header = HEADER_PINS
+    place_header(b, header)
 
     # UPDI programming header: 1 = 3V3, 2 = UPDI, 3 = GND
     j2 = b.place("Connector_PinHeader_2.54mm", "PinHeader_1x03_P2.54mm_Vertical", "J2", "UPDI",
@@ -313,6 +371,37 @@ def build_core(b):
         if p.GetNetname() == "GND":
             p.SetZoneConnection(pcbnew.ZONE_CONNECTION_FULL)
     b.text(pcbnew.B_SilkS, 92.5, 50.6, "UPDI 3V3 UPDI GND", 0.8, mirror=True)
+
+
+def build_console_select(b, u, passive):
+    """Select button + status LED on console-select boards (layout.CONSOLE_SELECT).
+
+    SW_SEL (front) pulls PC3 to GND; the firmware steps through the consoles on
+    each press. LED1, an SK6812MINI-E on the back, shines through its cutout to
+    the front beside the button. It runs from the Tab5's 5 V (J1 pin 6) through
+    D1: about 4.3 V is inside the LED's 3.7-5.5 V range and lowers its input
+    threshold (0.7 VDD) to about 3.0 V, so the 3.3 V AVR drives DIN (PC2, via
+    R10) in spec. Without 5 V on the header only the LED stays dark."""
+    sel = CFG.select
+    make_led_footprint()
+    b.connect(u, AVRDD_PIN_NO["PC3"], "CON_SEL")
+    b.connect(u, AVRDD_PIN_NO["PC2"], "LED_DATA")
+    bx, by = sel["button"]
+    sw = b.place(LOCAL_LIB, "SW_PUSH_6mm_4pin", "SW_SEL", "SELECT CONSOLE", bx, by, 0.0, anchor="pads")
+    for pin, netname in ((1, "GND"), (2, "GND"), (3, "CON_SEL"), (4, "CON_SEL")):
+        b.connect(sw, pin, netname)
+    lx, ly = sel["led"]
+    led = b.place(LOCAL_LIB, LED_FP, "LED1", "SK6812MINI-E", lx, ly, 0.0, back=True)
+    b.keepout(lx - LED_CUT[0] / 2 - 0.5, ly - LED_CUT[1] / 2 - 0.5, lx + LED_CUT[0] / 2 + 0.5, ly + LED_CUT[1] / 2 + 0.5)
+    for pin, netname in ((1, "GND"), (2, "LED_DIN"), (3, "+5V_LED"), (4, None)):
+        b.connect(led, pin, netname)
+    passive("R10", "100", lx + 7.0, ly, "LED_DATA", "LED_DIN", 90.0)
+    passive("C5", "100nF", lx - 4.0, ly + 4.5, "+5V_LED", "GND", 0.0,
+            fp="C_0805_2012Metric_Pad1.18x1.45mm_HandSolder", lib="Capacitor_SMD")
+    d = b.place("Diode_SMD", "D_SOD-123", "D1", "1N4148W", lx + 2.0, ly + 4.5, 180.0, back=True)
+    b.connect(d, 1, "+5V_LED")     # SOD-123 pad 1 = cathode
+    b.connect(d, 2, "+5V")
+    b.text(pcbnew.F_SilkS, bx, by + 6.5, "CONSOLE", 1.0)
 
 
 def place_header(b, pins):
@@ -339,7 +428,7 @@ def build():
     b.line(pcbnew.Edge_Cuts, OUTLINE, closed=True, width=0.1)
     for i, x in enumerate(M3_X):
         b.place("MountingHole", "MountingHole_3.2mm_M3", f"H{i + 1}", "M3", x, M3_Y)
-    b.text(pcbnew.F_SilkS, 64, 49.5, "RetroPad %s  (console ID %d)" % (CFG.title, CFG.id), 1.2)
+    b.text(pcbnew.F_SilkS, 64, 49.5, "RetroPad %s  (%s)" % (CFG.title, CFG.id_label), 1.2)
     b.text(pcbnew.B_SilkS, 100, 53.5, "RetroPad %s rev 0.1" % CFG.name.upper(), 1.0, mirror=True)
 
     # Buttons (front): one MCU pin each, switch to GND, internal pull-up in the MCU.
@@ -452,8 +541,9 @@ PARTS = {
     "SW_PUSH_6mm_4pin": ("C&K", "PTS645SM43-2 LFS", ""),
     "SW_PUSH-12mm_4pin": ("Omron", "B3F-4055", "SW414-ND"),
     "SW_Tactile_SPST_Angled_PTS645Vx31-2LFS": ("C&K", "PTS645VL31-2 LFS", "CKN9094-ND"),
-    # Console-select slide switch (NES / GB / SMS board), SP3T, right angle, SMD
-    "SW_SP3T_PCM13": ("C&K", "PCM13SMTR", ""),
+    # Console-select status LED (NES / GB / SMS board), reverse mount
+    "SK6812MINI-E_ReverseMount": ("OPSCO", "SK6812MINI-E", "LCSC C5149201"),
+    "D_SOD-123": ("", "1N4148W", ""),
     # J1 to the Tab5: 2x5 right-angle male, 5.84 mm mating pins. Confirm the pin
     # length against M5Stack's keyboard before ordering (see README checklist).
     "PinHeader_2x05_P2.54mm_Horizontal": ("Samtec", "TSW-105-08-G-D-RA", "SAM1037-05-ND"),

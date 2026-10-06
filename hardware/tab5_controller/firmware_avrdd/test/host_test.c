@@ -11,6 +11,9 @@
 #undef main
 
 PORT_t PORTA, PORTC, PORTD, PORTF;
+VPORT_t VPORTC;
+uint8_t fake_eeprom[256];
+int fake_eeprom_writes;
 TWI_t TWI0;
 TCB_t TCB0;
 ADC_t ADC0;
@@ -158,7 +161,53 @@ int main(void)
     check("Genesis PD6 -> X, PC2 -> Z, PC3 -> MODE", buttons_sample(),
           RP_BIT(RP_BTN_X) | RP_BIT(RP_BTN_Z) | RP_BIT(RP_BTN_SELECT));
 
-    printf("console-select switch: the ID is re-read while running\n");
+    printf("console-select board: straps read SELECT_STRAP_ID\n");
+    memset(fake_eeprom, 0xFF, sizeof fake_eeprom);       /* blank EEPROM */
+    PORTA.IN = 0xFF & (uint8_t)~((SELECT_STRAP_ID & 0x03) | (SELECT_STRAP_ID & 0x0C) << 4);
+    check("straps read the select code", read_console_id(), SELECT_STRAP_ID);
+    PORTC.PIN2CTRL = PORT_PULLUPEN_bm;                   /* as buttons_init() left it */
+    select_init();
+    check("blank EEPROM starts at the first console", s_console, select_console[0]);
+    check("  LED shows it", s_led_shown, 0);
+    check("  PC2 output, low, no pull-up", (VPORTC.DIR & PIN2_bm) | (VPORTC.OUT & PIN2_bm) | PORTC.PIN2CTRL, PIN2_bm);
+    host_read(RP_REG_INFO, v, 8);
+    check("  info block reports NES, never the select code", v[RP_INFO_CONSOLE_ID], RP_CONSOLE_NES);
+    int presses = 0;
+    for (int ms = 0; ms < SEL_DEBOUNCE_MS - 1; ms++)
+        presses += select_step(true);
+    check("bounce shorter than the debounce: ignored", presses, 0);
+    check("  ignored release resets the count", select_step(false), 0);
+    for (int ms = 0; ms < SEL_DEBOUNCE_MS; ms++)
+        presses += select_step(true);
+    check("held press steps once", presses, 1);
+    check("  console now Game Boy", s_console, RP_CONSOLE_GB);
+    check("  saved to EEPROM", fake_eeprom[0], 1);
+    check("  LED shows it", s_led_shown, 1);
+    for (int ms = 0; ms < 500; ms++)
+        presses += select_step(true);
+    check("holding does not repeat", presses, 1);
+    for (int ms = 0; ms < SEL_DEBOUNCE_MS; ms++)
+        presses += select_step(false);
+    for (int ms = 0; ms < SEL_DEBOUNCE_MS; ms++)
+        presses += select_step(true);
+    check("next press: Master System", s_console, RP_CONSOLE_SMS);
+    host_read(RP_REG_INFO, v, 8);
+    check("  info block reports SMS to the Tab5", v[RP_INFO_CONSOLE_ID], RP_CONSOLE_SMS);
+    for (int ms = 0; ms < SEL_DEBOUNCE_MS; ms++)
+        select_step(false);
+    for (int ms = 0; ms < SEL_DEBOUNCE_MS; ms++)
+        select_step(true);
+    check("wraps back to NES", s_console, RP_CONSOLE_NES);
+    check("  EEPROM written once per press", fake_eeprom_writes, 3);
+    fake_eeprom[0] = 2;                                  /* power cycle with SMS saved */
+    select_init();
+    check("boot restores the saved console", s_console, RP_CONSOLE_SMS);
+    fake_eeprom[0] = 7;                                  /* corrupt index */
+    select_init();
+    check("out-of-range EEPROM falls back to the first", s_console, select_console[0]);
+    s_select = false;
+
+    printf("strap boards: the ID is re-read while running\n");
     set_console(RP_CONSOLE_NES);
     check("one reading of a new ID is not enough", console_id_step(RP_CONSOLE_SMS), 0);
     check("  console unchanged", s_console, RP_CONSOLE_NES);
@@ -166,10 +215,10 @@ int main(void)
     check("  console now SMS", s_console, RP_CONSOLE_SMS);
     host_read(RP_REG_INFO, v, 8);
     check("  info block reports SMS to the Tab5", v[RP_INFO_CONSOLE_ID], RP_CONSOLE_SMS);
-    check("switch passing GB on its way back: no change", console_id_step(RP_CONSOLE_GB), 0);
+    check("a single GB glitch: no change", console_id_step(RP_CONSOLE_GB), 0);
     check("  back at SMS resets the candidate", console_id_step(RP_CONSOLE_SMS), 0);
     check("  console still SMS", s_console, RP_CONSOLE_SMS);
-    PORTA.IN = 0xFF & (uint8_t)~(1 << 1);               /* switch now grounds ID1 only */
+    PORTA.IN = 0xFF & (uint8_t)~(1 << 1);               /* ID1 grounded only */
     check("strap read after a move: Game Boy", read_console_id(), RP_CONSOLE_GB);
     PORTA.IN = 0xFF & (uint8_t)~(1 << 0);               /* back to ID0 */
     check("previously grounded pin gets its pull-up back", read_console_id(), RP_CONSOLE_NES);

@@ -107,12 +107,14 @@ This is P1 in M5Stack's keyboard schematic (`SCH_Tab5_Keyboard_SCH_V1.0`): a 2×
 |---|---|---|---|---|---|---|
 | 10 | G9 | **not connected** | | 9 | INT_G50 | **not connected** |
 | 8 | SDA_G0 | PA2 (TWI0 SDA), 4.7 kΩ pull-up | | 7 | SCL_G1 | PA3 (TWI0 SCL), 4.7 kΩ pull-up |
-| 6 | SYS_EXT5V | **not connected** | | 5 | VCC_3V3 | Board supply |
+| 6 | SYS_EXT5V | **not connected** (console-select board: status LED via D1) | | 5 | VCC_3V3 | Board supply |
 | 4 | GND | GND | | 3 | GND | GND |
 | 2 | GND | GND | | 1 | SYS_VIN | **not connected** |
 
-* The whole board runs from the Tab5's 3.3 V on pin 5. Leave SYS_VIN and SYS_EXT5V open, as
-  M5Stack does.
+* The whole board runs from the Tab5's 3.3 V on pin 5. Leave SYS_VIN open, as M5Stack does.
+  SYS_EXT5V stays open too, except on the NES / Game Boy / Master System board, where it feeds
+  only the SK6812 status LED through a diode (see
+  [Console select](boards/README.md#console-select)). That LED stays dark if the port has no 5 V.
 * G9 (pin 10) is unused, as on the keyboard. The Tab5 never reprograms a board; firmware goes
   on over the board's own UPDI header.
 * INT is not wired. The host driver polls the board, and the AVR32DD28 has no pin left for it.
@@ -165,16 +167,17 @@ generated from the board layouts, and reports each button under its canonical Re
 
 ### 2.4 Console ID straps
 
-Each strap pin uses the MCU's internal pull-up, read once at boot. Fit a 0 Ω resistor to GND
-to set that bit. With no straps fitted the ID is 0, which means Generic.
+Each strap pin uses the MCU's internal pull-up. Fit a 0 Ω resistor to GND to set that bit.
+With no straps fitted the ID is 0, which means Generic. Straps reading 14 mark a console-select
+board: its console comes from a button instead and is never reported as 14.
 
 | ID | Console | ID3 PA7 | ID2 PA6 | ID1 PA1 | ID0 PA0 |
 |---|---|---|---|---|---|
 | 0 | Generic | – | – | – | – |
-| 1 | NES (NES / GB / SMS board, switch) | – | – | – | ● |
-| 2 | Game Boy / Color (NES / GB / SMS board, switch) | – | – | ● | – |
+| 1 | NES (NES / GB / SMS board: CONSOLE button) | – | – | – | ● |
+| 2 | Game Boy / Color (NES / GB / SMS board: CONSOLE button) | – | – | ● | – |
 | 3 | SNES | – | – | ● | ● |
-| 4 | Master System / Game Gear (NES / GB / SMS board, switch) | – | ● | – | – |
+| 4 | Master System / Game Gear (NES / GB / SMS board: CONSOLE button) | – | ● | – | – |
 | 5 | Genesis / Mega Drive | – | ● | – | ● |
 | 6 | PC Engine | – | ● | ● | – |
 | 7 | Atari 2600 | – | ● | ● | ● |
@@ -184,7 +187,7 @@ to set that bit. With no straps fitted the ID is 0, which means Generic.
 | 11 | ColecoVision | ● | – | ● | ● |
 | 12 | Neo Geo | ● | ● | – | – |
 | 13 | ZX Spectrum | ● | ● | – | ● |
-| 14 | reserved | ● | ● | ● | – |
+| 14 | console-select board (NES / GB / SMS straps; reports 1, 2 or 4) | ● | ● | ● | – |
 
 The ID also selects the button slot table, so **one firmware image serves every board**.
 
@@ -203,10 +206,10 @@ in-game menu.
 
 | ID | Console | Buttons (label → bit) | Notes |
 |---|---|---|---|
-| 1 | NES | D-pad, B→`B`, A→`A`, SELECT, START | One board with a slide switch serves NES, Game Boy and Master System |
-| 2 | Game Boy | Same as ID 1 | NES / GB / SMS board, switch on GB |
+| 1 | NES | D-pad, B→`B`, A→`A`, SELECT, START | One board with a CONSOLE button serves NES, Game Boy and Master System |
+| 2 | Game Boy | Same as ID 1 | NES / GB / SMS board, LED green |
 | 3 | SNES | D-pad, A, B, X, Y, L, R, SELECT, START | |
-| 4 | SMS / GG | D-pad, 1→`B`, 2→`A`, START (Pause) | NES / GB / SMS board, switch on SMS; SELECT unused |
+| 4 | SMS / GG | D-pad, 1→`B`, 2→`A`, START (Pause) | NES / GB / SMS board, LED blue; SELECT unused |
 | 5 | Genesis | D-pad, A→`A`, B→`B`, C→`C`, X→`X`, Y→`Y`, Z→`Z`, START, MODE→`SELECT` | A/B/C are remapped for the core. With this board attached, port 1 is a 6-button pad and the Genesis app passes X/Y/Z/MODE through. Holding MODE when the board connects keeps it 3-button. |
 | 6 | PC Engine | D-pad, II→`B`, I→`A`, SELECT, RUN→`START` | |
 | 7 | Atari 2600 | Joystick→D-pad, FIRE→`A`, GAME SELECT→`SELECT`, GAME RESET→`START`, paddle→AN0 | |
@@ -282,7 +285,7 @@ Behaviour:
   the 8-byte state block. Otherwise it is treated as a stock keyboard.
 * After 5 failed transfers in a row the board is treated as removed and the port is probed
   again every second. The next emulator you start, or the one already running, picks up
-  whichever board is attached. The log prints `RetroPad attached: Genesis (fw 0x21)`.
+  whichever board is attached. The log prints `RetroPad attached: Genesis (fw 0x22)`.
 * `tab5_ctrl_get_info()` exposes `present`, `console` and `analog_count`. The launcher can use
   them to suggest the right board for a ROM; this is not wired up yet.
 
@@ -318,9 +321,9 @@ make flash PORT=/dev/ttyUSB0       # SerialUPDI: USB-serial adapter + resistor
 
 * **Console boards:** [`boards/`](boards/README.md) has routed, DRC-clean KiCad projects
   (schematic + PCB, AVR32DD28) for SNES, Genesis, and NES / Game Boy / Master System (one board
-  with a console-select switch). Each was checked against the firmware's pin map. Check the 2×5 header orientation
+  with a CONSOLE button and RGB status LED). Each was checked against the firmware's pin map. Check the 2×5 header orientation
   before ordering.
-* **Firmware:** builds to about 1.5 KB and passes a host test that replays the driver's I2C
+* **Firmware:** builds to about 2.1 KB and passes a host test that replays the driver's I2C
   traffic. It has not yet run on real hardware.
 * **Host driver:** the launcher builds with ESP-IDF v5.5.2 both with the driver off (the
   default) and with `CONFIG_TAB5_CTRL_ENABLE=y`. It has not yet run on real hardware.
