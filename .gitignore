@@ -6,6 +6,8 @@ build_papp/
 
 # === Firmware binaries (all generated) ===
 firmware/
+RetroESP32_P4_v1.bin
+RetroESP32_P4_HDMI_v1.bin
 
 # === ESP-IDF generated config (only .defaults are tracked) ===
 sdkconfig
