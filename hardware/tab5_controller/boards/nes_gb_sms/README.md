@@ -9,6 +9,18 @@ one, and an RGB LED beside the button shows the choice: red = NES, green = Game 
 blue = Master System. The Tab5 then switches the button map and the launcher jumps to that
 console's games. The choice is kept across power cycles.
 
+### LED colours
+
+| LED colour | System | Console ID |
+|---|---|---|
+| Red | NES | 1 |
+| Green | Game Boy | 2 |
+| Blue | Master System | 4 |
+
+Each press of CONSOLE steps red → green → blue → red. If the LED stays dark, the Tab5 isn't
+supplying 5 V on J1 pin 6. The board still works, only the LED is off. The colours come from
+`CONSOLE_SELECT` in [`../layout.py`](../layout.py).
+
 * **Master System:** button 1 is B, button 2 is A, START is START (Pause). SELECT does nothing.
 * **CONSOLE button:** a 6×6 tact switch (SW_SEL) on PC3. The ID straps read 14, which tells the
   firmware this is a console-select board (see [Console select](../README.md#console-select)).
