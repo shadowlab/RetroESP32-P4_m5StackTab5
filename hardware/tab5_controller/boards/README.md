@@ -124,6 +124,10 @@ python3 gen_avrdd_pinmap.py          # after changing a layout's buttons
 Freerouting 1.9 runs single-threaded on purpose. In testing, 2.1's multi-threaded optimiser
 reported "0 unrouted" but wrote a session with nets missing.
 
+Back-side reference labels (U1, R1, C1, ...) are drawn as board-level silkscreen text and the
+footprints' own references are hidden: EasyEDA's KiCad import mirrors some flipped footprints'
+references. `python3 gen_pcb.py <board> --back-refs-only` re-applies this to a routed board.
+
 Check the DRC report for 0 unconnected pads after every route: if 1.9 stalls with a net
 unrouted, re-run with `FR_PASSES=300`.
 

@@ -284,6 +284,32 @@ class Builder:
             t.SetMirrored(True)
         self.board.Add(t)
 
+    def back_refs_to_board_text(self):
+        """Redraw each back footprint's reference as plain board text (same place,
+        size and angle as KiCad shows it) and hide the footprint's own copy.
+
+        EasyEDA's KiCad import draws some flipped footprints' references mirrored
+        top to bottom (R1-R3, R6-R9, C1-C3 on these boards). Board-level mirrored
+        text, like the ID and UPDI labels, comes through unchanged."""
+        for t in [d for d in self.board.GetDrawings()
+                  if isinstance(d, pcbnew.PCB_TEXT) and d.GetLayer() == pcbnew.B_SilkS
+                  and any(d.GetText() == f.GetReference() for f in self.board.GetFootprints())]:
+            self.board.Remove(t)        # earlier run on the same board
+        for fp in self.board.GetFootprints():
+            ref = fp.Reference()
+            if not fp.IsFlipped() or ref.GetLayer() != pcbnew.B_SilkS:
+                continue
+            t = pcbnew.PCB_TEXT(self.board)
+            t.SetText(fp.GetReference())
+            t.SetLayer(pcbnew.B_SilkS)
+            t.SetPosition(ref.GetPosition())
+            t.SetTextAngle(ref.GetDrawRotation())
+            t.SetTextSize(ref.GetTextSize())
+            t.SetTextThickness(ref.GetTextThickness())
+            t.SetMirrored(True)
+            self.board.Add(t)
+            ref.SetVisible(False)
+
     def keepout(self, x0, y0, x1, y1):
         """No tracks, vias or copper fill in a rectangle on both layers (exported to
         Freerouting, which otherwise only sees the board outline, not cutouts)."""
@@ -455,6 +481,7 @@ def build():
                 b.connect(sw, pin, netname)
 
     build_core(b)
+    b.back_refs_to_board_text()
     return b
 
 def drc(path):
@@ -574,9 +601,17 @@ def write_bom(board, path):
 def main():
     args = [a for a in sys.argv[1:] if not a.startswith("--")]
     if len(args) != 1 or args[0] not in layout.CONSOLES:
-        sys.exit("usage: gen_pcb.py {%s} [--route] [--reuse-ses] [--bom-only]" % ",".join(layout.CONSOLES))
+        sys.exit("usage: gen_pcb.py {%s} [--route] [--reuse-ses] [--bom-only] [--back-refs-only]" % ",".join(layout.CONSOLES))
     configure(args[0])
     OUT, OUT_UNROUTED = CFG.pcb, CFG.pcb_unrouted
+    if "--back-refs-only" in sys.argv:
+        # Apply back_refs_to_board_text() to the routed board without re-placing or re-routing
+        rb = Builder.__new__(Builder)
+        rb.board = pcbnew.LoadBoard(OUT)
+        rb.back_refs_to_board_text()
+        pcbnew.SaveBoard(OUT, rb.board)
+        print("saved", OUT, "| DRC report:", drc(OUT))
+        return
     if "--bom-only" in sys.argv:
         # Rewrite the BOM from the routed board, without re-placing or re-routing
         print("BOM:", write_bom(pcbnew.LoadBoard(OUT), os.path.join(CFG.dir, CFG.base + "_bom.csv")))
