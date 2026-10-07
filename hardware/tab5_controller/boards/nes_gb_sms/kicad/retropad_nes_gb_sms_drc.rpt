@@ -1,5 +1,5 @@
 ** Drc report for /home/user/RetroESP32-P4_m5StackTab5/hardware/tab5_controller/boards/nes_gb_sms/kicad/retropad_nes_gb_sms.kicad_pcb **
-** Created on 2026-10-07 20:08:21 **
+** Created on 2026-10-07 20:14:27 **
 
 ** Found 43 DRC violations **
 [silk_overlap]: Silkscreen overlap
@@ -61,7 +61,7 @@
     @(56.0000 mm, 95.0000 mm): Footprint H1
 [lib_footprint_issues]: The current configuration does not include the library 'Connector_PinHeader_2.54mm'.
     Local override; Severity: warning
-    @(60.9200 mm, 90.0800 mm): Footprint J1
+    @(66.0000 mm, 88.8100 mm): Footprint J1
 [lib_footprint_issues]: The current configuration does not include the library 'MountingHole'.
     Local override; Severity: warning
     @(152.0000 mm, 95.0000 mm): Footprint H2
@@ -76,7 +76,7 @@
     @(84.0000 mm, 93.0000 mm): Footprint R2
 [lib_footprint_issues]: The current configuration does not include the library 'Connector_PinHeader_2.54mm'.
     Local override; Severity: warning
-    @(130.0000 mm, 86.5000 mm): Footprint J2
+    @(127.4600 mm, 86.5000 mm): Footprint J2
 [lib_footprint_issues]: The current configuration does not include the library 'Resistor_SMD'.
     Local override; Severity: warning
     @(124.0000 mm, 99.0000 mm): Footprint R7

@@ -124,9 +124,14 @@ python3 gen_avrdd_pinmap.py          # after changing a layout's buttons
 Freerouting 1.9 runs single-threaded on purpose. In testing, 2.1's multi-threaded optimiser
 reported "0 unrouted" but wrote a session with nets missing.
 
-Back-side reference labels (U1, R1, C1, ...) are drawn as board-level silkscreen text and the
-footprints' own references are hidden: EasyEDA's KiCad import mirrors some flipped footprints'
-references. `python3 gen_pcb.py <board> --back-refs-only` re-applies this to a routed board.
+Two changes keep the boards intact through EasyEDA's KiCad import (KiCad shows no difference):
+every footprint's anchor sits on the centre of its pads (EasyEDA shifts footprints whose anchor
+is off-centre, which put the Genesis switches on H2 and R6-R9), and back-side references
+(U1, R1, C1, ...) are board-level silkscreen text with the footprints' own references hidden
+(EasyEDA mirrors some flipped footprints' references). `python3 gen_pcb.py <board>
+--easyeda-fixups` applies both to a routed board. Because of the moved anchors, don't use
+KiCad's "Update PCB from footprint library" on J1, J2 or the right-angle switches: their
+library anchors are on pin 1, so the pads would move.
 
 Check the DRC report for 0 unconnected pads after every route: if 1.9 stalls with a net
 unrouted, re-run with `FR_PASSES=300`.

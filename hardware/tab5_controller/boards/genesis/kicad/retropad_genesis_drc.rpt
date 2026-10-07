@@ -1,5 +1,5 @@
 ** Drc report for /home/user/RetroESP32-P4_m5StackTab5/hardware/tab5_controller/boards/genesis/kicad/retropad_genesis.kicad_pcb **
-** Created on 2026-10-07 20:08:22 **
+** Created on 2026-10-07 20:14:27 **
 
 ** Found 66 DRC violations **
 [silk_overlap]: Silkscreen overlap
@@ -139,7 +139,7 @@
     @(152.0000 mm, 95.0000 mm): Footprint H2
 [lib_footprint_issues]: The current configuration does not include the library 'Connector_PinHeader_2.54mm'.
     Local override; Severity: warning
-    @(60.9200 mm, 90.0800 mm): Footprint J1
+    @(66.0000 mm, 88.8100 mm): Footprint J1
 [lib_footprint_issues]: The current configuration does not include the library 'MountingHole'.
     Local override; Severity: warning
     @(56.0000 mm, 95.0000 mm): Footprint H1
@@ -181,7 +181,7 @@
     @(84.0000 mm, 93.0000 mm): Footprint R2
 [lib_footprint_issues]: The current configuration does not include the library 'Connector_PinHeader_2.54mm'.
     Local override; Severity: warning
-    @(130.0000 mm, 86.5000 mm): Footprint J2
+    @(127.4600 mm, 86.5000 mm): Footprint J2
 [silk_edge_clearance]: Silkscreen clipped by board edge
     Rule: board setup constraints silk; Severity: warning
     @(165.0000 mm, 83.5000 mm): Line on Edge.Cuts

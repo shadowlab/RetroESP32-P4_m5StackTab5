@@ -44,6 +44,32 @@ SWITCH_4PIN = {
 }
 
 
+def center_on_pads(fp):
+    """Move a footprint's anchor to the centre of its numbered pads, leaving every
+    pad and drawing where it is.
+
+    EasyEDA's KiCad import shifts a footprint whose anchor is off its centre by
+    the anchor-to-centre distance (the Genesis board's 12 mm switches landed on
+    H2 and R6-R9). With the anchor on the centre the shift is zero."""
+    def centre():
+        pads = [p for p in fp.Pads() if p.GetNumber()]
+        return pcbnew.VECTOR2I(round(sum(p.GetPosition().x for p in pads) / len(pads)),
+                               round(sum(p.GetPosition().y for p in pads) / len(pads)))
+
+    if not any(p.GetNumber() for p in fp.Pads()):
+        return
+    target = centre()
+    # Shift the anchor at 0 degrees, where board and footprint axes line up, so
+    # the footprint's own coordinates stay exact (and match the library copy)
+    angle = fp.GetOrientation()
+    fp.SetOrientationDegrees(0)
+    d = centre() - fp.GetPosition()
+    if d.x or d.y:
+        fp.MoveAnchorPosition(pcbnew.VECTOR2I(-d.x, -d.y))   # items shift by -d
+    fp.SetPosition(target)
+    fp.SetOrientation(angle)
+
+
 def make_switch_footprints():
     """Write the 4-pin switch footprints into kicad_lib/RetroPad.pretty."""
     import re
@@ -60,8 +86,12 @@ def make_switch_footprints():
         text, n = re.subn(r'\(pad "(\d)" (thru_hole \w+ )\(at ([-\d.]+) ([-\d.]+)', renumber, text)
         assert n == 4, (name, n)
         text = re.sub(r'\(descr "([^"]*)"\)', r'(descr "\1; 4-pin numbering 1-4, tied pairs 1-2 and 3-4")', text, 1)
-        with open(os.path.join(out_dir, name + ".kicad_mod"), "w") as f:
+        path = os.path.join(out_dir, name + ".kicad_mod")
+        with open(path, "w") as f:
             f.write(text)
+        fp = pcbnew.FootprintLoad(out_dir, name)
+        center_on_pads(fp)
+        pcbnew.FootprintSave(out_dir, fp)
     return out_dir
 
 
@@ -284,6 +314,13 @@ class Builder:
             t.SetMirrored(True)
         self.board.Add(t)
 
+    def easyeda_fixups(self):
+        """Changes that keep the board intact through EasyEDA's KiCad import;
+        KiCad's view of the board does not change."""
+        for fp in self.board.GetFootprints():
+            center_on_pads(fp)
+        self.back_refs_to_board_text()
+
     def back_refs_to_board_text(self):
         """Redraw each back footprint's reference as plain board text (same place,
         size and angle as KiCad shows it) and hide the footprint's own copy.
@@ -291,23 +328,24 @@ class Builder:
         EasyEDA's KiCad import draws some flipped footprints' references mirrored
         top to bottom (R1-R3, R6-R9, C1-C3 on these boards). Board-level mirrored
         text, like the ID and UPDI labels, comes through unchanged."""
-        for t in [d for d in self.board.GetDrawings()
-                  if isinstance(d, pcbnew.PCB_TEXT) and d.GetLayer() == pcbnew.B_SilkS
-                  and any(d.GetText() == f.GetReference() for f in self.board.GetFootprints())]:
-            self.board.Remove(t)        # earlier run on the same board
+        # A board this already ran on keeps its texts; they are updated in place
+        done = {d.GetText(): d for d in self.board.GetDrawings()
+                if d.GetClass() == "PCB_TEXT" and d.GetLayer() == pcbnew.B_SilkS}
         for fp in self.board.GetFootprints():
             ref = fp.Reference()
             if not fp.IsFlipped() or ref.GetLayer() != pcbnew.B_SilkS:
                 continue
-            t = pcbnew.PCB_TEXT(self.board)
-            t.SetText(fp.GetReference())
+            t = done.get(fp.GetReference())
+            if t is None:
+                t = pcbnew.PCB_TEXT(self.board)
+                t.SetText(fp.GetReference())
+                self.board.Add(t)
             t.SetLayer(pcbnew.B_SilkS)
             t.SetPosition(ref.GetPosition())
             t.SetTextAngle(ref.GetDrawRotation())
             t.SetTextSize(ref.GetTextSize())
             t.SetTextThickness(ref.GetTextThickness())
             t.SetMirrored(True)
-            self.board.Add(t)
             ref.SetVisible(False)
 
     def keepout(self, x0, y0, x1, y1):
@@ -481,7 +519,7 @@ def build():
                 b.connect(sw, pin, netname)
 
     build_core(b)
-    b.back_refs_to_board_text()
+    b.easyeda_fixups()
     return b
 
 def drc(path):
@@ -601,14 +639,14 @@ def write_bom(board, path):
 def main():
     args = [a for a in sys.argv[1:] if not a.startswith("--")]
     if len(args) != 1 or args[0] not in layout.CONSOLES:
-        sys.exit("usage: gen_pcb.py {%s} [--route] [--reuse-ses] [--bom-only] [--back-refs-only]" % ",".join(layout.CONSOLES))
+        sys.exit("usage: gen_pcb.py {%s} [--route] [--reuse-ses] [--bom-only] [--easyeda-fixups]" % ",".join(layout.CONSOLES))
     configure(args[0])
     OUT, OUT_UNROUTED = CFG.pcb, CFG.pcb_unrouted
-    if "--back-refs-only" in sys.argv:
-        # Apply back_refs_to_board_text() to the routed board without re-placing or re-routing
+    if "--easyeda-fixups" in sys.argv:
+        # Apply easyeda_fixups() to the routed board without re-placing or re-routing
         rb = Builder.__new__(Builder)
         rb.board = pcbnew.LoadBoard(OUT)
-        rb.back_refs_to_board_text()
+        rb.easyeda_fixups()
         pcbnew.SaveBoard(OUT, rb.board)
         print("saved", OUT, "| DRC report:", drc(OUT))
         return
