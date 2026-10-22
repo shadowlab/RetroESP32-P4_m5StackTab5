@@ -139,9 +139,11 @@ static esp_err_t tab5_present(const uint16_t *src, uint32_t in_w, uint32_t in_h,
     float px = roundf(legacy_sx * factor * 16.0f) / 16.0f;
     float py = roundf(legacy_sy * factor * 16.0f) / 16.0f;
 
-    /* Shrink a picture that would overflow the panel (PAPP frames at 2.4x: 320x200 -> 725 px on a
-     * 720 px panel) to the largest 1/16 steps that fit, keeping its aspect, instead of failing. */
-    float fit = fminf((float)TAB5_PANEL_W / (in_h * px), (float)TAB5_PANEL_H / (in_w * py));
+    /* Shrink a picture that would cover the touch pad or overflow the panel (PAPP frames at 2.4x:
+     * 320x200 -> 1160x725) to the largest 1/16 steps that fit between the pad bars, keeping its
+     * aspect (3.125x: 1000x625), instead of drawing over the pad or failing. */
+    const float max_land_w = (float)(TAB5_PANEL_H - 2 * TAB5_PAD_BAR_W);   /* panel Y = landscape X */
+    float fit = fminf((float)TAB5_PANEL_W / (in_h * px), max_land_w / (in_w * py));
     if (fit < 1.0f) {
         px = floorf(px * fit * 16.0f) / 16.0f;
         py = floorf(py * fit * 16.0f) / 16.0f;
