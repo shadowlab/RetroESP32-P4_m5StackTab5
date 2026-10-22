@@ -14,6 +14,7 @@
 #include "esp_idf_version.h"
 #include "esp_vfs_fat.h"
 #include "driver/sdmmc_host.h"
+#include "driver/gpio.h"
 #include "sdmmc_cmd.h"
 #include "sd_pwr_ctrl_by_on_chip_ldo.h"
 #ifdef CONFIG_BOARD_M5STACK_TAB5
@@ -115,6 +116,12 @@ esp_err_t odroid_sdcard_open(const char* base_path)
                 slot_config.d1 = (gpio_num_t)SD_MMC_D1;
                 slot_config.d2 = (gpio_num_t)SD_MMC_D2;
                 slot_config.d3 = (gpio_num_t)SD_MMC_D3;
+            } else {
+                /* D3 is not part of a 1-bit bus, but a card that sees it low during CMD0 switches
+                 * to SPI mode and then ignores SDMMC until it loses power: keep it pulled up. */
+                gpio_reset_pin((gpio_num_t)SD_MMC_D3);
+                gpio_set_direction((gpio_num_t)SD_MMC_D3, GPIO_MODE_INPUT);
+                gpio_pullup_en((gpio_num_t)SD_MMC_D3);
             }
             slot_config.flags |= SDMMC_SLOT_FLAG_INTERNAL_PULLUP;
 
