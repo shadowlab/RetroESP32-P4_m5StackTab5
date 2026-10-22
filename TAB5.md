@@ -141,7 +141,7 @@ otherwise the board is probed as before.
   (`tab5_display_set_fill_hook`). The emulator/UI picture never covers the bars, so it costs nothing per
   frame; pressed buttons are re-drawn highlighted (only that button, cache-synced).
 * **Multi-touch** (up to 5 points): hold the D-pad and A/B together; the D-pad is hit-tested by direction
-  from its centre, so diagonals work. Touch I2C runs at 400 kHz.
+  from its centre, so diagonals work. Touch I2C runs at 100 kHz (as in esp-bsp; reads stopped after the first touch at 400 kHz on a v3 board).
 * **Polled off the emulator threads:** a background task on core 0 reads the touch controller every 8 ms
   and redraws changed buttons; `odroid_input_gamepad_read()` only reads the cached button mask.
 * The same pad is shown in the launcher, in-game menus and PAPP apps, so touch alone can drive everything.
