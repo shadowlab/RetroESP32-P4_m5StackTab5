@@ -152,7 +152,7 @@ static esp_err_t lcd_enable(bool enable)
 static esp_err_t touch_io_new(uint8_t addr, esp_lcd_panel_io_handle_t *io)
 {
     const esp_lcd_panel_io_i2c_config_t cfg = {
-        .scl_speed_hz = 100000,   /* as in esp-bsp (the controllers' tested speed) */
+        .scl_speed_hz = 400000,   /* as M5GFX uses for both controllers; halves touch read latency */
         .dev_addr = addr,
         .control_phase_bytes = 1,
         .lcd_cmd_bits = 16,
