@@ -241,10 +241,6 @@ defaults to C23 / C++26; `CONFIG_COMPILER_DISABLE_DEFAULT_ERRORS=y`; on 6.x only
    is applied where the frame buffer is written (`tab5_present()`, `st7701_lcd_tab5.c`, the pad's
    `fill_rect_land()`) and where touch is read (`tab5_touch_read()`), so the rest of the code keeps
    one coordinate frame. Tap each pad button once and watch it highlight.
-2a. **SD card** — the log names the mode that mounted the card (`SD Card mounted at /sd (attempt N, …)`).
-   It tries SDMMC 4-bit at 40 and 20 MHz, then 1-bit at 20 MHz and 400 kHz, then SPI mode on the same
-   pins, power-cycling the card in between. The first Tab5 tested got no answer to 4-bit high speed
-   (`send_op_cond returned 0x107`).
 3. **Audio** — ES8388 init happens in `components/audio/audio.c`; the speaker amp is enabled through the
    expander (`tab5_board_speaker_enable`).
 4. **USB gamepad** — needs the expander's USB rail (`tab5_board_usb_power_enable`).
