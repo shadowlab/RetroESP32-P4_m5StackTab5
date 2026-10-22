@@ -152,9 +152,7 @@ static esp_err_t lcd_enable(bool enable)
 static esp_err_t touch_io_new(uint8_t addr, esp_lcd_panel_io_handle_t *io)
 {
     const esp_lcd_panel_io_i2c_config_t cfg = {
-        /* 100 kHz as in esp-bsp: on a v3 Tab5 (ST7121) the touch reads stopped answering after the
-         * first touch at 400 kHz. */
-        .scl_speed_hz = 100000,
+        .scl_speed_hz = 100000,   /* as in esp-bsp (the controllers' tested speed) */
         .dev_addr = addr,
         .control_phase_bytes = 1,
         .lcd_cmd_bits = 16,
@@ -483,6 +481,7 @@ static int                       s_read_errors = 0;
 #define TOUCH_NO_REPORT        (-1)
 #define TOUCH_READ_ERROR       (-2)
 #define TOUCH_MAX_READ_ERRORS  3        /* consecutive errors (24 ms at the pad's poll rate) */
+#define ST712X_MAX_SLOTS       10       /* report slots the ST712x can have (esp_lcd_touch_st7123) */
 
 esp_err_t tab5_touch_init(void)
 {
@@ -518,7 +517,7 @@ esp_err_t tab5_touch_init(void)
             max = 0;
         }
         s_st_max_touches = (max == 0 || max > TAB5_MAX_TOUCH_POINTS) ? TAB5_MAX_TOUCH_POINTS : max;
-        ESP_LOGI(TAG, "ST712x touch ready (%u points)", s_st_max_touches);
+        ESP_LOGI(TAG, "ST712x touch ready (%u points, controller reports %u)", s_st_max_touches, max);
     }
     return ESP_OK;
 }
@@ -554,10 +553,16 @@ static int read_st712x(tab5_touch_point_t *pts, int max_points)
     if (esp_lcd_panel_io_rx_param(s_touch_io, 0x0010, &adv, 1) != ESP_OK) return TOUCH_READ_ERROR;
     if (!(adv & 0x08)) return 0;                /* with_coord clear: nothing touching */
 
-    uint8_t raw[7 * TAB5_MAX_TOUCH_POINTS];
-    if (esp_lcd_panel_io_rx_param(s_touch_io, 0x0014, raw, 7 * s_st_max_touches) != ESP_OK) return TOUCH_READ_ERROR;
+    /* Read the whole report, as Espressif's esp_lcd_touch_st7123 does: the number of slots comes
+     * from register 0x0009 on every read.  Reading only part of it (the first 5 slots) left the
+     * ST7121 on a v3 Tab5 repeating its first touch forever, as if the report was never consumed. */
+    uint8_t slots = 0;
+    if (esp_lcd_panel_io_rx_param(s_touch_io, 0x0009, &slots, 1) != ESP_OK) return TOUCH_READ_ERROR;
+    if (slots == 0 || slots > ST712X_MAX_SLOTS) slots = ST712X_MAX_SLOTS;
+    uint8_t raw[7 * ST712X_MAX_SLOTS];
+    if (esp_lcd_panel_io_rx_param(s_touch_io, 0x0014, raw, 7 * slots) != ESP_OK) return TOUCH_READ_ERROR;
     int out = 0;
-    for (int i = 0; i < s_st_max_touches && out < max_points; i++) {
+    for (int i = 0; i < slots && out < max_points; i++) {
         const uint8_t *r = &raw[i * 7];
         if (!(r[0] & 0x80)) continue;           /* valid flag */
         pts[out].x = (uint16_t)(((r[0] & 0x3F) << 8) | r[1]);
