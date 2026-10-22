@@ -235,11 +235,16 @@ defaults to C23 / C++26; `CONFIG_COMPILER_DISABLE_DEFAULT_ERRORS=y`; on 6.x only
 1. **Serial log** — look for `Detected Tab5 hardware v1/v2/v3` from `tab5_board`. If it prints
    *"No known touch controller found"* the revision probing needs a look (it follows the BSP: ST7123 touch
    answers at 0x55, GT911 at 0x14).
-2. **Orientation** — the UI is rotated 270° like the handheld. If the picture and touch are upside down,
-   the fix is the rotation angle in `tab5_present()` / `st7701_lcd_tab5.c` plus the mirrored mapping in
-   `gt911_touch.c` and `tab5_pad.c`. The pad's drawing and hit-testing were checked on the host
-   (rendered upright, every button hits itself); whether touch coordinates line up with the panel's
-   orientation is **not** verified on hardware: tap each pad button once and watch it highlight.
+2. **Orientation** — the picture and touch are turned 180° from the original 270° rotation by
+   `CONFIG_TAB5_ROTATE_180` (default on), because the 270° picture was upside down on the first Tab5
+   tested (v3, ST7121). If it is upside down on yours, build with `CONFIG_TAB5_ROTATE_180=n`. The flip
+   is applied where the frame buffer is written (`tab5_present()`, `st7701_lcd_tab5.c`, the pad's
+   `fill_rect_land()`) and where touch is read (`tab5_touch_read()`), so the rest of the code keeps
+   one coordinate frame. Tap each pad button once and watch it highlight.
+2a. **SD card** — the log names the mode that mounted the card (`SD Card mounted at /sd (attempt N, …)`).
+   It tries SDMMC 4-bit at 40 and 20 MHz, then 1-bit at 20 MHz and 400 kHz, then SPI mode on the same
+   pins, power-cycling the card in between. The first Tab5 tested got no answer to 4-bit high speed
+   (`send_op_cond returned 0x107`).
 3. **Audio** — ES8388 init happens in `components/audio/audio.c`; the speaker amp is enabled through the
    expander (`tab5_board_speaker_enable`).
 4. **USB gamepad** — needs the expander's USB rail (`tab5_board_usb_power_enable`).

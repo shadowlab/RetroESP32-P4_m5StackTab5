@@ -17,6 +17,7 @@
 #include <stdint.h>
 #include <stdbool.h>
 #include <stddef.h>
+#include "sdkconfig.h"
 #include "esp_err.h"
 #include "driver/i2c_master.h"
 
@@ -55,6 +56,21 @@ extern "C" {
 #define TAB5_UI_Y_OFF    140    /* panel Y of the UI rect (landscape: 140 px left margin) */
 #define TAB5_EMU_SCALE   1.5f
 #define TAB5_PAD_BAR_W   140    /* landscape px reserved at each side for the touch pad */
+
+/*
+ * CONFIG_TAB5_ROTATE_180 turns the whole picture by 180 deg (the landscape image is rotated 90 deg
+ * instead of 270 deg onto the panel).  Everything above stays in the 270 deg ("logical") panel
+ * frame; only what is written into the frame buffer is mirrored through the centre, and
+ * tab5_touch_read() mirrors touch points back the same way, so drawing and hit-testing code never
+ * needs to know.
+ */
+#ifdef CONFIG_TAB5_ROTATE_180
+#define TAB5_ROTATE_180  1
+#define TAB5_LANDSCAPE_ANGLE 90
+#else
+#define TAB5_ROTATE_180  0
+#define TAB5_LANDSCAPE_ANGLE 270
+#endif
 
 typedef enum {
     TAB5_REV_UNKNOWN = 0,
@@ -127,7 +143,8 @@ void tab5_display_set_fill_hook(tab5_fill_hook_t hook);
 esp_err_t tab5_touch_init(void);
 
 /**
- * Read currently-pressed touch points, native portrait coordinates.
+ * Read currently-pressed touch points, portrait coordinates in the logical (270 deg) frame:
+ * with TAB5_ROTATE_180 the controller's points are mirrored through the panel centre.
  * @return number of points written to pts (0 when nothing is touched).
  */
 int tab5_touch_read(tab5_touch_point_t *pts, int max_points);

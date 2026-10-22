@@ -5,6 +5,7 @@
  * Uses the same GPIO assignments as the ESP32-P4 base project.
  */
 
+#include "sdkconfig.h"
 #include "odroid_sdcard.h"
 #include "pins_config.h"
 
@@ -15,6 +16,11 @@
 #include "driver/sdmmc_host.h"
 #include "sdmmc_cmd.h"
 #include "sd_pwr_ctrl_by_on_chip_ldo.h"
+#ifdef CONFIG_BOARD_M5STACK_TAB5
+#include "driver/sdspi_host.h"
+#include "driver/spi_master.h"
+#define SDCARD_SPI_HOST SPI3_HOST
+#endif
 #include "freertos/FreeRTOS.h"
 #include "freertos/task.h"
 
@@ -62,53 +68,105 @@ esp_err_t odroid_sdcard_open(const char* base_path)
         return ret;
     }
 
-    const int max_attempts = 3;
+    /*
+     * Mount attempts, from fastest to most forgiving.  If 4-bit high speed gets no answer from the card
+     * (e.g. "send_op_cond returned 0x107", seen on a Tab5), slow down, drop to 1-bit and finally try SPI
+     * mode on the same pins.  Each attempt power-cycles the card through the LDO first, and the log
+     * names the mode that worked.
+     */
+    static const struct {
+        const char *name;
+        int width;              /* 4 or 1: SDMMC bus width; 0: SPI mode */
+        int freq_khz;
+    } modes[] = {
+        { "SDMMC 4-bit, 40 MHz", 4, SDMMC_FREQ_HIGHSPEED },
+        { "SDMMC 4-bit, 20 MHz", 4, SDMMC_FREQ_DEFAULT },
+        { "SDMMC 1-bit, 20 MHz", 1, SDMMC_FREQ_DEFAULT },
+        { "SDMMC 1-bit, 400 kHz", 1, SDMMC_FREQ_PROBING },
+#ifdef CONFIG_BOARD_M5STACK_TAB5
+        { "SPI, 20 MHz", 0, SDMMC_FREQ_DEFAULT },
+#endif
+    };
+    const int max_attempts = sizeof(modes) / sizeof(modes[0]);
+
+    esp_vfs_fat_sdmmc_mount_config_t mount_config = {
+        .format_if_mount_failed = false,
+        .max_files = 10,
+        .allocation_unit_size = 16 * 1024
+    };
+
     for (int attempt = 1; attempt <= max_attempts; attempt++) {
-        ESP_LOGI(TAG, "SD mount attempt %d/%d", attempt, max_attempts);
-
-        sdmmc_host_t host = SDMMC_HOST_DEFAULT();
-        host.slot = SDMMC_HOST_SLOT_0;
-        host.max_freq_khz = SDMMC_FREQ_HIGHSPEED;
-        host.pwr_ctrl_handle = pwr_ctrl_handle;
-
-        sdmmc_slot_config_t slot_config = SDMMC_SLOT_CONFIG_DEFAULT();
-        slot_config.width = 4;
-        slot_config.clk = (gpio_num_t)SD_MMC_CLK;
-        slot_config.cmd = (gpio_num_t)SD_MMC_CMD;
-        slot_config.d0  = (gpio_num_t)SD_MMC_D0;
-        slot_config.d1  = (gpio_num_t)SD_MMC_D1;
-        slot_config.d2  = (gpio_num_t)SD_MMC_D2;
-        slot_config.d3  = (gpio_num_t)SD_MMC_D3;
-        slot_config.flags |= SDMMC_SLOT_FLAG_INTERNAL_PULLUP;
-
-        esp_vfs_fat_sdmmc_mount_config_t mount_config = {
-            .format_if_mount_failed = false,
-            .max_files = 10,
-            .allocation_unit_size = 16 * 1024
-        };
+        const int width = modes[attempt - 1].width;
+        ESP_LOGI(TAG, "SD mount attempt %d/%d: %s", attempt, max_attempts, modes[attempt - 1].name);
 
         sdmmc_card_t *card = NULL;
+        if (width > 0) {
+            sdmmc_host_t host = SDMMC_HOST_DEFAULT();
+            host.slot = SDMMC_HOST_SLOT_0;
+            host.max_freq_khz = modes[attempt - 1].freq_khz;
+            host.pwr_ctrl_handle = pwr_ctrl_handle;
+
+            sdmmc_slot_config_t slot_config = SDMMC_SLOT_CONFIG_DEFAULT();
+            slot_config.width = width;
+            slot_config.clk = (gpio_num_t)SD_MMC_CLK;
+            slot_config.cmd = (gpio_num_t)SD_MMC_CMD;
+            slot_config.d0  = (gpio_num_t)SD_MMC_D0;
+            if (width == 4) {
+                slot_config.d1 = (gpio_num_t)SD_MMC_D1;
+                slot_config.d2 = (gpio_num_t)SD_MMC_D2;
+                slot_config.d3 = (gpio_num_t)SD_MMC_D3;
+            }
+            slot_config.flags |= SDMMC_SLOT_FLAG_INTERNAL_PULLUP;
+
 #if SDCARD_SHARED_HOST_INIT
-        ret = sdmmc_host_init();
-        if (ret == ESP_OK) {
-            host.init = &sdmmc_host_init_noop;
+            ret = sdmmc_host_init();
+            if (ret == ESP_OK) {
+                host.init = &sdmmc_host_init_noop;
+                ret = esp_vfs_fat_sdmmc_mount(base_path, &host, &slot_config,
+                                               &mount_config, &card);
+            } else {
+                ESP_LOGW(TAG, "SDMMC host init failed (0x%x)", ret);
+            }
+#else
             ret = esp_vfs_fat_sdmmc_mount(base_path, &host, &slot_config,
                                            &mount_config, &card);
-        } else {
-            ESP_LOGW(TAG, "SDMMC host init failed (0x%x)", ret);
+#endif
         }
-#else
-        ret = esp_vfs_fat_sdmmc_mount(base_path, &host, &slot_config,
-                                       &mount_config, &card);
+#ifdef CONFIG_BOARD_M5STACK_TAB5
+        else {
+            /* SPI mode on the SD pins: CLK = CLK, MOSI = CMD, MISO = D0, CS = D3 (as in esp-bsp) */
+            sdmmc_host_t host = SDSPI_HOST_DEFAULT();
+            host.slot = SDCARD_SPI_HOST;
+            host.max_freq_khz = modes[attempt - 1].freq_khz;
+            host.pwr_ctrl_handle = pwr_ctrl_handle;
+            const spi_bus_config_t bus_cfg = {
+                .sclk_io_num = SD_MMC_CLK,
+                .mosi_io_num = SD_MMC_CMD,
+                .miso_io_num = SD_MMC_D0,
+                .quadwp_io_num = -1,
+                .quadhd_io_num = -1,
+                .max_transfer_sz = 4000,
+            };
+            ret = spi_bus_initialize(SDCARD_SPI_HOST, &bus_cfg, SDSPI_DEFAULT_DMA);
+            if (ret == ESP_OK) {
+                sdspi_device_config_t dev_cfg = SDSPI_DEVICE_CONFIG_DEFAULT();
+                dev_cfg.gpio_cs = SD_MMC_D3;
+                dev_cfg.host_id = SDCARD_SPI_HOST;
+                ret = esp_vfs_fat_sdspi_mount(base_path, &host, &dev_cfg, &mount_config, &card);
+                if (ret != ESP_OK) spi_bus_free(SDCARD_SPI_HOST);
+            } else {
+                ESP_LOGW(TAG, "SPI bus init failed (0x%x)", ret);
+            }
+        }
 #endif
         if (ret == ESP_OK) {
-            ESP_LOGI(TAG, "SD Card mounted at %s (attempt %d)", base_path, attempt);
+            ESP_LOGI(TAG, "SD Card mounted at %s (attempt %d, %s)", base_path, attempt, modes[attempt - 1].name);
             sdmmc_card_print_info(stdout, card);
             s_mounted = true;
             return ESP_OK;
         }
 
-        ESP_LOGW(TAG, "SD mount failed (0x%x) on attempt %d", ret, attempt);
+        ESP_LOGW(TAG, "SD mount failed (0x%x, %s) on attempt %d", ret, esp_err_to_name(ret), attempt);
 
         if (attempt < max_attempts) {
             ESP_LOGI(TAG, "Power-cycling SD card via LDO...");

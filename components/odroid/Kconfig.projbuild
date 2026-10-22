@@ -20,6 +20,16 @@ menu "RetroESP32 Platform"
             arrive before the previous one reached the screen are dropped rather than
             waited for, so emulation speed never depends on the panel refresh rate.
 
+    config TAB5_ROTATE_180
+        bool "Tab5: turn the picture and touch by 180 degrees"
+        default y
+        depends on BOARD_M5STACK_TAB5
+        help
+            The landscape picture is rotated onto the portrait panel by 90 degrees
+            (on) or 270 degrees (off), i.e. this flips which way up the tablet is
+            held.  On is the right way up on the first hardware tested (v3, ST7121).
+            The touch pad, the launcher UI and touch input all follow.
+
     config TAB5_ILI9881C_DPI_CLOCK_MHZ
         int "Tab5 v1 (ILI9881C) pixel clock (MHz)"
         default 60

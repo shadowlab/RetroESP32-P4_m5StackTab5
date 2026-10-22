@@ -575,6 +575,12 @@ int tab5_touch_read(tab5_touch_point_t *pts, int max_points)
     int out = s_last_cnt < max_points ? s_last_cnt : max_points;
     memcpy(pts, s_last_pts, out * sizeof(tab5_touch_point_t));
     xSemaphoreGive(s_touch_lock);
+#if TAB5_ROTATE_180
+    for (int i = 0; i < out; i++) {
+        if (pts[i].x < TAB5_PANEL_W) pts[i].x = (TAB5_PANEL_W - 1) - pts[i].x;
+        if (pts[i].y < TAB5_PANEL_H) pts[i].y = (TAB5_PANEL_H - 1) - pts[i].y;
+    }
+#endif
     return out;
 }
 

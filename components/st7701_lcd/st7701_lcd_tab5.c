@@ -46,12 +46,17 @@ esp_err_t st7701_lcd_draw_rgb_bitmap(uint16_t x, uint16_t y,
 
     uint32_t dx = (uint32_t)(x * SCALE + 0.5f) + TAB5_UI_X_OFF;
     uint32_t dy = (uint32_t)(y * SCALE + 0.5f) + TAB5_UI_Y_OFF;
+#if TAB5_ROTATE_180
+    /* same rounding as the PPA's output size, then mirror the rect through the panel centre */
+    dx = TAB5_PANEL_W - dx - (uint32_t)(w * SCALE + 0.5f);
+    dy = TAB5_PANEL_H - dy - (uint32_t)(h * SCALE + 0.5f);
+#endif
     /* These are one-off or partial draws (launcher splash, full-screen clears), not frames:
      * write them into every frame buffer so a double-buffered display stays consistent. */
     esp_err_t ret = ESP_OK;
     for (int f = 0; f < tab5_display_fb_count() && ret == ESP_OK; f++) {
         ret = ppa_rotate_scale_rgb565_to_rect(
-            data, w, h, 0, SCALE, SCALE,
+            data, w, h, TAB5_ROTATE_180 ? 180 : 0, SCALE, SCALE,
             tab5_display_fb_at(f), tab5_display_fb_size(), TAB5_PANEL_W, TAB5_PANEL_H,
             dx, dy, NULL, NULL, false);
     }
