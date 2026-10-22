@@ -139,6 +139,14 @@ static esp_err_t tab5_present(const uint16_t *src, uint32_t in_w, uint32_t in_h,
     float px = roundf(legacy_sx * factor * 16.0f) / 16.0f;
     float py = roundf(legacy_sy * factor * 16.0f) / 16.0f;
 
+    /* Shrink a picture that would overflow the panel (PAPP frames at 2.4x: 320x200 -> 725 px on a
+     * 720 px panel) to the largest 1/16 steps that fit, keeping its aspect, instead of failing. */
+    float fit = fminf((float)TAB5_PANEL_W / (in_h * px), (float)TAB5_PANEL_H / (in_w * py));
+    if (fit < 1.0f) {
+        px = floorf(px * fit * 16.0f) / 16.0f;
+        py = floorf(py * fit * 16.0f) / 16.0f;
+    }
+
     /* rotate 270° (or 90°): output width comes from the input height and vice versa */
     uint32_t out_w = (uint32_t)(in_h * px + 0.5f);
     uint32_t out_h = (uint32_t)(in_w * py + 0.5f);
