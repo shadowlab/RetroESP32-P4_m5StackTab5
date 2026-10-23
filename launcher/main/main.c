@@ -1964,12 +1964,6 @@
 
 //{#pragma region Files
   //{#pragma region Sort
-    inline static void swap(char** a, char** b) {
-        char* t = *a;
-        *a = *b;
-        *b = t;
-    }
-
     static int strcicmp(char const *a, char const *b) {
         for (;; a++, b++)
         {
@@ -1978,30 +1972,16 @@
         }
     }
 
-    static int partition (char** arr, int low, int high) {
-        char* pivot = arr[high];
-        int i = (low - 1);
-
-        for (int j = low; j <= high- 1; j++)
-        {
-            if (strcicmp(arr[j], pivot) < 0)
-            {
-                i++;
-                swap(&arr[i], &arr[j]);
-            }
-        }
-        swap(&arr[i + 1], &arr[high]);
-        return (i + 1);
+    static int name_cmp(const void *a, const void *b) {
+        return strcicmp(*(char * const *)a, *(char * const *)b);
     }
 
+    /* libc qsort: the old hand-written quicksort used the last name as its pivot and
+       recursed once per name on an already sorted folder (FAT lists files in copy
+       order), so a large, sorted ROM folder overflowed the launcher's 32 KB main stack. */
     void quick_sort(char** arr, int low, int high) {
         if (low < high)
-        {
-            int pi = partition(arr, low, high);
-
-            quick_sort(arr, low, pi - 1);
-            quick_sort(arr, pi + 1, high);
-        }
+            qsort(arr + low, high - low + 1, sizeof(char *), name_cmp);
     }
 
     void sort_files(char** files)
