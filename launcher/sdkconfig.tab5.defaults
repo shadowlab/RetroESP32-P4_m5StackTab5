@@ -27,3 +27,9 @@ CONFIG_SPIRAM_XIP_FROM_PSRAM=y
 # The emulator cores are third-party code that is not warning-clean on newer GCC (ESP-IDF 6 ships
 # GCC 15 and turns more warnings into errors). Keep warnings as warnings.
 CONFIG_COMPILER_DISABLE_DEFAULT_ERRORS=y
+
+# Keyboard port (Ext.Port1): the stock M5Stack Tab5 Keyboard works as a gamepad, and the RetroPad
+# console boards (hardware/tab5_controller) plug in here too.
+CONFIG_TAB5_CTRL_ENABLE=y
+CONFIG_TAB5_CTRL_I2C_SDA=0
+CONFIG_TAB5_CTRL_I2C_SCL=1

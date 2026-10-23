@@ -274,7 +274,7 @@ CONFIG_TAB5_CTRL_I2C_SDA=0
 CONFIG_TAB5_CTRL_I2C_SCL=1
 ```
 
-It is off by default, so builds without it are unchanged.
+The Tab5 build turns it on in `launcher/sdkconfig.tab5.defaults`; other builds leave it off.
 
 Behaviour:
 
