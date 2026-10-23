@@ -22,6 +22,8 @@
 #include "driver/i2c_master.h"
 #include "freertos/FreeRTOS.h"
 #include "freertos/task.h"
+#include "freertos/idf_additions.h"
+#include "esp_heap_caps.h"
 
 #define I2C_TIMEOUT_MS      20
 #define I2C_FREQ_HZ         400000
@@ -234,7 +236,13 @@ esp_err_t tab5_ctrl_init(void)
         return err;
     }
 
-    if (xTaskCreate(poll_task, "tab5_ctrl", 3072, NULL, 3, &s_task) != pdPASS) {
+    /* Stack in PSRAM: the SNES app runs internal RAM so close to empty that 3 KB more starved the
+     * SD driver's DMA bounce buffers (failed reads, SRAM save lost).  The task only does I2C and
+     * never touches flash, so it never runs with the cache disabled. */
+    BaseType_t ok = xTaskCreateWithCaps(poll_task, "tab5_ctrl", 3072, NULL, 3, &s_task,
+                                        MALLOC_CAP_SPIRAM | MALLOC_CAP_8BIT);
+    if (ok != pdPASS) ok = xTaskCreate(poll_task, "tab5_ctrl", 3072, NULL, 3, &s_task);
+    if (ok != pdPASS) {
         i2c_master_bus_rm_device(s_dev);
         i2c_del_master_bus(s_bus);
         s_dev = NULL;

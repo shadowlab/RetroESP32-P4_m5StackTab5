@@ -152,7 +152,7 @@ static esp_err_t lcd_enable(bool enable)
 static esp_err_t touch_io_new(uint8_t addr, esp_lcd_panel_io_handle_t *io)
 {
     const esp_lcd_panel_io_i2c_config_t cfg = {
-        .scl_speed_hz = 400000,   /* both controllers support 400 kHz; halves touch read latency */
+        .scl_speed_hz = 400000,   /* as M5GFX uses for both controllers; halves touch read latency */
         .dev_addr = addr,
         .control_phase_bytes = 1,
         .lcd_cmd_bits = 16,
@@ -475,6 +475,13 @@ static SemaphoreHandle_t         s_touch_lock = NULL;
 static uint8_t                   s_st_max_touches = 0;
 static tab5_touch_point_t        s_last_pts[TAB5_MAX_TOUCH_POINTS];
 static int                       s_last_cnt = 0;
+static int                       s_read_errors = 0;
+
+/* read_*() results below 0: no new report (GT911, keep the last state) or an I2C error */
+#define TOUCH_NO_REPORT        (-1)
+#define TOUCH_READ_ERROR       (-2)
+#define TOUCH_MAX_READ_ERRORS  3        /* consecutive errors (24 ms at the pad's poll rate) */
+#define ST712X_MAX_SLOTS       10       /* report slots the ST712x can have (esp_lcd_touch_st7123) */
 
 esp_err_t tab5_touch_init(void)
 {
@@ -510,7 +517,7 @@ esp_err_t tab5_touch_init(void)
             max = 0;
         }
         s_st_max_touches = (max == 0 || max > TAB5_MAX_TOUCH_POINTS) ? TAB5_MAX_TOUCH_POINTS : max;
-        ESP_LOGI(TAG, "ST712x touch ready (%u points)", s_st_max_touches);
+        ESP_LOGI(TAG, "ST712x touch ready (%u points, controller reports %u)", s_st_max_touches, max);
     }
     return ESP_OK;
 }
@@ -518,8 +525,8 @@ esp_err_t tab5_touch_init(void)
 static int read_gt911(tab5_touch_point_t *pts, int max_points)
 {
     uint8_t status = 0;
-    if (esp_lcd_panel_io_rx_param(s_touch_io, GT911_REG_STATUS, &status, 1) != ESP_OK) return s_last_cnt;
-    if (!(status & 0x80)) return -1;            /* no new report: keep previous state */
+    if (esp_lcd_panel_io_rx_param(s_touch_io, GT911_REG_STATUS, &status, 1) != ESP_OK) return TOUCH_READ_ERROR;
+    if (!(status & 0x80)) return TOUCH_NO_REPORT;   /* no new report: keep previous state */
 
     int cnt = status & 0x0F;
     if (cnt > TAB5_MAX_TOUCH_POINTS) cnt = TAB5_MAX_TOUCH_POINTS;
@@ -543,13 +550,19 @@ static int read_gt911(tab5_touch_point_t *pts, int max_points)
 static int read_st712x(tab5_touch_point_t *pts, int max_points)
 {
     uint8_t adv = 0;
-    if (esp_lcd_panel_io_rx_param(s_touch_io, 0x0010, &adv, 1) != ESP_OK) return s_last_cnt;
+    if (esp_lcd_panel_io_rx_param(s_touch_io, 0x0010, &adv, 1) != ESP_OK) return TOUCH_READ_ERROR;
     if (!(adv & 0x08)) return 0;                /* with_coord clear: nothing touching */
 
-    uint8_t raw[7 * TAB5_MAX_TOUCH_POINTS];
-    if (esp_lcd_panel_io_rx_param(s_touch_io, 0x0014, raw, 7 * s_st_max_touches) != ESP_OK) return s_last_cnt;
+    /* Read the whole report, as Espressif's esp_lcd_touch_st7123 does: the number of slots comes
+     * from register 0x0009 on every read.  Reading only part of it (the first 5 slots) left the
+     * ST7121 on a v3 Tab5 repeating its first touch forever, as if the report was never consumed. */
+    uint8_t slots = 0;
+    if (esp_lcd_panel_io_rx_param(s_touch_io, 0x0009, &slots, 1) != ESP_OK) return TOUCH_READ_ERROR;
+    if (slots == 0 || slots > ST712X_MAX_SLOTS) slots = ST712X_MAX_SLOTS;
+    uint8_t raw[7 * ST712X_MAX_SLOTS];
+    if (esp_lcd_panel_io_rx_param(s_touch_io, 0x0014, raw, 7 * slots) != ESP_OK) return TOUCH_READ_ERROR;
     int out = 0;
-    for (int i = 0; i < s_st_max_touches && out < max_points; i++) {
+    for (int i = 0; i < slots && out < max_points; i++) {
         const uint8_t *r = &raw[i * 7];
         if (!(r[0] & 0x80)) continue;           /* valid flag */
         pts[out].x = (uint16_t)(((r[0] & 0x3F) << 8) | r[1]);
@@ -571,10 +584,22 @@ int tab5_touch_read(tab5_touch_point_t *pts, int max_points)
     if (n >= 0) {
         memcpy(s_last_pts, tmp, sizeof(tmp));
         s_last_cnt = n;
+        s_read_errors = 0;
+    } else if (n == TOUCH_READ_ERROR && ++s_read_errors >= TOUCH_MAX_READ_ERRORS) {
+        /* The controller stopped answering: release the touch instead of holding the last
+         * point (a stuck button) until it comes back. */
+        if (s_read_errors == TOUCH_MAX_READ_ERRORS) ESP_LOGW(TAG, "touch controller not answering");
+        s_last_cnt = 0;
     }
     int out = s_last_cnt < max_points ? s_last_cnt : max_points;
     memcpy(pts, s_last_pts, out * sizeof(tab5_touch_point_t));
     xSemaphoreGive(s_touch_lock);
+#if TAB5_ROTATE_180
+    for (int i = 0; i < out; i++) {
+        if (pts[i].x < TAB5_PANEL_W) pts[i].x = (TAB5_PANEL_W - 1) - pts[i].x;
+        if (pts[i].y < TAB5_PANEL_H) pts[i].y = (TAB5_PANEL_H - 1) - pts[i].y;
+    }
+#endif
     return out;
 }
 

@@ -4,7 +4,9 @@
  * Coordinates: all layout is in LANDSCAPE pixels (1280x720, origin top-left).  The panel is
  * portrait and the picture is rotated 270 deg onto it, so
  *      panel_x = 719 - landscape_y        panel_y = landscape_x
- * (the inverse is used to turn touch points back into landscape space).
+ * (the inverse is used to turn touch points back into landscape space).  With TAB5_ROTATE_180 the
+ * frame-buffer writes are additionally mirrored through the panel centre (fill_rect_land,
+ * sync_button); touch points arrive already mirrored back, so the hit test is unchanged.
  */
 #include "sdkconfig.h"
 
@@ -175,9 +177,17 @@ static void fill_rect_land(uint16_t *fb, int lx, int ly, int w, int h, uint16_t 
     if (px0 < 0) px0 = 0;
     if (px1 > TAB5_PANEL_W) px1 = TAB5_PANEL_W;
     if (px1 <= px0) return;
+#if TAB5_ROTATE_180
+    int t = px0;
+    px0 = TAB5_PANEL_W - px1;
+    px1 = TAB5_PANEL_W - t;
+#endif
     for (int i = 0; i < w; i++) {
         int py = lx + i;
         if (py < 0 || py >= TAB5_PANEL_H) continue;
+#if TAB5_ROTATE_180
+        py = (TAB5_PANEL_H - 1) - py;
+#endif
         uint16_t *row = fb + (size_t)py * TAB5_PANEL_W;
         for (int px = px0; px < px1; px++) row[px] = color;
     }
@@ -280,6 +290,9 @@ static void sync_button(uint16_t *fb, int i)
     const pad_btn_t *b = &s_btn[i];
     int py0 = bar_x0(b) + b->x;
     int rows = b->w;
+#if TAB5_ROTATE_180
+    py0 = TAB5_PANEL_H - py0 - rows;
+#endif
     esp_cache_msync(fb + (size_t)py0 * TAB5_PANEL_W, (size_t)rows * TAB5_PANEL_W * sizeof(uint16_t),
                     ESP_CACHE_MSYNC_FLAG_DIR_C2M | ESP_CACHE_MSYNC_FLAG_UNALIGNED);
 }

@@ -139,7 +139,17 @@ static esp_err_t tab5_present(const uint16_t *src, uint32_t in_w, uint32_t in_h,
     float px = roundf(legacy_sx * factor * 16.0f) / 16.0f;
     float py = roundf(legacy_sy * factor * 16.0f) / 16.0f;
 
-    /* rotate 270°: output width comes from the input height and vice versa */
+    /* Shrink a picture that would cover the touch pad or overflow the panel (PAPP frames at 2.4x:
+     * 320x200 -> 1160x725) to the largest 1/16 steps that fit between the pad bars, keeping its
+     * aspect (3.125x: 1000x625), instead of drawing over the pad or failing. */
+    const float max_land_w = (float)(TAB5_PANEL_H - 2 * TAB5_PAD_BAR_W);   /* panel Y = landscape X */
+    float fit = fminf((float)TAB5_PANEL_W / (in_h * px), max_land_w / (in_w * py));
+    if (fit < 1.0f) {
+        px = floorf(px * fit * 16.0f) / 16.0f;
+        py = floorf(py * fit * 16.0f) / 16.0f;
+    }
+
+    /* rotate 270° (or 90°): output width comes from the input height and vice versa */
     uint32_t out_w = (uint32_t)(in_h * px + 0.5f);
     uint32_t out_h = (uint32_t)(in_w * py + 0.5f);
     if (out_w > TAB5_PANEL_W || out_h > TAB5_PANEL_H) {
@@ -147,6 +157,10 @@ static esp_err_t tab5_present(const uint16_t *src, uint32_t in_w, uint32_t in_h,
     }
     uint32_t x_off = (TAB5_PANEL_W - out_w) / 2;
     uint32_t y_off = (TAB5_PANEL_H - out_h) / 2;
+#if TAB5_ROTATE_180
+    x_off = TAB5_PANEL_W - out_w - x_off;
+    y_off = TAB5_PANEL_H - out_h - y_off;
+#endif
 
     uint32_t geom = (out_w << 20) ^ (out_h << 8) ^ (x_off << 4) ^ y_off;
     if (geom != s_tab5_geom) {
@@ -156,7 +170,7 @@ static esp_err_t tab5_present(const uint16_t *src, uint32_t in_w, uint32_t in_h,
 
     esp_err_t ret = ppa_rotate_scale_rgb565_to_rect(
         src, in_w, in_h,
-        270, px, py,
+        TAB5_LANDSCAPE_ANGLE, px, py,
         fb, tab5_display_fb_size(), TAB5_PANEL_W, TAB5_PANEL_H,
         x_off, y_off, NULL, NULL, byte_swap);
     tab5_display_end_frame();
