@@ -57,6 +57,13 @@
 #include "serial_upload.h"
 
 /*
+  USB drive mode: SD card over USB-C (Tab5)
+*/
+#if CONFIG_BOARD_M5STACK_TAB5
+#include "usb_drive.h"
+#endif
+
+/*
   Odroid-compatible APIs (ESP32-P4 implementation)
 */
 #include "odroid_settings.h"

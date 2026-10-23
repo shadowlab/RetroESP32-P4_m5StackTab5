@@ -1,0 +1,9 @@
+## IDF Component Manager Manifest File
+dependencies:
+  idf: ">=5.0"
+  # USB drive mode (Tab5): the SD card as USB mass storage on the USB-C port. Pinned to the versions
+  # the launcher was built and sized with.
+  espressif/esp_tinyusb:
+    version: "2.4.0"
+  espressif/tinyusb:
+    version: "0.21.0~2"

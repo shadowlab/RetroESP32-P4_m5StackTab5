@@ -155,6 +155,9 @@
 
     printf("\n-----\n%s\n-----\n", __func__);
     
+#if CONFIG_BOARD_M5STACK_TAB5
+    usb_drive_boot_fixup();
+#endif
     nvs_flash_init();
     odroid_system_init();
 
@@ -863,8 +866,73 @@
     draw_mask(x,y-1,400,38);
     draw_text(x,y,(char *)"MAP CONTROLLER",false, SETTING == 3 ? true : false, false);
 
+#if CONFIG_BOARD_M5STACK_TAB5
+    y+=42;
+    draw_mask(x,y-1,400,38);
+    draw_text(x,y,(char *)"USB DRIVE",false, SETTING == 4 ? true : false, false);
+#endif
+
     display_flush();
   }
+
+#if CONFIG_BOARD_M5STACK_TAB5
+  /* ─── USB DRIVE: SD card on the USB-C port ───────────────────────── */
+  static void usb_drive_draw_status(const char *line1, const char *line2, bool warn)
+  {
+    draw_mask(0, 279, WIDTH, 80);
+    draw_text(40, 280, (char *)line1, false, warn, false);
+    if (line2) draw_text(40, 320, (char *)line2, false, warn, false);
+    display_flush();
+  }
+
+  void run_usb_drive_mode(void)
+  {
+    clear_screen();
+    draw_text(40, 40, (char *)"USB DRIVE", false, true, false);
+    draw_text(40, 120, (char *)"THE SD CARD IS NOW ON THE USB-C", false, false, false);
+    draw_text(40, 160, (char *)"PORT. COPY FILES ON THE PC, THEN", false, false, false);
+    draw_text(40, 200, (char *)"EJECT THE DRIVE THERE.", false, false, false);
+    draw_text(40, 400, (char *)"B: LEAVE USB DRIVE", false, false, false);
+    usb_drive_draw_status("STARTING...", NULL, false);
+
+    if (usb_drive_start() != ESP_OK) {
+      usb_drive_draw_status("USB DRIVE FAILED", NULL, true);
+      vTaskDelay(pdMS_TO_TICKS(2000));
+      if (odroid_sdcard_is_mounted()) return;   /* failed before the card was unmounted */
+      usb_drive_stop_and_restart();
+    }
+
+    int shown = -1;
+    bool confirm = false;
+    while (true) {
+      usb_drive_state_t st = usb_drive_state();
+      if ((int)st != shown && !confirm) {
+        shown = (int)st;
+        if (st == USB_DRIVE_WAITING)       usb_drive_draw_status("WAITING FOR THE PC...", "(CONNECT USB-C TO A COMPUTER)", false);
+        else if (st == USB_DRIVE_IN_USE)   usb_drive_draw_status("IN USE BY THE PC", "EJECT IT THERE BEFORE LEAVING", true);
+        else                               usb_drive_draw_status("EJECTED - SAFE TO LEAVE", NULL, false);
+      }
+
+      odroid_input_gamepad_read(&gamepad);
+      if (gamepad.values[ODROID_INPUT_B]) {
+        debounce(ODROID_INPUT_B);
+        if (st == USB_DRIVE_IN_USE && !confirm) {
+          /* Leaving while the PC still has the card can lose what it has not written yet */
+          confirm = true;
+          usb_drive_draw_status("NOT EJECTED ON THE PC YET!", "B AGAIN: LEAVE ANYWAY", true);
+          continue;
+        }
+        usb_drive_draw_status("RESTARTING...", NULL, false);
+        usb_drive_stop_and_restart();
+      }
+      if (confirm && st != USB_DRIVE_IN_USE) { confirm = false; shown = -1; }
+      vTaskDelay(pdMS_TO_TICKS(50));
+    }
+  }
+  #define SETTING_LAST 4
+#else
+  #define SETTING_LAST 3
+#endif
 
   /* ─── MAP CONTROLLER wizard ─────────────────────────────────────── */
   void run_map_controller_wizard(void)
@@ -4738,7 +4806,7 @@
         if (gamepad.values[ODROID_INPUT_UP]) {
           if (STEP == 0) {
             SETTING--;
-            if (SETTING < 0) SETTING = 3;
+            if (SETTING < 0) SETTING = SETTING_LAST;
             draw_settings();
           }
           usleep(200000);
@@ -4747,7 +4815,7 @@
         if (gamepad.values[ODROID_INPUT_DOWN]) {
           if (STEP == 0) {
             SETTING++;
-            if (SETTING > 3) SETTING = 0;
+            if (SETTING > SETTING_LAST) SETTING = 0;
             draw_settings();
           }
           usleep(200000);
@@ -4764,6 +4832,13 @@
               draw_background();
               draw_settings();
             }
+#if CONFIG_BOARD_M5STACK_TAB5
+            if (SETTING == 4) {
+              run_usb_drive_mode();   /* only returns if it could not start */
+              draw_background();
+              draw_settings();
+            }
+#endif
           } else if (STEP >= 3) {
             /* Enter ROM browser for emulator systems */
             enter_browser();
