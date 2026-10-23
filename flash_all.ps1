@@ -25,7 +25,7 @@ $flash_map = @(
     @{ Offset = "0x010000"; File = "launcher.bin";         Desc = "Launcher (factory)" },
     @{ Offset = "0x310000"; File = "nes_app.bin";          Desc = "NES (ota_0)" },
     @{ Offset = "0x410000"; File = "gb_app.bin";           Desc = "GB/GBC (ota_1)" },
-    @{ Offset = "0x510000"; File = "sms_app.bin";          Desc = "SMS/GG/COL (ota_2)" },
+    @{ Offset = "0x510000"; File = "sms_app.bin";          Desc = "SMS/GG (ota_2)" },
     @{ Offset = "0x710000"; File = "snes_app.bin";         Desc = "SNES (ota_3)" },
     @{ Offset = "0xA10000"; File = "genesis_app.bin";      Desc = "Genesis (ota_4)" },
     @{ Offset = "0xC10000"; File = "neogeo_app.bin";       Desc = "Neo Geo (ota_5)" }

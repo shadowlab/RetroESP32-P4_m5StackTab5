@@ -36,7 +36,7 @@ The headline: SNES, Genesis/Mega Drive and the mighty **NeoGeo** all run at **60
 |--------|---------|
 | **Nintendo** | NES · Game Boy · Game Boy Color · **SNES** ⭐ |
 | **Sega** | Master System · Game Gear · **Genesis / Mega Drive** ⭐ |
-| **Arcade & more** | **NeoGeo** ⭐ · ColecoVision |
+| **Arcade** | **NeoGeo** ⭐ |
 
 ⭐ = hand-tuned to hold **60 FPS** on the P4.
 

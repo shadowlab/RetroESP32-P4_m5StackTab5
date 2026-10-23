@@ -24,12 +24,12 @@
 /*
   Emulator Count + 3 for Settings, Favorites, and Recently Played
 */
-#define COUNT 13
+#define COUNT 12
 
 /* Carousel positions used by name in main.c (indexes into EMULATORS[] etc.) */
-#define STEP_SNES    9
-#define STEP_GENESIS 10
-#define STEP_NEOGEO  11
+#define STEP_SNES    8
+#define STEP_GENESIS 9
+#define STEP_NEOGEO  10
 
 /*
 

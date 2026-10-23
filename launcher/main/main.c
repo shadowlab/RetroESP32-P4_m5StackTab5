@@ -69,7 +69,6 @@
     "NINTENDO GAME BOY COLOR",
     "SEGA MASTER SYSTEM",
     "SEGA GAME GEAR",
-    "COLECOVISION",
     "SUPER NINTENDO",
     "SEGA GENESIS",
     "NEO GEO",
@@ -85,7 +84,6 @@
     "gbc",      // gnuboy
     "sms",      // smsplus
     "gg",       // smsplus
-    "col",      // smsplus
     "snes",     // snes9x
     "gen",      // gwenesis
     "neogeo",   // gngeo
@@ -94,7 +92,7 @@
 
   const char *SHORT_NAMES[COUNT] = {
     "", "", "",
-    "NES", "GB", "GBC", "SMS", "GG", "COL",
+    "NES", "GB", "GBC", "SMS", "GG",
     "SNES", "GEN", "NEOGEO", "PAPP"
   };
 
@@ -107,7 +105,6 @@
     "gbc",      // gnuboy
     "sms",      // smsplus
     "gg",       // smsplus
-    "col",      // smsplus
     "smc",      // snes9x
     "md",       // gwenesis
     "zip",      // gngeo (neo geo)
@@ -447,7 +444,7 @@
    * Slot  Partition  Emulator        Extensions
    *  0    ota_0     nofrendo (NES)  .nes
    *  1    ota_1     gnuboy (GB/GBC) .gb .gbc
-   *  2    ota_2     smsplus (SMS)   .sms .gg .col
+   *  2    ota_2     smsplus (SMS)   .sms .gg
    *  3    ota_3     snes9x (SNES)   .smc .sfc
    *  4    ota_4     gwenesis (GEN)  .md .gen
    *  5    ota_5     gngeo (NEOGEO)  .zip
@@ -461,7 +458,6 @@
     if(ext_eq(ext, "gbc")) return 1;   /* ota_1: gnuboy */
     if(ext_eq(ext, "sms")) return 2;   /* ota_2: smsplus */
     if(ext_eq(ext, "gg"))  return 2;   /* ota_2: smsplus */
-    if(ext_eq(ext, "col")) return 2;   /* ota_2: smsplus */
     if(ext_eq(ext, "smc")) return 3;   /* ota_3: snes9x */
     if(ext_eq(ext, "sfc")) return 3;   /* ota_3: snes9x */
     if(ext_eq(ext, "md"))  return 4;   /* ota_4: gwenesis */
@@ -5154,17 +5150,10 @@
       case RP_CONSOLE_NES:     return 3;
       case RP_CONSOLE_GB:      return 4;
       case RP_CONSOLE_SMS:     return 6;
-      case RP_CONSOLE_COLECO:  return 8;
-      case RP_CONSOLE_A7800:   return 9;
-      case RP_CONSOLE_SPECTRUM:return 10;
-      case RP_CONSOLE_A2600:   return 11;
-      case RP_CONSOLE_LYNX:    return 12;
-      case RP_CONSOLE_PCE:     return 13;
-      case RP_CONSOLE_A5200:   return 14;
-      case RP_CONSOLE_SNES:    return 15;
-      case RP_CONSOLE_GENESIS: return 16;
-      case RP_CONSOLE_NEOGEO:  return 17;
-      default:                 return -1;   /* generic, stock keyboard, none */
+      case RP_CONSOLE_SNES:    return STEP_SNES;
+      case RP_CONSOLE_GENESIS: return STEP_GENESIS;
+      case RP_CONSOLE_NEOGEO:  return STEP_NEOGEO;
+      default:                 return -1;   /* generic, stock keyboard, removed systems, none */
     }
   }
 

@@ -207,7 +207,7 @@ static void handle_upload(void)
 static int ext_to_ota_slot(const char *ext)
 {
     struct { const char *e; int slot; } map[] = {
-        {"nes",0}, {"gb",1}, {"gbc",1}, {"sms",2}, {"gg",2}, {"col",2},
+        {"nes",0}, {"gb",1}, {"gbc",1}, {"sms",2}, {"gg",2},
         {"smc",3}, {"sfc",3}, {"md",4}, {"gen",4}, {"zip",5}, {NULL,0}
     };
     for (int i = 0; map[i].e; i++) {

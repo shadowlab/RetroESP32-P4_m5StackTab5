@@ -273,7 +273,7 @@ build attaches the image to it and fills in the notes.
 
 The SD card layout, ROM folders and Neo Geo cache generation are identical to the other targets.
 
-**Slot sizes:** Atari 2600/7800/800, Lynx, PC Engine and ZX Spectrum were dropped (2026-10) and their
+**Slot sizes:** Atari 2600/7800/800, Lynx, PC Engine, ZX Spectrum and ColecoVision were dropped (2026-10) and their
 flash shared out among the rest. The launcher's `factory` slot is back at 0x10000 with 3 MB (it is ~1.1 MB with
 [USB drive mode](#usb-drive-mode-sd-card-over-usb-c) and [Wi-Fi transfer](#wi-fi-transfer-sd-card-over-wi-fi));
 NES and Game Boy get 1 MB each, Master System and Genesis 2 MB, SNES 3 MB, and Neo Geo the remaining ~3.9 MB.

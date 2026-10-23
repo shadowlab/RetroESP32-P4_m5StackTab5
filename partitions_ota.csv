@@ -3,7 +3,8 @@
 # Tab5 image sizes (ESP-IDF 5.5.2, tab5-v1.0.0 + Wi-Fi transfer):
 #   launcher=~1100KB  nes=592KB  gb=564KB  sms=1256KB  snes=831KB  genesis=1240KB  neogeo=1278KB
 #
-# Atari 2600/7800/800, Lynx, PC Engine and ZX Spectrum were removed (2026-10-23), and their flash
+# Atari 2600/7800/800, Lynx, PC Engine and ZX Spectrum were removed (ColecoVision too, from the
+# launcher; it ran inside the SMS app) (2026-10-23), and their flash
 # shared out among what is left. The launcher (factory) is back at 0x10000 with 3 MB for Wi-Fi and
 # whatever comes next; every app has at least ~45% headroom, and Neo Geo, the last slot, takes the rest.
 # OTA slots must be numbered without gaps (the bootloader picks one by sequence % slot count), so the

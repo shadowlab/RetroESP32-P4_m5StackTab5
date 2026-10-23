@@ -24,7 +24,7 @@ $OUT  = Join-Path $ROOT 'RetroESP32_P4_v1.bin'
 # Format: offset, filename, description
 $offsets = @("0x2000","0x8000","0xD000","0x010000","0x310000","0x410000","0x510000","0x710000","0xA10000","0xC10000")
 $files   = @("bootloader.bin","partition-table.bin","ota_data_initial.bin","launcher.bin","nes_app.bin","gb_app.bin","sms_app.bin","snes_app.bin","genesis_app.bin","neogeo_app.bin")
-$descs   = @("Bootloader","Partition Table","OTA Data","Launcher (factory)","NES (ota_0)","GB/GBC (ota_1)","SMS/GG/COL (ota_2)","SNES (ota_3)","Genesis (ota_4)","Neo Geo (ota_5)")
+$descs   = @("Bootloader","Partition Table","OTA Data","Launcher (factory)","NES (ota_0)","GB/GBC (ota_1)","SMS/GG (ota_2)","SNES (ota_3)","Genesis (ota_4)","Neo Geo (ota_5)")
 
 Write-Host ""
 Write-Host "=== RetroESP32-P4 Merged Binary Generator ===" -ForegroundColor Cyan

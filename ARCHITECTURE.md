@@ -34,7 +34,7 @@ the `factory` partition switches between emulators (each a separate OTA firmware
 |--------|------|----------|------|-----------|
 | NES | nofrendo | OTA | ota_0 | `.nes` |
 | Game Boy / Color | gnuboy | OTA | ota_1 | `.gb` `.gbc` |
-| SMS / Game Gear / ColecoVision | smsplus | OTA | ota_2 | `.sms` `.gg` `.col` |
+| SMS / Game Gear | smsplus | OTA | ota_2 | `.sms` `.gg` |
 | SNES | snes9x | OTA | ota_3 | `.smc` `.sfc` |
 | Genesis / Mega Drive | gwenesis | OTA | ota_4 | `.md` `.gen` |
 | Neo Geo | gngeo | OTA | ota_5 | `.zip` (see [Neo Geo Cache](#neo-geo-cache)) |
@@ -96,7 +96,7 @@ Bootloader is at **0x2000** (ESP32-P4 requirement, not 0x0); partition table at 
 | factory | 0x010000 | 3 MB | Launcher |
 | ota_0 | 0x310000 | 1 MB | NES |
 | ota_1 | 0x410000 | 1 MB | GB/GBC |
-| ota_2 | 0x510000 | 2 MB | SMS/GG/COL |
+| ota_2 | 0x510000 | 2 MB | SMS/GG |
 | ota_3 | 0x710000 | 3 MB | SNES |
 | ota_4 | 0xA10000 | 2 MB | Genesis |
 | ota_5 | 0xC10000 | 3.94 MB | Neo Geo (to the end of flash) |
@@ -314,7 +314,7 @@ For a native port, build a `.papp` from `ESP32_P4_PAPP_Template/` instead — no
 
 Tab5 builds (ESP-IDF 5.5.2): launcher ~1.1 MB (3 MB slot), nes ~592 KB and gb ~564 KB (1 MB slots),
 sms ~1256 KB (2 MB), snes ~831 KB (3 MB), genesis ~1240 KB (2 MB), neogeo ~1278 KB (~3.9 MB). Atari
-2600/7800/800, Lynx, PC Engine and ZX Spectrum were removed in 2026-10 and their flash shared out, so
+2600/7800/800, Lynx, PC Engine, ZX Spectrum and ColecoVision were removed in 2026-10 and their flash shared out, so
 every slot has at least ~45% headroom.
 On overflow: shrink the app (`-Os`, strip) or grow the partition and shift later offsets.
 

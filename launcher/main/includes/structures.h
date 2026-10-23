@@ -52,7 +52,6 @@ SYSTEM SYSTEMS[COUNT] = {
   /* NINTENDO GAME BOY COLOR */{0, &gbc ,&gbc_color},
   /* SEGA MASTER SYSTEM */{0, &sms ,&sms_color},
   /* SEGA GAME GEAR */{0, &gg ,&gg_color},
-  /* COLECOVISION */{0, &col ,&col_color},
   /* SUPER NINTENDO */{0, &snes ,&snes_color},
   /* SEGA GENESIS */{0, &genesis ,&genesis_color},
   /* NEO GEO */{0, &neogeo ,&neogeo_color},
