@@ -111,23 +111,6 @@ static const pad_layout_t s_layouts[] = {
     /* Master System / Game Gear: A = button 2, B = button 1, Select = SMS Pause */
     { "sms_app", HIDE(B_X) | HIDE(B_Y) | HIDE(B_L) | HIDE(B_R),
       { [B_A] = "2", [B_B] = "1", [B_SELECT] = "PAUSE" }, NO_RECTS },
-    /* Atari 2600: A = fire, Select / Start = console Select / Reset */
-    { "stella_app", HIDE(B_B) | HIDE(B_X) | HIDE(B_Y) | HIDE(B_L) | HIDE(B_R),
-      { [B_A] = "FIRE", [B_START] = "RESET" }, NO_RECTS },
-    /* Atari 7800: two fire buttons, Start = Pause */
-    { "prosystem_app", HIDE(B_X) | HIDE(B_Y) | HIDE(B_L) | HIDE(B_R),
-      { [B_START] = "PAUSE" }, NO_RECTS },
-    /* Atari Lynx: A, B, Start = Pause, Select = Option 1 */
-    { "handy_app", HIDE(B_X) | HIDE(B_Y) | HIDE(B_L) | HIDE(B_R),
-      { [B_START] = "PAUSE", [B_SELECT] = "OPT1" }, NO_RECTS },
-    /* PC Engine: A = I, B = II, Start = Run */
-    { "pce_app", HIDE(B_X) | HIDE(B_Y) | HIDE(B_L) | HIDE(B_R),
-      { [B_A] = "I", [B_B] = "II", [B_START] = "RUN" }, NO_RECTS },
-    /* Atari 800 / 5200: A and B are both the trigger; L toggles the on-screen keyboard */
-    { "atari800_app", HIDE(B_B) | HIDE(B_X) | HIDE(B_Y) | HIDE(B_R),
-      { [B_A] = "FIRE", [B_L] = "KBD" }, NO_RECTS },
-    /* ZX Spectrum: A, B, Start, Select are mapped to keys / Kempston fire */
-    { "spectrum_app", HIDE(B_X) | HIDE(B_Y) | HIDE(B_L) | HIDE(B_R), { 0 }, NO_RECTS },
     /* Genesis: pad A -> Genesis B, pad B -> C, pad X -> A (Y duplicates A; Select / L / R unused).
      * Genesis A gets the full-width slot above B / C. */
     { "genesis_app", HIDE(B_Y) | HIDE(B_SELECT) | HIDE(B_L) | HIDE(B_R),

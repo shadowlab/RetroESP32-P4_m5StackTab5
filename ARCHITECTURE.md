@@ -35,16 +35,9 @@ the `factory` partition switches between emulators (each a separate OTA firmware
 | NES | nofrendo | OTA | ota_0 | `.nes` |
 | Game Boy / Color | gnuboy | OTA | ota_1 | `.gb` `.gbc` |
 | SMS / Game Gear / ColecoVision | smsplus | OTA | ota_2 | `.sms` `.gg` `.col` |
-| ZX Spectrum | spectrum | OTA | ota_3 | `.z80` `.sna` |
-| Atari 2600 | stella | OTA | ota_4 | `.a26` `.bin` |
-| Atari 7800 | prosystem | OTA | ota_5 | `.a78` |
-| Atari Lynx | handy | OTA | ota_6 | `.lnx` |
-| PC Engine | huexpress | OTA | ota_7 | `.pce` |
-| Atari 800XL / 5200 | atari800 | OTA | ota_8 | `.xex` `.atr` `.a52` |
-| *(free)* | — | OTA | ota_9 | — |
-| SNES | snes9x | OTA | ota_10 | `.smc` `.sfc` |
-| Genesis / Mega Drive | gwenesis | OTA | ota_11 | `.md` `.gen` |
-| Neo Geo | gngeo | OTA | ota_12 | `.zip` (see [Neo Geo Cache](#neo-geo-cache)) |
+| SNES | snes9x | OTA | ota_3 | `.smc` `.sfc` |
+| Genesis / Mega Drive | gwenesis | OTA | ota_4 | `.md` `.gen` |
+| Neo Geo | gngeo | OTA | ota_5 | `.zip` (see [Neo Geo Cache](#neo-geo-cache)) |
 | Doom / Quake / Duke3D / OpenTyrian | prboom / quake / duke3d / opentyrian | PSRAM | — | `.papp` on SD |
 
 ---
@@ -100,20 +93,15 @@ Bootloader is at **0x2000** (ESP32-P4 requirement, not 0x0); partition table at 
 |-----------|--------|------|----------|
 | nvs | 0x009000 | 16 KB | NVS store |
 | otadata | 0x00D000 | 8 KB | OTA boot selection |
-| ota_0 | 0x0E0000 | 640 KB | NES |
-| ota_1 | 0x180000 | 640 KB | GB/GBC |
-| ota_2 | 0x220000 | 1.31 MB | SMS/GG/COL |
-| ota_3 | 0x370000 | 768 KB | ZX Spectrum |
-| ota_4 | 0x430000 | 1.25 MB | Atari 2600 |
-| ota_5 | 0x570000 | 640 KB | Atari 7800 |
-| ota_6 | 0x610000 | 640 KB | Atari Lynx |
-| ota_7 | 0x6B0000 | 704 KB | PC Engine |
-| ota_8 | 0x760000 | 832 KB | Atari 800 |
-| ota_9 | 0x830000 | 576 KB | *(free)* |
-| ota_10 | 0x8C0000 | 960 KB | SNES |
-| ota_11 | 0x9B0000 | 1.31 MB | Genesis |
-| ota_12 | 0xB00000 | 1.5 MB | Neo Geo |
-| factory | 0xC80000 | 2 MB | Launcher (after the apps; 0x10000–0xDFFFF is free) |
+| factory | 0x010000 | 3 MB | Launcher |
+| ota_0 | 0x310000 | 1 MB | NES |
+| ota_1 | 0x410000 | 1 MB | GB/GBC |
+| ota_2 | 0x510000 | 2 MB | SMS/GG/COL |
+| ota_3 | 0x710000 | 3 MB | SNES |
+| ota_4 | 0xA10000 | 2 MB | Genesis |
+| ota_5 | 0xC10000 | 3.94 MB | Neo Geo (to the end of flash) |
+
+OTA slots must be numbered without gaps: the bootloader picks one by `(sequence - 1) % slot count`.
 
 PSRAM `.papp` apps use no partition — they live on the SD card.
 
@@ -161,8 +149,8 @@ void app_return_to_launcher(void);            // set boot=factory, esp_restart()
 `odroid_sdcard` (SDMMC/FAT32), `odroid_settings` (NVS).
 
 Other: `psram_app_loader`, `st7701_lcd`, `gt911_touch`, `ppa_engine`,
-`gamepad`/`usb_host_hid`, `audio`, `pngaux`/`pngdec`. Cores: `nofrendo gnuboy smsplus spectrum stella
-prosystem handy huexpress atari800 snes9x gwenesis gngeo`. Ports: `prboom quake duke3d opentyrian`.
+`gamepad`/`usb_host_hid`, `audio`, `pngaux`/`pngdec`. Cores: `nofrendo gnuboy smsplus snes9x gwenesis
+gngeo`. Ports: `prboom quake duke3d opentyrian`.
 
 ---
 
@@ -297,7 +285,7 @@ cd apps\snes ; idf.py build      # delete sdkconfig + build/ first if last built
 
 **Flash all:** `.\flash_all.ps1` — port is `$PORT` (script default COM30; hardware COM5 as of
 Phase 49). Flash map mirrors `partitions_ota.csv`: bootloader 0x2000, partition-table 0x8000,
-ota_data_initial 0xD000, launcher 0xC80000, then each `*_app.bin` at its ota offset. Or flash the
+ota_data_initial 0xD000, launcher 0x10000, then each `*_app.bin` at its ota offset. Or flash the
 merged `RetroESP32_P4_v1.bin` at 0x0.
 
 **Flash one app:**
@@ -324,11 +312,10 @@ For a native port, build a `.papp` from `ESP32_P4_PAPP_Template/` instead — no
 
 ## Binary Sizes
 
-Approximate (from `partitions_ota.csv`; re-measure after builds). Partitions that run **tight**:
-NES and Atari 800 each got 64 KB from the free ota_9 slot
-(NES now 640 KB, Tab5 build ~590 KB; Atari 800 now 832 KB, Tab5 build ~757 KB). Others carry
-60–360 KB headroom. The launcher (~706 KB; Tab5 ~1.1 MB with USB drive mode and Wi-Fi transfer) has a
-2 MB slot at the end of the apps. Largest cores: sms ~1231 KB, genesis ~1212 KB, stella ~1184 KB, neogeo ~1177 KB.
+Tab5 builds (ESP-IDF 5.5.2): launcher ~1.1 MB (3 MB slot), nes ~592 KB and gb ~564 KB (1 MB slots),
+sms ~1256 KB (2 MB), snes ~831 KB (3 MB), genesis ~1240 KB (2 MB), neogeo ~1278 KB (~3.9 MB). Atari
+2600/7800/800, Lynx, PC Engine and ZX Spectrum were removed in 2026-10 and their flash shared out, so
+every slot has at least ~45% headroom.
 On overflow: shrink the app (`-Os`, strip) or grow the partition and shift later offsets.
 
 ---

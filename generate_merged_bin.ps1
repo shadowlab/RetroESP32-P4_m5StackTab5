@@ -22,9 +22,9 @@ $OUT  = Join-Path $ROOT 'RetroESP32_P4_v1.bin'
 
 # Flash map (must match partitions_ota.csv)
 # Format: offset, filename, description
-$offsets = @("0x2000","0x8000","0xD000","0xC80000","0x0E0000","0x180000","0x220000","0x370000","0x430000","0x570000","0x610000","0x6B0000","0x760000","0x8C0000","0x9B0000","0xB00000")
-$files   = @("bootloader.bin","partition-table.bin","ota_data_initial.bin","launcher.bin","nes_app.bin","gb_app.bin","sms_app.bin","spectrum_app.bin","stella_app.bin","prosystem_app.bin","handy_app.bin","pce_app.bin","atari800_app.bin","snes_app.bin","genesis_app.bin","neogeo_app.bin")
-$descs   = @("Bootloader","Partition Table","OTA Data","Launcher (factory)","NES (ota_0)","GB/GBC (ota_1)","SMS/GG/COL (ota_2)","ZX Spectrum (ota_3)","Stella (ota_4)","ProSystem (ota_5)","Handy (ota_6)","PC Engine (ota_7)","Atari 800 (ota_8)","SNES (ota_10)","Genesis (ota_11)","Neo Geo (ota_12)")
+$offsets = @("0x2000","0x8000","0xD000","0x010000","0x310000","0x410000","0x510000","0x710000","0xA10000","0xC10000")
+$files   = @("bootloader.bin","partition-table.bin","ota_data_initial.bin","launcher.bin","nes_app.bin","gb_app.bin","sms_app.bin","snes_app.bin","genesis_app.bin","neogeo_app.bin")
+$descs   = @("Bootloader","Partition Table","OTA Data","Launcher (factory)","NES (ota_0)","GB/GBC (ota_1)","SMS/GG/COL (ota_2)","SNES (ota_3)","Genesis (ota_4)","Neo Geo (ota_5)")
 
 Write-Host ""
 Write-Host "=== RetroESP32-P4 Merged Binary Generator ===" -ForegroundColor Cyan
@@ -42,12 +42,6 @@ $sources = @(
     @{ Src = "$ROOT\apps\nes\build\nes_app.bin";                      Dst = "nes_app.bin" },
     @{ Src = "$ROOT\apps\gb\build\gb_app.bin";                        Dst = "gb_app.bin" },
     @{ Src = "$ROOT\apps\sms\build\sms_app.bin";                      Dst = "sms_app.bin" },
-    @{ Src = "$ROOT\apps\spectrum\build\spectrum_app.bin";             Dst = "spectrum_app.bin" },
-    @{ Src = "$ROOT\apps\stella\build\stella_app.bin";                 Dst = "stella_app.bin" },
-    @{ Src = "$ROOT\apps\prosystem\build\prosystem_app.bin";           Dst = "prosystem_app.bin" },
-    @{ Src = "$ROOT\apps\handy\build\handy_app.bin";                   Dst = "handy_app.bin" },
-    @{ Src = "$ROOT\apps\pce\build\pce_app.bin";                      Dst = "pce_app.bin" },
-    @{ Src = "$ROOT\apps\atari800\build\atari800_app.bin";             Dst = "atari800_app.bin" },
     @{ Src = "$ROOT\apps\snes\build\snes_app.bin";                    Dst = "snes_app.bin" },
     @{ Src = "$ROOT\apps\genesis\build\genesis_app.bin";               Dst = "genesis_app.bin" },
     @{ Src = "$ROOT\apps\neogeo\build\neogeo_app.bin";                 Dst = "neogeo_app.bin" }

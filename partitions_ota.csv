@@ -1,38 +1,23 @@
 # RetroESP32-P4 OTA Multi-Binary Partition Table (16 MB flash)
 #
-# Binary sizes (measured):
-#   launcher=706KB  nes=567KB  gb=539KB  sms=1231KB  spectrum=665KB
-#   stella=1184KB  prosystem=575KB  handy=535KB  pce=575KB
-#   atari800=734KB  opentyrian=662KB  snes=869KB  genesis=1212KB
-#   neogeo=1177KB
+# Tab5 image sizes (ESP-IDF 5.5.2, tab5-v1.0.0 + Wi-Fi transfer):
+#   launcher=~1100KB  nes=592KB  gb=564KB  sms=1256KB  snes=831KB  genesis=1240KB  neogeo=1278KB
 #
-# ota_0 (NES) was grown from 576 KB to 640 KB: the M5Stack Tab5 build is ~575 KB.
-# The 64 KB came from the unused ota_9 slot (768 -> 704 KB); ota_1..ota_8 moved up
-# by 0x10000 with their sizes unchanged.  ota_8 (Atari 800) was then grown from
-# 768 KB to 832 KB with another 64 KB of ota_9 (now 640 KB, at 0x820000; it stays
-# unused).  The factory slot (launcher) was then grown from 768 KB to 832 KB for the Tab5's USB drive
-# mode (TinyUSB, ~45 KB), again from ota_9 (now 576 KB at 0x830000): ota_0..ota_8 moved up by another
-# 0x10000 with their sizes unchanged.
-# For the Tab5's Wi-Fi transfer (ESP-Hosted + lwIP + HTTP server, ~1.1 MB launcher) the factory slot then
-# moved to the free flash after ota_12: 2 MB at 0xC80000, listed last because the table must be in address
-# order. The bootloader finds it by its type, not its place. 0x10000-0xDFFFF (832 KB, the old factory slot)
-# and 0xE80000-0xFFFFFF (1.5 MB) are free.  Offsets must match flash_all.ps1,
-# generate_merged_bin*.ps1 (build_all_tab5.sh reads them from here).
+# Atari 2600/7800/800, Lynx, PC Engine and ZX Spectrum were removed (2026-10-23), and their flash
+# shared out among what is left. The launcher (factory) is back at 0x10000 with 3 MB for Wi-Fi and
+# whatever comes next; every app has at least ~45% headroom, and Neo Geo, the last slot, takes the rest.
+# OTA slots must be numbered without gaps (the bootloader picks one by sequence % slot count), so the
+# remaining emulators are renumbered ota_0..ota_5 - keep get_ota_slot() in launcher/main/main.c and
+# ext_to_ota_slot() in components/serial_upload in step.  Offsets must match flash_all.ps1 and
+# generate_merged_bin.ps1 (build_all_tab5.sh reads them from here).
 #
 # Name,     Type, SubType, Offset,    Size,    Flags
 nvs,        data, nvs,     0x9000,    0x4000,
 otadata,    data, ota,     0xD000,    0x2000,
-ota_0,      app,  ota_0,   0x0E0000,  0x0A0000,
-ota_1,      app,  ota_1,   0x180000,  0x0A0000,
-ota_2,      app,  ota_2,   0x220000,  0x150000,
-ota_3,      app,  ota_3,   0x370000,  0x0C0000,
-ota_4,      app,  ota_4,   0x430000,  0x140000,
-ota_5,      app,  ota_5,   0x570000,  0x0A0000,
-ota_6,      app,  ota_6,   0x610000,  0x0A0000,
-ota_7,      app,  ota_7,   0x6B0000,  0x0B0000,
-ota_8,      app,  ota_8,   0x760000,  0x0D0000,
-ota_9,      app,  ota_9,   0x830000,  0x090000,
-ota_10,     app,  ota_10,  0x8C0000,  0x0F0000,
-ota_11,     app,  ota_11,  0x9B0000,  0x150000,
-ota_12,     app,  ota_12,  0xB00000,  0x180000,
-factory,    app,  factory, 0xC80000,  0x200000,
+factory,    app,  factory, 0x010000,  0x300000,
+ota_0,      app,  ota_0,   0x310000,  0x100000,
+ota_1,      app,  ota_1,   0x410000,  0x100000,
+ota_2,      app,  ota_2,   0x510000,  0x200000,
+ota_3,      app,  ota_3,   0x710000,  0x300000,
+ota_4,      app,  ota_4,   0xA10000,  0x200000,
+ota_5,      app,  ota_5,   0xC10000,  0x3F0000,

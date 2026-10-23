@@ -208,9 +208,7 @@ static int ext_to_ota_slot(const char *ext)
 {
     struct { const char *e; int slot; } map[] = {
         {"nes",0}, {"gb",1}, {"gbc",1}, {"sms",2}, {"gg",2}, {"col",2},
-        {"z80",3}, {"sna",3}, {"a26",4}, {"bin",4}, {"a78",5}, {"lnx",6},
-        {"pce",7}, {"xex",8}, {"atr",8}, {"a52",8}, {"smc",10}, {"sfc",10},
-        {"md",11}, {"gen",11}, {"zip",12}, {NULL,0}
+        {"smc",3}, {"sfc",3}, {"md",4}, {"gen",4}, {"zip",5}, {NULL,0}
     };
     for (int i = 0; map[i].e; i++) {
         if (strcasecmp(ext, map[i].e) == 0) return map[i].slot;
