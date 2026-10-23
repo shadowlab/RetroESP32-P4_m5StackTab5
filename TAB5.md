@@ -259,7 +259,16 @@ from that file, so a partition change only needs editing there (and in the Windo
 image's size against its slot; the merged `RetroESP32_P4_Tab5_v1.bin` and the individual binaries are
 uploaded as the `RetroESP32_P4_Tab5-idf5.5.2` artifact.
 
-Pushing a tag `tab5-v<version>` builds the same way and publishes a GitHub release with the merged
+**Every merge to `main`** publishes a release too, tagged `tab5-build-<run number>`, with the merged image under
+its own name and as `RetroESP32_P4_Tab5.bin`. The newest one can be downloaded without a GitHub login (workflow
+artifacts need one), e.g. to flash it:
+
+```bash
+curl -L -o RetroESP32_P4_Tab5.bin https://github.com/shadowlab/RetroESP32-P4_m5StackTab5/releases/latest/download/RetroESP32_P4_Tab5.bin
+python -m esptool --chip esp32p4 -b 460800 write_flash 0x0 RetroESP32_P4_Tab5.bin
+```
+
+Pushing a tag `tab5-v<version>` builds the same way and publishes a versioned GitHub release with the merged
 image and its SHA-256 sum; a suffix (`tab5-v0.2.0-beta.1`) marks it as a pre-release:
 
 ```bash

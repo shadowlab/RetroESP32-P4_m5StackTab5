@@ -2,8 +2,12 @@
 # then merge them into one flashable image (RetroESP32_P4_Tab5_v1.bin, flash at 0x0).
 # Built with ESP-IDF 5.5.2, the toolchain releases are made with.  build_all_tab5.sh fails a job when
 # an image does not fit its partition in partitions_ota.csv.
+# Every push to main (a merged pull request) publishes a GitHub release with the merged image, tagged
+# tab5-build-<run number>. Each release also carries the image as RetroESP32_P4_Tab5.bin, so the newest one is always at
+#   https://github.com/<owner>/<repo>/releases/latest/download/RetroESP32_P4_Tab5.bin
+# (no GitHub login needed, unlike workflow artifacts).
 # Pushing a tag named tab5-v<version> (e.g. tab5-v0.1.0, or tab5-v0.1.0-beta.1 for a pre-release)
-# also publishes a GitHub release with the merged image.
+# publishes a versioned release the same way.
 name: Build Tab5 firmware
 
 on:
@@ -89,7 +93,7 @@ jobs:
 
   release:
     name: Publish release
-    if: startsWith(github.ref, 'refs/tags/tab5-v')
+    if: startsWith(github.ref, 'refs/tags/tab5-v') || (github.event_name == 'push' && github.ref == 'refs/heads/main')
     needs: merge
     runs-on: ubuntu-latest
     permissions:
@@ -103,18 +107,38 @@ jobs:
       - name: Publish
         env:
           GH_TOKEN: ${{ github.token }}
-          TAG: ${{ github.ref_name }}
+          REF_TYPE: ${{ github.ref_type }}
+          REF_NAME: ${{ github.ref_name }}
+          RUN_NUMBER: ${{ github.run_number }}
+          COMMIT_MSG: ${{ github.event.head_commit.message }}
         run: |
           cd dist
+          if [ "$REF_TYPE" = tag ]; then
+            TAG="$REF_NAME"                       # versioned release: tab5-v1.2.0
+            title="M5Stack Tab5 ${TAG#tab5-}"
+          else
+            TAG="tab5-build-$RUN_NUMBER"          # merge to main: tab5-build-57
+            title="M5Stack Tab5 build $RUN_NUMBER (${GITHUB_SHA::8})"
+          fi
           main="RetroESP32_P4_Tab5_${TAG#tab5-}.bin"
           cp RetroESP32_P4_Tab5_v1.bin "$main"
-          sha256sum "$main" > SHA256SUMS
+          # Same image under a fixed name, for .../releases/latest/download/RetroESP32_P4_Tab5.bin
+          cp RetroESP32_P4_Tab5_v1.bin RetroESP32_P4_Tab5.bin
+          sha256sum "$main" RetroESP32_P4_Tab5.bin > SHA256SUMS
 
           prerelease=()
           [[ "$TAG" =~ ^tab5-v[0-9.]+- ]] && prerelease=(--prerelease)
 
           {
             echo "Firmware for the **M5Stack Tab5**, built by CI from \`${GITHUB_SHA::8}\`."
+            if [ "$REF_TYPE" != tag ]; then
+              echo
+              # A merge commit's first line is "Merge pull request #N from ...", its third the PR title
+              subject=$(printf '%s\n' "$COMMIT_MSG" | head -1)
+              [[ "$subject" == "Merge pull request"* ]] && subject="$subject: $(printf '%s\n' "$COMMIT_MSG" | sed -n 3p)"
+              echo "Automatic build of \`main\` after: **$subject**"
+              echo "Build-tested by CI; check the pull request for what has been tried on a Tab5."
+            fi
             echo
             echo "> **First update the ESP32-C6 firmware** with the separate [tab5-p4-c6-sdio-ota](https://github.com/shadowlab/tab5-p4-c6-sdio-ota) updater"
             echo "> (flash it on its own, wait for \`[PASS]\` in its log). It is not part of this release."
@@ -144,10 +168,12 @@ jobs:
 
           if gh release view "$TAG" --repo "$GITHUB_REPOSITORY" > /dev/null 2>&1; then
             # release already drafted/published on GitHub (which also creates the tag): attach the images
-            gh release upload "$TAG" --repo "$GITHUB_REPOSITORY" --clobber "$main" SHA256SUMS
+            gh release upload "$TAG" --repo "$GITHUB_REPOSITORY" --clobber "$main" RetroESP32_P4_Tab5.bin SHA256SUMS
             gh release edit "$TAG" --repo "$GITHUB_REPOSITORY" --notes-file notes.md
           else
-            gh release create "$TAG" --repo "$GITHUB_REPOSITORY" --verify-tag \
-              --title "M5Stack Tab5 ${TAG#tab5-}" --notes-file notes.md "${prerelease[@]}" \
-              "$main" SHA256SUMS
+            verify=(--verify-tag)               # tag pushes: the tag exists; main builds: create it here
+            [ "$REF_TYPE" = tag ] || verify=(--target "$GITHUB_SHA")
+            gh release create "$TAG" --repo "$GITHUB_REPOSITORY" "${verify[@]}" \
+              --title "$title" --notes-file notes.md "${prerelease[@]}" \
+              "$main" RetroESP32_P4_Tab5.bin SHA256SUMS
           fi
