@@ -31,6 +31,9 @@ void count_all_roms();
 void create_settings();
 void draw_settings();
 void run_map_controller_wizard();
+#if CONFIG_BOARD_M5STACK_TAB5
+void run_usb_drive_mode(void);
+#endif
 
 /*
  Toggle

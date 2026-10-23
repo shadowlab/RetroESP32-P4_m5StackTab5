@@ -9,6 +9,7 @@
 #include <stdbool.h>
 #include <stddef.h>
 #include "esp_err.h"
+#include "sdmmc_cmd.h"
 
 #ifdef __cplusplus
 extern "C" {
@@ -35,6 +36,18 @@ esp_err_t odroid_sdcard_close(void);
  * @return true if mounted
  */
 bool odroid_sdcard_is_mounted(void);
+
+/**
+ * @brief The mounted card, or NULL if the SD card is not mounted.
+ */
+sdmmc_card_t *odroid_sdcard_get_card(void);
+
+/**
+ * @brief Unmount the FAT file system but keep the card initialised (for USB mass storage).
+ * Files under the base path are unavailable afterwards; restart to mount again.
+ * @return ESP_OK on success
+ */
+esp_err_t odroid_sdcard_detach_fs(void);
 
 /**
  * @brief Get the size of a file on the SD card.

@@ -100,17 +100,17 @@ Bootloader is at **0x2000** (ESP32-P4 requirement, not 0x0); partition table at 
 |-----------|--------|------|----------|
 | nvs | 0x009000 | 16 KB | NVS store |
 | otadata | 0x00D000 | 8 KB | OTA boot selection |
-| factory | 0x010000 | 768 KB | Launcher |
-| ota_0 | 0x0D0000 | 640 KB | NES |
-| ota_1 | 0x170000 | 640 KB | GB/GBC |
-| ota_2 | 0x210000 | 1.31 MB | SMS/GG/COL |
-| ota_3 | 0x360000 | 768 KB | ZX Spectrum |
-| ota_4 | 0x420000 | 1.25 MB | Atari 2600 |
-| ota_5 | 0x560000 | 640 KB | Atari 7800 |
-| ota_6 | 0x600000 | 640 KB | Atari Lynx |
-| ota_7 | 0x6A0000 | 704 KB | PC Engine |
-| ota_8 | 0x750000 | 832 KB | Atari 800 |
-| ota_9 | 0x820000 | 640 KB | *(free)* |
+| factory | 0x010000 | 832 KB | Launcher |
+| ota_0 | 0x0E0000 | 640 KB | NES |
+| ota_1 | 0x180000 | 640 KB | GB/GBC |
+| ota_2 | 0x220000 | 1.31 MB | SMS/GG/COL |
+| ota_3 | 0x370000 | 768 KB | ZX Spectrum |
+| ota_4 | 0x430000 | 1.25 MB | Atari 2600 |
+| ota_5 | 0x570000 | 640 KB | Atari 7800 |
+| ota_6 | 0x610000 | 640 KB | Atari Lynx |
+| ota_7 | 0x6B0000 | 704 KB | PC Engine |
+| ota_8 | 0x760000 | 832 KB | Atari 800 |
+| ota_9 | 0x830000 | 576 KB | *(free)* |
 | ota_10 | 0x8C0000 | 960 KB | SNES |
 | ota_11 | 0x9B0000 | 1.31 MB | Genesis |
 | ota_12 | 0xB00000 | 1.5 MB | Neo Geo |
@@ -303,7 +303,7 @@ merged `RetroESP32_P4_v1.bin` at 0x0.
 **Flash one app:**
 ```powershell
 python -m esptool --chip esp32p4 -p COM5 -b 460800 --before default_reset --after hard_reset `
-  write_flash --flash_mode dio --flash_size 16MB --flash_freq 80m 0xD0000 firmware\nes_app.bin
+  write_flash --flash_mode dio --flash_size 16MB --flash_freq 80m 0xE0000 firmware\nes_app.bin
 ```
 
 ---
@@ -325,7 +325,7 @@ For a native port, build a `.papp` from `ESP32_P4_PAPP_Template/` instead — no
 ## Binary Sizes
 
 Approximate (from `partitions_ota.csv`; re-measure after builds). Partitions that run **tight**:
-launcher (~706 KB / 768 KB; Tab5 ~735 KB). NES and Atari 800 each got 64 KB from the free ota_9 slot
+launcher (~706 KB / 832 KB; Tab5 ~782 KB with USB drive mode). NES, Atari 800 and the launcher each got 64 KB from the free ota_9 slot
 (NES now 640 KB, Tab5 build ~590 KB; Atari 800 now 832 KB, Tab5 build ~757 KB). Others carry
 60–360 KB headroom. Largest cores: sms ~1231 KB, genesis ~1212 KB, stella ~1184 KB, neogeo ~1177 KB.
 On overflow: shrink the app (`-Os`, strip) or grow the partition and shift later offsets.

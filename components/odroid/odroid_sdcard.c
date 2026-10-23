@@ -15,11 +15,15 @@
 #include "driver/sdmmc_host.h"
 #include "sdmmc_cmd.h"
 #include "sd_pwr_ctrl_by_on_chip_ldo.h"
+#include "diskio_impl.h"
+#include "diskio_sdmmc.h"
 #include "freertos/FreeRTOS.h"
 #include "freertos/task.h"
 
 static const char *TAG = "odroid_sdcard";
 static bool s_mounted = false;
+static sdmmc_card_t *s_card = NULL;
+static char s_base_path[16] = "";
 
 /*
  * The P4 has one SDMMC controller with two slots: the SD card is on slot 0, and ESP-Hosted (Wi-Fi via the
@@ -105,6 +109,8 @@ esp_err_t odroid_sdcard_open(const char* base_path)
             ESP_LOGI(TAG, "SD Card mounted at %s (attempt %d)", base_path, attempt);
             sdmmc_card_print_info(stdout, card);
             s_mounted = true;
+            s_card = card;
+            strlcpy(s_base_path, base_path, sizeof(s_base_path));
             return ESP_OK;
         }
 
@@ -139,6 +145,32 @@ esp_err_t odroid_sdcard_close(void)
     /* Note: on P4, we keep the SD card mounted persistently */
     ESP_LOGI(TAG, "odroid_sdcard_close() called (keeping mounted for P4)");
     return ESP_OK;
+}
+
+sdmmc_card_t *odroid_sdcard_get_card(void)
+{
+    return s_mounted ? s_card : NULL;
+}
+
+/*
+ * Take the FAT file system off the card but leave the card itself initialised, so another user of the raw
+ * card (USB mass storage) can have it. Same steps as esp_vfs_fat_sdcard_unmount() without the host deinit
+ * and free(card). The fatfs mount context stays allocated; the launcher restarts before mounting again.
+ */
+esp_err_t odroid_sdcard_detach_fs(void)
+{
+    if (!s_mounted) return ESP_ERR_INVALID_STATE;
+
+    BYTE pdrv = ff_diskio_get_pdrv_card(s_card);
+    if (pdrv == 0xff) return ESP_ERR_INVALID_STATE;
+
+    char drv[3] = {(char)('0' + pdrv), ':', 0};
+    f_mount(NULL, drv, 0);
+    ff_diskio_unregister(pdrv);
+    esp_err_t ret = esp_vfs_fat_unregister_path(s_base_path);
+    s_mounted = false;
+    ESP_LOGI(TAG, "File system detached from %s (card kept initialised)", s_base_path);
+    return ret;
 }
 
 size_t odroid_sdcard_get_filesize(const char* path)

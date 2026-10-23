@@ -165,6 +165,33 @@ otherwise the board is probed as before.
 
   The D-pad, MENU and VOL are always there.
 
+## USB drive mode (SD card over USB-C)
+
+**Settings → USB DRIVE** (the carousel's settings page, last entry) offers the SD card to a computer on the
+USB-C port as a USB mass storage device: it shows up as a removable drive, with no driver or tool needed.
+
+1. Pick USB DRIVE and press A. The launcher unmounts the card and the screen shows the drive's state
+   (waiting for the PC / in use by the PC / ejected).
+2. Copy ROMs, saves, artwork and `.papp` files on the computer.
+3. **Eject the drive on the computer**, then press **B**. The Tab5 restarts, mounts the card again and
+   re-reads the ROM lists. Pressing B while the computer still has the card asks for a second B first:
+   leaving early can lose writes the computer has not finished.
+
+How it works (`launcher/main/usb_drive.c`): the USB-C port is wired to the ESP32-P4's first full-speed USB
+PHY, which USB-Serial-JTAG (the serial console, flashing and `tools/upload_papp.py`) normally uses. The
+P4's other full-speed PHY sits on GPIO 26/27, the codec's I2S lines, and the high-speed controller runs
+the USB-A host port. So USB drive mode swaps the two full-speed PHYs, so that the USB-OTG 1.1 controller
+gets the USB-C pins and runs TinyUSB's mass storage class straight on the SD card. USB-Serial-JTAG is
+parked with its pads off.
+
+* **The serial port disappears while USB drive mode is on** (no log output, no `upload_papp.py`). It comes
+  back after leaving. If the Tab5 resets some other way while in USB drive mode (crash, reset button), the
+  launcher restores the pins at its next boot. Leave USB drive mode before flashing.
+* **Full speed only** (12 Mbit/s, about 0.8–1 MB/s), the most these pins can do. For many GB a card
+  reader is still quicker.
+* Only the launcher contains TinyUSB (`launcher/main/idf_component.yml`); the emulator apps are unchanged.
+  It needed 64 KB more flash for the launcher, see the slot sizes below.
+
 ## Building
 
 ```bash
@@ -213,8 +240,9 @@ The SD card layout, ROM folders and Neo Geo cache generation are identical to th
 **Slot sizes:** all 12 apps and the launcher fit their OTA slots in the Tab5 build. The NES slot (`ota_0`)
 was grown from 576 KB to 640 KB with 64 KB from the unused `ota_9` slot (`ota_1`…`ota_8` moved up by
 0x10000, sizes unchanged), so NES builds with full logging at ~590 KB. Atari 800 (`ota_8`, right before
-`ota_9`) got another 64 KB the same way: 832 KB for a ~757 KB build. The tightest slot is now the launcher
-(~735 / 768 KB). The partition table is shared with the other targets: after
+`ota_9`) got another 64 KB the same way: 832 KB for a ~757 KB build. The launcher's `factory` slot got a
+third 64 KB for [USB drive mode](#usb-drive-mode-sd-card-over-usb-c): 832 KB for a ~782 KB build (`ota_0`…`ota_8`
+moved up by another 0x10000; `ota_9`, still unused, is now 576 KB). The partition table is shared with the other targets: after
 updating, flash the full image (or the partition table plus every app) once.
 
 **ESP-IDF version.** Releases are built with **ESP-IDF 5.5.2**, the only supported toolchain for this

@@ -22,7 +22,7 @@ $OUT  = Join-Path $ROOT 'RetroESP32_P4_v1.bin'
 
 # Flash map (must match partitions_ota.csv)
 # Format: offset, filename, description
-$offsets = @("0x2000","0x8000","0xD000","0x10000","0x0D0000","0x170000","0x210000","0x360000","0x420000","0x560000","0x600000","0x6A0000","0x750000","0x8C0000","0x9B0000","0xB00000")
+$offsets = @("0x2000","0x8000","0xD000","0x10000","0x0E0000","0x180000","0x220000","0x370000","0x430000","0x570000","0x610000","0x6B0000","0x760000","0x8C0000","0x9B0000","0xB00000")
 $files   = @("bootloader.bin","partition-table.bin","ota_data_initial.bin","launcher.bin","nes_app.bin","gb_app.bin","sms_app.bin","spectrum_app.bin","stella_app.bin","prosystem_app.bin","handy_app.bin","pce_app.bin","atari800_app.bin","snes_app.bin","genesis_app.bin","neogeo_app.bin")
 $descs   = @("Bootloader","Partition Table","OTA Data","Launcher (factory)","NES (ota_0)","GB/GBC (ota_1)","SMS/GG/COL (ota_2)","ZX Spectrum (ota_3)","Stella (ota_4)","ProSystem (ota_5)","Handy (ota_6)","PC Engine (ota_7)","Atari 800 (ota_8)","SNES (ota_10)","Genesis (ota_11)","Neo Geo (ota_12)")
 
