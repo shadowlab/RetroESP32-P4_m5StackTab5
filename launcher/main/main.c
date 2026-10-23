@@ -870,6 +870,10 @@
     y+=42;
     draw_mask(x,y-1,400,38);
     draw_text(x,y,(char *)"USB DRIVE",false, SETTING == 4 ? true : false, false);
+
+    y+=42;
+    draw_mask(x,y-1,400,38);
+    draw_text(x,y,(char *)"WI-FI TRANSFER",false, SETTING == 5 ? true : false, false);
 #endif
 
     display_flush();
@@ -929,7 +933,7 @@
       vTaskDelay(pdMS_TO_TICKS(50));
     }
   }
-  #define SETTING_LAST 4
+  #define SETTING_LAST 5
 #else
   #define SETTING_LAST 3
 #endif
@@ -3024,6 +3028,491 @@
 
 //}#pragma endregion Search
 
+#if CONFIG_BOARD_M5STACK_TAB5
+//{#pragma region Wi-Fi transfer
+  /*
+   * WI-FI TRANSFER (Settings): join a Wi-Fi network through the ESP32-C6 and serve the SD card to a browser
+   * (file_server.c). The network is picked on screen like WiFiManager does it: scan, touch a network, type the
+   * password on the touch keyboard. It is saved and joined directly next time. The hotspot entry makes the Tab5
+   * its own access point for when there is no router. Leaving restarts the launcher, which switches the C6
+   * off again and re-reads the ROM lists.
+   */
+  #define WT_ROW_Y0     72
+  #define WT_ROW_H      46
+  #define WT_ROWS       7
+  #define WT_MAX_APS    24
+  #define WT_HOTSPOT_SSID "RetroESP-Tab5"
+
+  static void wt_fill(int x, int y, int w, int h, uint16_t color) {
+    int count = w * h;
+    if (count > 64000) count = 64000;
+    for (int i = 0; i < count; i++) buffer[i] = color;
+    ili9341_write_frame_rectangleLE(x, y, w, h, buffer);
+  }
+
+  static void wt_line(int y, const char *s, bool hl) {
+    draw_mask(0, y - 1, WIDTH, 36);
+    if (s) draw_text(40, y, (char *)s, false, hl, false);
+  }
+
+  static void wt_header(const char *title) {
+    clear_screen();
+    draw_text(40, 16, (char *)title, false, true, false);
+  }
+
+  static bool wt_touch(int *ui_x, int *ui_y) {
+    uint16_t tx = 0, ty = 0;
+    if (!gt911_touch_get_xy(&tx, &ty)) return false;
+    *ui_x = (int)ty;           /* portrait touch -> landscape UI, as in the search keyboard */
+    *ui_y = 479 - (int)tx;
+    return true;
+  }
+
+  static void wt_wait_release(void) {
+    int x, y;
+    do {
+      vTaskDelay(pdMS_TO_TICKS(30));
+      odroid_input_gamepad_read(&gamepad);
+    } while (wt_touch(&x, &y) || gamepad.values[ODROID_INPUT_A] || gamepad.values[ODROID_INPUT_B] ||
+             gamepad.values[ODROID_INPUT_Y]);
+  }
+
+  static void __attribute__((noreturn)) wt_leave(void) {
+    wt_line(436, "RESTARTING...", false);
+    display_flush();
+    file_server_stop();
+    wifi_link_power_off();
+    vTaskDelay(pdMS_TO_TICKS(200));
+    esp_restart();
+  }
+
+  /* ─── text entry (password / network name) ─────────────────────── */
+  #define TK_KEY_W  68
+  #define TK_KEY_H  54
+  #define TK_GAP    6
+  #define TK_Y0     150
+  enum { TK_NONE = 0, TK_SHIFT, TK_DEL, TK_SYM, TK_SPACE, TK_SHOW, TK_CANCEL, TK_OK };
+  typedef struct { short x, y, w, h; short code; char label[8]; } tk_key_t;
+
+  static const char *tk_layers[3][4] = {
+    { "1234567890", "qwertyuiop", "asdfghjkl", "zxcvbnm" },
+    { "1234567890", "QWERTYUIOP", "ASDFGHJKL", "ZXCVBNM" },
+    { "!@#$%^&*()", "-_=+[]{}\\|", ";:'\",.<>/", "?`~" },
+  };
+
+  /* One place for the geometry, used to draw and to hit-test. Codes >= 32 are characters. */
+  static int tk_layout(int layer, bool hidden, tk_key_t *keys) {
+    int n = 0;
+    for (int r = 0; r < 4; r++) {
+      const char *row = tk_layers[layer][r];
+      int len = strlen(row);
+      int side = r == 3 ? 100 : 0;        /* SHIFT and DEL frame the last letter row */
+      int w = len * (TK_KEY_W + TK_GAP) - TK_GAP + (side ? 2 * (side + TK_GAP) : 0);
+      int x = (WIDTH - w) / 2;
+      int y = TK_Y0 + r * (TK_KEY_H + TK_GAP);
+      if (side) {
+        keys[n++] = (tk_key_t){ x, y, side, TK_KEY_H, TK_SHIFT, "SHIFT" };
+        x += side + TK_GAP;
+      }
+      for (int k = 0; k < len; k++) {
+        keys[n] = (tk_key_t){ x, y, TK_KEY_W, TK_KEY_H, row[k], "" };
+        keys[n].label[0] = row[k];
+        n++;
+        x += TK_KEY_W + TK_GAP;
+      }
+      if (side) keys[n++] = (tk_key_t){ x, y, side, TK_KEY_H, TK_DEL, "DEL" };
+    }
+    static const struct { short w; short code; const char *label; } bottom[] = {
+      { 100, TK_SYM, "" }, { 220, TK_SPACE, "SPACE" }, { 100, TK_SHOW, "" }, { 130, TK_CANCEL, "CANCEL" }, { 110, TK_OK, "OK" },
+    };
+    int w = -TK_GAP;
+    for (int i = 0; i < 5; i++) w += bottom[i].w + TK_GAP;
+    int x = (WIDTH - w) / 2;
+    int y = TK_Y0 + 4 * (TK_KEY_H + TK_GAP);
+    for (int i = 0; i < 5; i++) {
+      keys[n] = (tk_key_t){ x, y, bottom[i].w, TK_KEY_H, bottom[i].code, "" };
+      const char *label = bottom[i].label;
+      if (bottom[i].code == TK_SYM) label = layer == 2 ? "abc" : "#+=";
+      if (bottom[i].code == TK_SHOW) label = hidden ? "SHOW" : "HIDE";
+      strlcpy(keys[n].label, label, sizeof(keys[n].label));
+      n++;
+      x += bottom[i].w + TK_GAP;
+    }
+    return n;
+  }
+
+  static void tk_draw_field(const char *text, bool hidden) {
+    char shown[40];
+    int len = strlen(text);
+    int start = len > 34 ? len - 34 : 0;      /* keep the end of a long entry in view */
+    int o = 0;
+    for (int i = start; i < len; i++) shown[o++] = hidden ? '*' : text[i];
+    shown[o++] = '_';
+    shown[o] = '\0';
+    draw_mask(0, 83, WIDTH, 40);
+    wt_fill(30, 80, WIDTH - 60, 2, GUI.fg);
+    draw_text(40, 88, shown, false, false, false);
+    wt_fill(30, 124, WIDTH - 60, 2, GUI.fg);
+  }
+
+  static void tk_draw_keys(int layer, bool hidden) {
+    tk_key_t keys[48];
+    int n = tk_layout(layer, hidden, keys);
+    for (int y = TK_Y0 - 4; y < HEIGHT; y += 60) draw_mask(0, y, WIDTH, HEIGHT - y < 60 ? HEIGHT - y : 60);
+    for (int i = 0; i < n; i++) {
+      bool on = (keys[i].code == TK_SHIFT && layer == 1) || (keys[i].code == TK_SYM && layer == 2);
+      kb_draw_key(keys[i].x, keys[i].y, keys[i].w, keys[i].h, keys[i].label, on);
+    }
+  }
+
+  /* Returns true with the text in out on OK, false on CANCEL / B. */
+  static bool wt_text_input(const char *title, char *out, int maxlen, bool secret) {
+    int layer = 0;
+    bool hidden = secret;
+    int len = strlen(out);
+    bool was_touched = true;     /* the touch that opened this screen must end first */
+
+    wt_header(title);
+    tk_draw_field(out, hidden);
+    tk_draw_keys(layer, hidden);
+    display_flush();
+    wt_wait_release();
+
+    while (true) {
+      vTaskDelay(pdMS_TO_TICKS(30));
+      odroid_input_gamepad_read(&gamepad);
+      if (gamepad.values[ODROID_INPUT_B]) { debounce(ODROID_INPUT_B); return false; }
+      if (gamepad.values[ODROID_INPUT_A]) { debounce(ODROID_INPUT_A); return true; }
+
+      int ux, uy;
+      bool touched = wt_touch(&ux, &uy);
+      if (touched && !was_touched) {
+        tk_key_t keys[48];
+        int n = tk_layout(layer, hidden, keys);
+        int code = TK_NONE;
+        for (int i = 0; i < n; i++) {
+          if (ux >= keys[i].x && ux < keys[i].x + keys[i].w && uy >= keys[i].y && uy < keys[i].y + keys[i].h) {
+            code = keys[i].code;
+            break;
+          }
+        }
+        bool redraw_keys = false;
+        if (code == TK_OK) return true;
+        if (code == TK_CANCEL) return false;
+        if (code == TK_SHIFT) { layer = layer == 1 ? 0 : 1; redraw_keys = true; }
+        else if (code == TK_SYM) { layer = layer == 2 ? 0 : 2; redraw_keys = true; }
+        else if (code == TK_SHOW) { hidden = !hidden; redraw_keys = true; }
+        else if (code == TK_DEL) { if (len > 0) out[--len] = '\0'; }
+        else if (code == TK_SPACE || code >= 32) {
+          if (len < maxlen) {
+            out[len++] = code == TK_SPACE ? ' ' : (char)code;
+            out[len] = '\0';
+          }
+          if (layer == 1) { layer = 0; redraw_keys = true; }   /* shift is for one letter */
+        }
+        if (code != TK_NONE) {
+          tk_draw_field(out, hidden);
+          if (redraw_keys) tk_draw_keys(layer, hidden);
+          display_flush();
+        }
+      }
+      was_touched = touched;
+    }
+  }
+
+  /* ─── network list ─────────────────────────────────────────────── */
+  enum { WT_EXTRA_OTHER = 0, WT_EXTRA_HOTSPOT, WT_EXTRA_RESCAN, WT_EXTRAS };
+  static const char *wt_extra_labels[WT_EXTRAS] = { "OTHER NETWORK (HIDDEN)...", "HOTSPOT (NO ROUTER)", "SCAN AGAIN" };
+
+  static void wt_draw_signal(int x, int y, int rssi, uint16_t color) {
+    int bars = rssi >= -55 ? 4 : rssi >= -67 ? 3 : rssi >= -78 ? 2 : 1;
+    for (int b = 0; b < 4; b++) {
+      int h = 8 + b * 7;
+      wt_fill(x + b * 10, y + 30 - h, 7, h, b < bars ? color : 0x4208);
+    }
+  }
+
+  static void wt_draw_lock(int x, int y, uint16_t color) {
+    wt_fill(x, y + 14, 18, 14, color);
+    wt_fill(x + 3, y + 4, 3, 10, color);
+    wt_fill(x + 12, y + 4, 3, 10, color);
+    wt_fill(x + 3, y + 3, 12, 3, color);
+  }
+
+  static void wt_draw_pick_row(const wifi_link_ap_t *aps, int n, int i, int top, bool sel) {
+    int y = WT_ROW_Y0 + (i - top) * WT_ROW_H;
+    draw_mask(0, y - 4, WIDTH, WT_ROW_H);
+    if (i < n) {
+      char name[28];
+      strlcpy(name, aps[i].ssid, sizeof(name));
+      draw_text(40, y, name, false, sel, false);
+      uint16_t c = sel ? GUI.hl : GUI.fg;
+      wt_draw_signal(680, y, aps[i].rssi, c);
+      if (aps[i].secure) wt_draw_lock(730, y, c);
+    } else {
+      draw_text(40, y, (char *)wt_extra_labels[i - n], false, sel, false);
+    }
+  }
+
+  static void wt_draw_pick(const wifi_link_ap_t *aps, int n, int sel, int top) {
+    int total = n + WT_EXTRAS;
+    for (int i = top; i < top + WT_ROWS; i++) {
+      if (i < total) wt_draw_pick_row(aps, n, i, top, i == sel);
+      else draw_mask(0, WT_ROW_Y0 + (i - top) * WT_ROW_H - 4, WIDTH, WT_ROW_H);
+    }
+    draw_mask(0, 396, WIDTH, 34);
+    if (top + WT_ROWS < total) draw_text(40, 398, (char *)"(MORE BELOW)", false, false, false);
+    display_flush();
+  }
+
+  /* Returns the chosen row (networks first, then the extras), or -1 to leave. */
+  static int wt_pick_network(const wifi_link_ap_t *aps, int n) {
+    int total = n + WT_EXTRAS;
+    int sel = 0, top = 0;
+    bool was_touched = true;
+
+    wt_header(n > 0 ? "CHOOSE A WI-FI NETWORK" : "NO WI-FI NETWORKS FOUND");
+    wt_line(436, "TOUCH A NETWORK  A: CHOOSE  B: LEAVE", false);
+    wt_draw_pick(aps, n, sel, top);
+    wt_wait_release();
+
+    while (true) {
+      vTaskDelay(pdMS_TO_TICKS(30));
+      odroid_input_gamepad_read(&gamepad);
+      if (gamepad.values[ODROID_INPUT_B]) { debounce(ODROID_INPUT_B); return -1; }
+      if (gamepad.values[ODROID_INPUT_A]) { debounce(ODROID_INPUT_A); return sel; }
+      int move = gamepad.values[ODROID_INPUT_DOWN] ? 1 : gamepad.values[ODROID_INPUT_UP] ? -1 : 0;
+      if (move) {
+        sel = (sel + move + total) % total;
+        if (sel < top) top = sel;
+        if (sel >= top + WT_ROWS) top = sel - WT_ROWS + 1;
+        wt_draw_pick(aps, n, sel, top);
+        vTaskDelay(pdMS_TO_TICKS(150));
+      }
+
+      int ux, uy;
+      bool touched = wt_touch(&ux, &uy);
+      if (touched && !was_touched && uy >= WT_ROW_Y0 - 4 && uy < WT_ROW_Y0 - 4 + WT_ROWS * WT_ROW_H) {
+        int i = top + (uy - (WT_ROW_Y0 - 4)) / WT_ROW_H;
+        if (i < total) {
+          sel = i;
+          wt_draw_pick(aps, n, sel, top);
+          return sel;
+        }
+      }
+      /* Touching the "more below" line pages down */
+      if (touched && !was_touched && uy >= 396 && uy < 430 && top + WT_ROWS < total) {
+        top += WT_ROWS;
+        if (top + WT_ROWS > total) top = total - WT_ROWS;
+        sel = top;
+        wt_draw_pick(aps, n, sel, top);
+      }
+      was_touched = touched;
+    }
+  }
+
+  /* Join and say how it went. */
+  static bool wt_connect(const char *ssid, const char *pass) {
+    char line[64];
+    wt_header("WI-FI TRANSFER");
+    snprintf(line, sizeof(line), "JOINING %.26s...", ssid);
+    wt_line(120, line, false);
+    display_flush();
+
+    wifi_link_result_t r = wifi_link_connect(ssid, pass, 20000);
+    if (r == WIFI_LINK_OK) return true;
+    const char *why = r == WIFI_LINK_ERR_AUTH      ? "WRONG PASSWORD?" :
+                      r == WIFI_LINK_ERR_NOT_FOUND ? "THE NETWORK IS NOT IN RANGE" :
+                      r == WIFI_LINK_ERR_TIMEOUT   ? "NO ANSWER FROM THE NETWORK" : "COULD NOT JOIN";
+    snprintf(line, sizeof(line), "COULD NOT JOIN %.22s", ssid);
+    wt_line(120, line, true);
+    wt_line(160, why, true);
+    display_flush();
+    vTaskDelay(pdMS_TO_TICKS(2500));
+    return false;
+  }
+
+  /* Pick a network until one works (true), or the user leaves (false). */
+  static bool wt_choose_and_connect(char *ssid, char *pass, bool *hotspot) {
+    static wifi_link_ap_t aps[WT_MAX_APS];
+    while (true) {
+      wt_header("WI-FI TRANSFER");
+      wt_line(120, "LOOKING FOR NETWORKS...", false);
+      display_flush();
+      int n = wifi_link_scan(aps, WT_MAX_APS);
+      if (n < 0) n = 0;
+
+      int pick = wt_pick_network(aps, n);
+      if (pick < 0) return false;
+      if (pick == n + WT_EXTRA_RESCAN) continue;
+
+      if (pick == n + WT_EXTRA_HOTSPOT) {
+        strlcpy(ssid, WT_HOTSPOT_SSID, WIFI_LINK_SSID_MAX + 1);
+        wifi_link_hotspot_password(pass, WIFI_LINK_PASS_MAX + 1);
+        if (wifi_link_start_hotspot(ssid, pass) == ESP_OK) {
+          *hotspot = true;
+          return true;
+        }
+        wt_line(120, "THE HOTSPOT DID NOT START", true);
+        display_flush();
+        vTaskDelay(pdMS_TO_TICKS(2000));
+        continue;
+      }
+
+      char saved_ssid[WIFI_LINK_SSID_MAX + 1] = "", saved_pass[WIFI_LINK_PASS_MAX + 1] = "";
+      wifi_link_load_saved(saved_ssid, saved_pass);
+      bool secure = true;
+      if (pick == n + WT_EXTRA_OTHER) {
+        ssid[0] = '\0';
+        if (!wt_text_input("NETWORK NAME:", ssid, WIFI_LINK_SSID_MAX, false) || ssid[0] == '\0') continue;
+      } else {
+        strlcpy(ssid, aps[pick].ssid, WIFI_LINK_SSID_MAX + 1);
+        secure = aps[pick].secure;
+      }
+      pass[0] = '\0';
+      if (secure) {
+        if (strcmp(ssid, saved_ssid) == 0) strlcpy(pass, saved_pass, WIFI_LINK_PASS_MAX + 1);
+        char title[48];
+        snprintf(title, sizeof(title), "PASSWORD FOR %.22s:", ssid);
+        if (!wt_text_input(title, pass, WIFI_LINK_PASS_MAX, true)) continue;
+      }
+      if (wt_connect(ssid, pass)) {
+        wifi_link_save(ssid, pass);
+        *hotspot = false;
+        return true;
+      }
+    }
+  }
+
+  static void wt_format_size(uint64_t b, char *out, size_t len) {
+    if (b >= 1024 * 1024) snprintf(out, len, "%.1f MB", b / (1024.0 * 1024.0));
+    else snprintf(out, len, "%u KB", (unsigned)(b / 1024));
+  }
+
+  /* The serving screen. Returns when the user wants another network; leaving restarts. */
+  static void wt_serve(const char *ssid, const char *pass, bool hotspot) {
+    char line[64], ip[20], url[32];
+    if (file_server_start() != ESP_OK) {
+      wt_line(120, "THE FILE SERVER DID NOT START", true);
+      display_flush();
+      vTaskDelay(pdMS_TO_TICKS(2500));
+      wt_leave();
+    }
+    wifi_link_ip_str(ip, sizeof(ip));
+    snprintf(url, sizeof(url), "http://%s", ip);
+
+    wt_header("WI-FI TRANSFER");
+    if (hotspot) {
+      snprintf(line, sizeof(line), "JOIN THE WI-FI  %s", ssid);
+      wt_line(80, line, false);
+      snprintf(line, sizeof(line), "PASSWORD        %s", pass);
+      wt_line(120, line, false);
+    } else {
+      snprintf(line, sizeof(line), "NETWORK  %.27s", ssid);
+      wt_line(80, line, false);
+    }
+    wt_line(180, "THEN OPEN THIS IN A BROWSER:", false);
+    draw_mask(0, 220, WIDTH, 52);
+    draw_text_scaled(40, 222, url, GUI.hl);
+    wt_line(436, hotspot ? "B: LEAVE   Y: JOIN A NETWORK INSTEAD" : "B: LEAVE   Y: OTHER NETWORK", false);
+    display_flush();
+    wt_wait_release();
+
+    char shown_act[64] = "", shown_link[64] = "";
+    bool confirm = false;
+    int tick = 0;
+    while (true) {
+      file_server_activity_t act;
+      file_server_activity(&act);
+
+      /* Link line, every second or so */
+      if (tick++ % 5 == 0) {
+        if (hotspot) {
+          int c = wifi_link_hotspot_clients();
+          snprintf(line, sizeof(line), "%d DEVICE%s CONNECTED", c, c == 1 ? "" : "S");
+        } else if (!wifi_link_is_up()) {
+          snprintf(line, sizeof(line), "CONNECTION LOST - RECONNECTING...");
+        } else {
+          int rssi = wifi_link_rssi();
+          snprintf(line, sizeof(line), "SIGNAL   %s (%d DBM)",
+                   rssi >= -55 ? "STRONG" : rssi >= -67 ? "GOOD" : rssi >= -78 ? "FAIR" : "WEAK", rssi);
+        }
+        if (strcmp(line, shown_link) != 0) {
+          strlcpy(shown_link, line, sizeof(shown_link));
+          wt_line(hotspot ? 300 : 120, line, false);
+          display_flush();
+        }
+      }
+
+      if (!confirm) {
+        if (act.busy) {
+          char done[16];
+          wt_format_size(act.done, done, sizeof(done));
+          int pct = act.total ? (int)(act.done * 100 / act.total) : 0;
+          snprintf(line, sizeof(line), "%s %.10s %d%% %s", act.upload ? "RECEIVING" : "SENDING", act.name, pct, done);
+        } else {
+          snprintf(line, sizeof(line), "READY - %lu RECEIVED, %lu SENT",
+                   (unsigned long)act.uploads, (unsigned long)act.downloads);
+        }
+        if (strcmp(line, shown_act) != 0) {
+          strlcpy(shown_act, line, sizeof(shown_act));
+          wt_line(hotspot ? 340 : 320, line, act.busy);
+          display_flush();
+        }
+      }
+
+      odroid_input_gamepad_read(&gamepad);
+      if (gamepad.values[ODROID_INPUT_B]) {
+        debounce(ODROID_INPUT_B);
+        if (act.busy && !confirm) {
+          /* A transfer stopped halfway leaves nothing behind (the server deletes partial uploads), but say so */
+          confirm = true;
+          wt_line(hotspot ? 340 : 320, "A TRANSFER IS RUNNING! B AGAIN: LEAVE", true);
+          display_flush();
+        } else {
+          wt_leave();
+        }
+      }
+      if (confirm && !act.busy) { confirm = false; shown_act[0] = '\0'; }
+      if (gamepad.values[ODROID_INPUT_Y] && !act.busy) {
+        debounce(ODROID_INPUT_Y);
+        return;
+      }
+      vTaskDelay(pdMS_TO_TICKS(200));
+    }
+  }
+
+  void run_wifi_transfer(void) {
+    char ssid[WIFI_LINK_SSID_MAX + 1] = "", pass[WIFI_LINK_PASS_MAX + 1] = "";
+    bool hotspot = false;
+
+    wt_header("WI-FI TRANSFER");
+    wt_line(120, "STARTING WI-FI...", false);
+    display_flush();
+    if (wifi_link_start() != ESP_OK) {
+      wt_line(120, "NO ANSWER FROM THE WI-FI CHIP (C6).", true);
+      wt_line(160, "IT NEEDS ESP-HOSTED 3.0.9 FIRMWARE", false);
+      wt_line(200, "(TAB5-P4-C6-SDIO-OTA).", false);
+      wt_line(436, "B: LEAVE", false);
+      display_flush();
+      do {
+        vTaskDelay(pdMS_TO_TICKS(50));
+        odroid_input_gamepad_read(&gamepad);
+      } while (!gamepad.values[ODROID_INPUT_B]);
+      wt_leave();
+    }
+
+    bool up = wifi_link_load_saved(ssid, pass) && wt_connect(ssid, pass);
+    while (true) {
+      if (!up && !wt_choose_and_connect(ssid, pass, &hotspot)) wt_leave();
+      wt_serve(ssid, pass, hotspot);
+      up = false;        /* Y: pick another network */
+      hotspot = false;
+    }
+  }
+//}#pragma endregion Wi-Fi transfer
+#endif
+
 //{#pragma region Recents
   void create_recents() {
     //  printf("\n----- %s START -----", __func__);
@@ -4837,6 +5326,9 @@
               run_usb_drive_mode();   /* only returns if it could not start */
               draw_background();
               draw_settings();
+            }
+            if (SETTING == 5) {
+              run_wifi_transfer();    /* leaving restarts the launcher */
             }
 #endif
           } else if (STEP >= 3) {

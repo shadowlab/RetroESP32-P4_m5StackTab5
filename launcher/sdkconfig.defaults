@@ -55,3 +55,7 @@ CONFIG_FREERTOS_PLACE_FUNCTIONS_INTO_FLASH=y
 CONFIG_HAL_ASSERTION_DISABLE=y
 CONFIG_COMPILER_SAVE_RESTORE_LIBCALLS=y
 CONFIG_ESP_ERR_TO_NAME_LOOKUP=n
+
+# ESP-Hosted (Wi-Fi through a co-processor) is in the launcher for the Tab5's Wi-Fi transfer, which starts it
+# itself when it is opened. Never at boot.
+# CONFIG_ESP_HOSTED_AUTO_CALL_INIT_BEFORE_APP_MAIN is not set

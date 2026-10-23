@@ -61,6 +61,8 @@
 */
 #if CONFIG_BOARD_M5STACK_TAB5
 #include "usb_drive.h"
+#include "wifi_link.h"
+#include "file_server.h"
 #endif
 
 /*

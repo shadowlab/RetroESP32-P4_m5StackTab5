@@ -41,6 +41,7 @@ static const char *TAG = "tab5_board";
 #define EXP_LCD_EN       IO_EXPANDER_PIN_NUM_4
 #define EXP_TOUCH_EN     IO_EXPANDER_PIN_NUM_5
 #define EXP1_USB_EN      IO_EXPANDER_PIN_NUM_3   /* expander @0x44 */
+#define EXP1_WLAN_PWR_EN IO_EXPANDER_PIN_NUM_0   /* expander @0x44: ESP32-C6 supply */
 
 #define TAB5_TOUCH_INT_GPIO     23
 #define TAB5_DSI_PHY_LDO_CHAN   3
@@ -127,6 +128,12 @@ esp_err_t tab5_board_usb_power_enable(bool enable)
 {
     ESP_RETURN_ON_ERROR(tab5_board_init(), TAG, "board init");
     return exp_push_pull(s_exp1, EXP1_USB_EN, enable);
+}
+
+esp_err_t tab5_board_wifi_power_enable(bool enable)
+{
+    ESP_RETURN_ON_ERROR(tab5_board_init(), TAG, "board init");
+    return exp_push_pull(s_exp1, EXP1_WLAN_PWR_EN, enable);
 }
 
 static esp_err_t lcd_enable(bool enable)

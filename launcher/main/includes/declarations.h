@@ -33,6 +33,7 @@ void draw_settings();
 void run_map_controller_wizard();
 #if CONFIG_BOARD_M5STACK_TAB5
 void run_usb_drive_mode(void);
+void run_wifi_transfer(void);
 #endif
 
 /*

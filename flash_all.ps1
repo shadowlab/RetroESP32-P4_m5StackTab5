@@ -22,7 +22,7 @@ $flash_map = @(
     @{ Offset = "0x2000";   File = "bootloader.bin";      Desc = "Bootloader" },
     @{ Offset = "0x8000";   File = "partition-table.bin";  Desc = "Partition Table" },
     @{ Offset = "0xD000";   File = "ota_data_initial.bin"; Desc = "OTA Data (boot factory)" },
-    @{ Offset = "0x10000";  File = "launcher.bin";         Desc = "Launcher (factory)" },
+    @{ Offset = "0xC80000"; File = "launcher.bin";         Desc = "Launcher (factory)" },
     @{ Offset = "0x0E0000"; File = "nes_app.bin";          Desc = "NES (ota_0)" },
     @{ Offset = "0x180000"; File = "gb_app.bin";           Desc = "GB/GBC (ota_1)" },
     @{ Offset = "0x220000"; File = "sms_app.bin";          Desc = "SMS/GG/COL (ota_2)" },
