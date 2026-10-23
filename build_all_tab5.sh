@@ -26,15 +26,9 @@ ALL_APPS=(
   "nes:apps/nes:nes_app.bin:ota_0"
   "gb:apps/gb:gb_app.bin:ota_1"
   "sms:apps/sms:sms_app.bin:ota_2"
-  "spectrum:apps/spectrum:spectrum_app.bin:ota_3"
-  "stella:apps/stella:stella_app.bin:ota_4"
-  "prosystem:apps/prosystem:prosystem_app.bin:ota_5"
-  "handy:apps/handy:handy_app.bin:ota_6"
-  "pce:apps/pce:pce_app.bin:ota_7"
-  "atari800:apps/atari800:atari800_app.bin:ota_8"
-  "snes:apps/snes:snes_app.bin:ota_10"
-  "genesis:apps/genesis:genesis_app.bin:ota_11"
-  "neogeo:apps/neogeo:neogeo_app.bin:ota_12"
+  "snes:apps/snes:snes_app.bin:ota_3"
+  "genesis:apps/genesis:genesis_app.bin:ota_4"
+  "neogeo:apps/neogeo:neogeo_app.bin:ota_5"
 )
 
 part_field() { # partition name, field (4 = offset, 5 = size)

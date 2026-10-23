@@ -52,11 +52,9 @@ presentation gets an extra scale factor chosen so that **≥ 140 px side bars** 
 | Content | Source | Result on the 1280×720 landscape view |
 |---|---|---|
 | Launcher UI / PAPP apps | 800×480 | 1000×600 (**1.25×**), 140 px bars left/right |
-| Emulators (Atari, PCE, Spectrum, …) | 320×240 | 960×720 (**3×**, integer, 4:3), 160 px bars |
 | Game Boy / Game Gear | 160×144 | 960×720 (6× / 5×), one PPA pass |
 | Master System | 256×192 | 960×720 (3.75×), one PPA pass |
 | NES | 256×224 | 960×714 (3.75× / 3.1875×), one PPA pass |
-| Lynx | 160×102 | 960×612 (6×, true aspect), one PPA pass |
 | SNES / Genesis / Neo Geo | native size × 2 (legacy) | native size × 3 |
 
 **Optimization — one PPA pass, no staging buffer.** The handheld path ran PPA into a staging buffer and
@@ -152,13 +150,8 @@ otherwise the board is probed as before.
 
   | System | Buttons shown |
   |---|---|
-  | NES, Game Boy / Color, ZX Spectrum | A, B, Start, Select |
+  | NES, Game Boy / Color | A, B, Start, Select |
   | Master System / Game Gear | 2, 1, Start, Pause |
-  | Atari 2600 | Fire, Select, Reset |
-  | Atari 7800 | A, B, Select, Pause |
-  | Atari Lynx | A, B, Opt1, Pause |
-  | PC Engine | I, II, Select, Run |
-  | Atari 800 / 5200 | Fire, KBD (on-screen keyboard), Select, Start |
   | Genesis | A (full width), B, C, Start |
   | Neo Geo | A, B, C, D, Coin, Start |
   | SNES, launcher, PAPP apps | full pad |
@@ -230,7 +223,7 @@ is deleted rather than left half-written. Folders are created as needed.
 
 ```bash
 . $IDF_PATH/export.sh            # ESP-IDF 5.5.2
-./build_all_tab5.sh              # launcher + 12 emulators -> firmware_tab5/ and RetroESP32_P4_Tab5_v1.bin
+./build_all_tab5.sh              # launcher + 6 emulators -> firmware_tab5/ and RetroESP32_P4_Tab5_v1.bin
 ./build_all_tab5.sh launcher snes   # or just some projects
 ./build_all_tab5.sh --merge-only    # merge what is already in firmware_tab5/
 python -m esptool --chip esp32p4 -b 460800 write_flash 0x0 RetroESP32_P4_Tab5_v1.bin
@@ -280,15 +273,12 @@ build attaches the image to it and fills in the notes.
 
 The SD card layout, ROM folders and Neo Geo cache generation are identical to the other targets.
 
-**Slot sizes:** all 12 apps and the launcher fit their OTA slots in the Tab5 build. The NES slot (`ota_0`)
-was grown from 576 KB to 640 KB with 64 KB from the unused `ota_9` slot (`ota_1`…`ota_8` moved up by
-0x10000, sizes unchanged), so NES builds with full logging at ~590 KB. Atari 800 (`ota_8`, right before
-`ota_9`) got another 64 KB the same way: 832 KB for a ~757 KB build. The launcher's `factory` slot got a
-third 64 KB for [USB drive mode](#usb-drive-mode-sd-card-over-usb-c) (`ota_0`…`ota_8` moved up by another 0x10000;
-`ota_9`, still unused, is now 576 KB). [Wi-Fi transfer](#wi-fi-transfer-sd-card-over-wi-fi) took the launcher to ~1.1 MB, so
-the `factory` slot moved to the free flash after the apps: 2 MB at 0xC80000 (the app slots kept their offsets; the old
-slot at 0x10000 is free). The partition table is shared with the other targets: after updating, flash the full image
-(or the partition table plus every app) once.
+**Slot sizes:** Atari 2600/7800/800, Lynx, PC Engine, ZX Spectrum and ColecoVision were dropped (2026-10) and their
+flash shared out among the rest. The launcher's `factory` slot is back at 0x10000 with 3 MB (it is ~1.1 MB with
+[USB drive mode](#usb-drive-mode-sd-card-over-usb-c) and [Wi-Fi transfer](#wi-fi-transfer-sd-card-over-wi-fi));
+NES and Game Boy get 1 MB each, Master System and Genesis 2 MB, SNES 3 MB, and Neo Geo the remaining ~3.9 MB.
+The emulators are renumbered `ota_0`…`ota_5` (the bootloader needs OTA slots without gaps). The partition
+table is shared with the other targets: after updating, flash the full image once.
 
 **ESP-IDF version.** Releases are built with **ESP-IDF 5.5.2**, the only supported toolchain for this
 target: the Tab5's ESP32-P4 is a pre-v3 chip, which 5.5 targets by default (`CONFIG_ESP32P4_SELECTS_REV_LESS_V3`,

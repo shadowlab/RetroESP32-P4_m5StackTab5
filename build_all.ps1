@@ -30,12 +30,6 @@ $apps = @(
     @{ Name = "nes";        Dir = "apps\nes";       Bin = "nes_app.bin" },
     @{ Name = "gb";         Dir = "apps\gb";        Bin = "gb_app.bin" },
     @{ Name = "sms";        Dir = "apps\sms";       Bin = "sms_app.bin" },
-    @{ Name = "spectrum";   Dir = "apps\spectrum";  Bin = "spectrum_app.bin" },
-    @{ Name = "stella";     Dir = "apps\stella";    Bin = "stella_app.bin" },
-    @{ Name = "prosystem";  Dir = "apps\prosystem"; Bin = "prosystem_app.bin" },
-    @{ Name = "handy";      Dir = "apps\handy";     Bin = "handy_app.bin" },
-    @{ Name = "pce";        Dir = "apps\pce";       Bin = "pce_app.bin" },
-    @{ Name = "atari800"; Dir = "apps\atari800"; Bin = "atari800_app.bin" },
     @{ Name = "snes";       Dir = "apps\snes";       Bin = "snes_app.bin" },
     @{ Name = "genesis";    Dir = "apps\genesis";    Bin = "genesis_app.bin" },
     @{ Name = "neogeo";     Dir = "apps\neogeo";     Bin = "neogeo_app.bin" }

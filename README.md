@@ -36,12 +36,9 @@ The headline: SNES, Genesis/Mega Drive and the mighty **NeoGeo** all run at **60
 |--------|---------|
 | **Nintendo** | NES · Game Boy · Game Boy Color · **SNES** ⭐ |
 | **Sega** | Master System · Game Gear · **Genesis / Mega Drive** ⭐ |
-| **Atari** | 2600 · 800XL / 5200 · 7800 · Lynx |
-| **Arcade & more** | **NeoGeo** ⭐ · PC Engine · ColecoVision · Sinclair ZX |
+| **Arcade** | **NeoGeo** ⭐ |
 
 ⭐ = hand-tuned to hold **60 FPS** on the P4.
-
-> Atari 2600 and 800XL/5200 support paddle controllers for Breakout, Kaboom! and the like.
 
 ### ⚡ Performance
 

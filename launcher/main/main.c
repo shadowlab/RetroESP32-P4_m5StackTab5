@@ -69,13 +69,6 @@
     "NINTENDO GAME BOY COLOR",
     "SEGA MASTER SYSTEM",
     "SEGA GAME GEAR",
-    "COLECOVISION",
-    "ATARI 7800",
-    "ZX SPECTRUM",
-    "ATARI 2600",
-    "ATARI LYNX",
-    "PC ENGINE",
-    "ATARI 800",
     "SUPER NINTENDO",
     "SEGA GENESIS",
     "NEO GEO",
@@ -91,13 +84,6 @@
     "gbc",      // gnuboy
     "sms",      // smsplus
     "gg",       // smsplus
-    "col",      // smsplus
-    "a78",      // prosystem
-    "spectrum", // spectrum
-    "a26",      // stella
-    "lynx",     // handy
-    "pce",      // huexpress
-    "a800",     // atari800
     "snes",     // snes9x
     "gen",      // gwenesis
     "neogeo",   // gngeo
@@ -106,9 +92,8 @@
 
   const char *SHORT_NAMES[COUNT] = {
     "", "", "",
-    "NES", "GB", "GBC", "SMS", "GG", "COL",
-    "A78", "ZX", "A26", "LYNX", "PCE",
-    "A800", "SNES", "GEN", "NEOGEO", "PAPP"
+    "NES", "GB", "GBC", "SMS", "GG",
+    "SNES", "GEN", "NEOGEO", "PAPP"
   };
 
   char EXTENSIONS[COUNT][10] = {
@@ -120,13 +105,6 @@
     "gbc",      // gnuboy
     "sms",      // smsplus
     "gg",       // smsplus
-    "col",      // smsplus
-    "a78",      // prosystem
-    "z80",      // spectrum
-    "a26",      // stella
-    "lnx",      // handy
-    "pce",      // huexpress
-    "xex",      // atari800
     "smc",      // snes9x
     "md",       // gwenesis
     "zip",      // gngeo (neo geo)
@@ -449,20 +427,13 @@
     const char *dot = strrchr(name, '.');
     if (!dot) return false;
     const char *ext = dot + 1;
-    /* Neo Geo (step 17): hide neogeo.zip and gngeo_data.zip */
-    if (step == 17 && is_neogeo_system_file(name)) return false;
+    /* Neo Geo: hide neogeo.zip and gngeo_data.zip */
+    if (step == STEP_NEOGEO && is_neogeo_system_file(name)) return false;
     if (strlen(EXTENSIONS[step]) > 0 && ext_eq(ext, EXTENSIONS[step])) return true;
-    // Atari 800 supports .xex, .atr, and .a52 (Atari 5200 cartridge)
-    if (step == 14 && ext_eq(ext, "atr")) return true;
-    if (step == 14 && ext_eq(ext, "a52")) return true;
-    // Spectrum supports both .z80 and .sna
-    if (step == 10 && ext_eq(ext, "sna")) return true;
-    // Atari 2600 supports both .a26 and .bin
-    if (step == 11 && ext_eq(ext, "bin")) return true;
     // SNES supports both .smc and .sfc
-    if (step == 15 && ext_eq(ext, "sfc")) return true;
+    if (step == STEP_SNES && ext_eq(ext, "sfc")) return true;
     // Genesis supports .md and .gen
-    if (step == 16 && ext_eq(ext, "gen")) return true;
+    if (step == STEP_GENESIS && ext_eq(ext, "gen")) return true;
     return false;
   }
 
@@ -473,16 +444,13 @@
    * Slot  Partition  Emulator        Extensions
    *  0    ota_0     nofrendo (NES)  .nes
    *  1    ota_1     gnuboy (GB/GBC) .gb .gbc
-   *  2    ota_2     smsplus (SMS)   .sms .gg .col
-   *  3    ota_3     spectrum (ZX)   .z80 .sna
-   *  4    ota_4     stella (A26)    .a26 .bin
-   *  5    ota_5     prosystem (A78) .a78
-   *  6    ota_6     handy (LNX)     .lnx
-   *  7    ota_7     huexpress (PCE) .pce
-   *  8    ota_8     atari800 (A800) .xex .atr .a52
-   * 10    ota_10    snes9x (SNES)   .smc .sfc
-   * 11    ota_11    gwenesis (GEN)  .md .gen
-   * 12    ota_12    gngeo (NEOGEO)  .zip
+   *  2    ota_2     smsplus (SMS)   .sms .gg
+   *  3    ota_3     snes9x (SNES)   .smc .sfc
+   *  4    ota_4     gwenesis (GEN)  .md .gen
+   *  5    ota_5     gngeo (NEOGEO)  .zip
+   *
+   * The slots must stay numbered without gaps: the bootloader picks an OTA
+   * slot by (sequence - 1) % (number of OTA partitions).
    */
   int get_ota_slot(char* ext) {
     if(ext_eq(ext, "nes")) return 0;   /* ota_0: nofrendo */
@@ -490,22 +458,11 @@
     if(ext_eq(ext, "gbc")) return 1;   /* ota_1: gnuboy */
     if(ext_eq(ext, "sms")) return 2;   /* ota_2: smsplus */
     if(ext_eq(ext, "gg"))  return 2;   /* ota_2: smsplus */
-    if(ext_eq(ext, "col")) return 2;   /* ota_2: smsplus */
-    if(ext_eq(ext, "z80")) return 3;   /* ota_3: spectrum */
-    if(ext_eq(ext, "sna")) return 3;   /* ota_3: spectrum */
-    if(ext_eq(ext, "a26")) return 4;   /* ota_4: stella */
-    if(ext_eq(ext, "bin")) return 4;   /* ota_4: stella */
-    if(ext_eq(ext, "a78")) return 5;   /* ota_5: prosystem */
-    if(ext_eq(ext, "lnx")) return 6;   /* ota_6: handy */
-    if(ext_eq(ext, "pce")) return 7;   /* ota_7: huexpress */
-    if(ext_eq(ext, "xex")) return 8;   /* ota_8: atari800 */
-    if(ext_eq(ext, "atr")) return 8;   /* ota_8: atari800 */
-    if(ext_eq(ext, "a52")) return 8;   /* ota_8: atari800 (5200 cart) */
-    if(ext_eq(ext, "smc")) return 10;  /* ota_10: snes9x */
-    if(ext_eq(ext, "sfc")) return 10;  /* ota_10: snes9x */
-    if(ext_eq(ext, "md"))  return 11;  /* ota_11: gwenesis */
-    if(ext_eq(ext, "gen")) return 11;  /* ota_11: gwenesis */
-    if(ext_eq(ext, "zip")) return 12;  /* ota_12: gngeo (neo geo) */
+    if(ext_eq(ext, "smc")) return 3;   /* ota_3: snes9x */
+    if(ext_eq(ext, "sfc")) return 3;   /* ota_3: snes9x */
+    if(ext_eq(ext, "md"))  return 4;   /* ota_4: gwenesis */
+    if(ext_eq(ext, "gen")) return 4;   /* ota_4: gwenesis */
+    if(ext_eq(ext, "zip")) return 5;   /* ota_5: gngeo (neo geo) */
     return -1;
   }
 
@@ -524,8 +481,6 @@
       if (strlen(EXTENSIONS[i]) > 0 && ext_eq(ROM.ext, EXTENSIONS[i]))
         return DIRECTORIES[i];
     }
-    if (ext_eq(ROM.ext, "atr")) return "a800";
-    if (ext_eq(ROM.ext, "bin")) return "a26";
     if (ext_eq(ROM.ext, "gen")) return "gen";
     return ROM.ext;
   }
@@ -793,7 +748,7 @@
         continue;
       }
 
-      /* Emulator systems (3..13): count files in /sd/roms/{dir}/ */
+      /* Emulator systems (3..COUNT-1): count files in /sd/roms/{dir}/ */
       char path[256];
       sprintf(path, "/sd/roms/%s", DIRECTORIES[e]);
       DIR *dir = opendir(path);
@@ -1677,7 +1632,11 @@
   }
 
   void draw_media(int x, int y, bool current, int offset) {
-    if(offset == -1) {offset = (STEP-3) * 16;}
+    if(offset == -1) {
+      /* media.h has icons for NES..COL (and the removed systems) only: SNES uses the
+         NES cartridge, Genesis the SMS one, and the rest the NES one */
+      offset = STEP < STEP_SNES ? (STEP-3) * 16 : STEP == STEP_GENESIS ? 3*16 : 0;
+    }
     int i = 0;
     for(int h = 0; h < 16; h++) {
       for(int sh = 0; sh < 2; sh++) {
@@ -2005,12 +1964,6 @@
 
 //{#pragma region Files
   //{#pragma region Sort
-    inline static void swap(char** a, char** b) {
-        char* t = *a;
-        *a = *b;
-        *b = t;
-    }
-
     static int strcicmp(char const *a, char const *b) {
         for (;; a++, b++)
         {
@@ -2019,30 +1972,16 @@
         }
     }
 
-    static int partition (char** arr, int low, int high) {
-        char* pivot = arr[high];
-        int i = (low - 1);
-
-        for (int j = low; j <= high- 1; j++)
-        {
-            if (strcicmp(arr[j], pivot) < 0)
-            {
-                i++;
-                swap(&arr[i], &arr[j]);
-            }
-        }
-        swap(&arr[i + 1], &arr[high]);
-        return (i + 1);
+    static int name_cmp(const void *a, const void *b) {
+        return strcicmp(*(char * const *)a, *(char * const *)b);
     }
 
+    /* libc qsort: the old hand-written quicksort used the last name as its pivot and
+       recursed once per name on an already sorted folder (FAT lists files in copy
+       order), so a large, sorted ROM folder overflowed the launcher's 32 KB main stack. */
     void quick_sort(char** arr, int low, int high) {
         if (low < high)
-        {
-            int pi = partition(arr, low, high);
-
-            quick_sort(arr, low, pi - 1);
-            quick_sort(arr, pi + 1, high);
-        }
+            qsort(arr + low, high - low + 1, sizeof(char *), name_cmp);
     }
 
     void sort_files(char** files)
@@ -2109,9 +2048,9 @@
         struct dirent *file;
         while ((file = readdir(directory)) != NULL) {
           bool extenstion = matches_rom_extension(file->d_name, STEP);
-          /* Neo Geo (STEP 17): skip directories and system files */
+          /* Neo Geo: skip directories and system files */
           bool is_dir = (file->d_type == 2);
-          if (is_dir && STEP == 17) continue;
+          if (is_dir && STEP == STEP_NEOGEO) continue;
           if(extenstion || is_dir) {
             SEEK[ROMS.total+1] = telldir(directory);
             ROMS.total++;
@@ -2128,7 +2067,7 @@
           while ((file = readdir(directory)) != NULL && SORTED_COUNT < ROMS.total) {
             bool extenstion = matches_rom_extension(file->d_name, STEP);
             bool is_dir2 = (file->d_type == 2);
-            if (is_dir2 && STEP == 17) continue;
+            if (is_dir2 && STEP == STEP_NEOGEO) continue;
             if(extenstion || is_dir2) {
               size_t len = strlen(file->d_name);
               if (file->d_type == 2) {
@@ -2149,7 +2088,7 @@
 
           /* Sort alphabetically — for Neo Geo, sort by display name */
           if (SORTED_COUNT > 1) {
-            if (STEP == 17) {
+            if (STEP == STEP_NEOGEO) {
               /* Ensure name table is loaded */
               if (ng_names_count < 0) ng_load_names();
               if (ng_names_count > 0) {
@@ -2288,7 +2227,7 @@
     //printf("\nlimit:%d", limit);
     for(int n = 0; n < limit; n++) {
       //printf("\n%d:%s", n, FILES[n]);
-      const char *label = (STEP == 17) ? ng_display_name(FILES[n]) : NULL;
+      const char *label = (STEP == STEP_NEOGEO) ? ng_display_name(FILES[n]) : NULL;
       bool use_ext = true;
       if (label) { use_ext = false; } else { label = FILES[n]; }
       draw_text(x+48,y,(char*)label,use_ext,n == 0 ? true : false, false);
@@ -4967,7 +4906,7 @@
       }
 
       /* Draw filename (without extension) — use display name for Neo Geo */
-      const char *label = (STEP == 17) ? ng_display_name(FILES[n]) : NULL;
+      const char *label = (STEP == STEP_NEOGEO) ? ng_display_name(FILES[n]) : NULL;
       bool use_ext = true;
       if (label) { use_ext = false; } else { label = FILES[n]; }
       draw_text(x + 40, y + 6, (char*)label, use_ext, selected, false);
@@ -5046,7 +4985,7 @@
     }
 
     /* Draw filename — use display name for Neo Geo */
-    const char *label = (STEP == 17) ? ng_display_name(FILES[n]) : NULL;
+    const char *label = (STEP == STEP_NEOGEO) ? ng_display_name(FILES[n]) : NULL;
     bool use_ext = true;
     if (label) { use_ext = false; } else { label = FILES[n]; }
     draw_text(x + 40, y + 6, (char*)label, use_ext, selected, false);
@@ -5191,17 +5130,10 @@
       case RP_CONSOLE_NES:     return 3;
       case RP_CONSOLE_GB:      return 4;
       case RP_CONSOLE_SMS:     return 6;
-      case RP_CONSOLE_COLECO:  return 8;
-      case RP_CONSOLE_A7800:   return 9;
-      case RP_CONSOLE_SPECTRUM:return 10;
-      case RP_CONSOLE_A2600:   return 11;
-      case RP_CONSOLE_LYNX:    return 12;
-      case RP_CONSOLE_PCE:     return 13;
-      case RP_CONSOLE_A5200:   return 14;
-      case RP_CONSOLE_SNES:    return 15;
-      case RP_CONSOLE_GENESIS: return 16;
-      case RP_CONSOLE_NEOGEO:  return 17;
-      default:                 return -1;   /* generic, stock keyboard, none */
+      case RP_CONSOLE_SNES:    return STEP_SNES;
+      case RP_CONSOLE_GENESIS: return STEP_GENESIS;
+      case RP_CONSOLE_NEOGEO:  return STEP_NEOGEO;
+      default:                 return -1;   /* generic, stock keyboard, removed systems, none */
     }
   }
 

@@ -22,19 +22,13 @@ $flash_map = @(
     @{ Offset = "0x2000";   File = "bootloader.bin";      Desc = "Bootloader" },
     @{ Offset = "0x8000";   File = "partition-table.bin";  Desc = "Partition Table" },
     @{ Offset = "0xD000";   File = "ota_data_initial.bin"; Desc = "OTA Data (boot factory)" },
-    @{ Offset = "0xC80000"; File = "launcher.bin";         Desc = "Launcher (factory)" },
-    @{ Offset = "0x0E0000"; File = "nes_app.bin";          Desc = "NES (ota_0)" },
-    @{ Offset = "0x180000"; File = "gb_app.bin";           Desc = "GB/GBC (ota_1)" },
-    @{ Offset = "0x220000"; File = "sms_app.bin";          Desc = "SMS/GG/COL (ota_2)" },
-    @{ Offset = "0x370000"; File = "spectrum_app.bin";     Desc = "ZX Spectrum (ota_3)" },
-    @{ Offset = "0x430000"; File = "stella_app.bin";       Desc = "Stella (ota_4)" },
-    @{ Offset = "0x570000"; File = "prosystem_app.bin";    Desc = "ProSystem (ota_5)" },
-    @{ Offset = "0x610000"; File = "handy_app.bin";        Desc = "Handy (ota_6)" },
-    @{ Offset = "0x6B0000"; File = "pce_app.bin";          Desc = "PC Engine (ota_7)" },
-    @{ Offset = "0x760000"; File = "atari800_app.bin";     Desc = "Atari 800 (ota_8)" },
-    @{ Offset = "0x8C0000"; File = "snes_app.bin";         Desc = "SNES (ota_10)" },
-    @{ Offset = "0x9B0000"; File = "genesis_app.bin";      Desc = "Genesis (ota_11)" },
-    @{ Offset = "0xB00000"; File = "neogeo_app.bin";       Desc = "Neo Geo (ota_12)" }
+    @{ Offset = "0x010000"; File = "launcher.bin";         Desc = "Launcher (factory)" },
+    @{ Offset = "0x310000"; File = "nes_app.bin";          Desc = "NES (ota_0)" },
+    @{ Offset = "0x410000"; File = "gb_app.bin";           Desc = "GB/GBC (ota_1)" },
+    @{ Offset = "0x510000"; File = "sms_app.bin";          Desc = "SMS/GG (ota_2)" },
+    @{ Offset = "0x710000"; File = "snes_app.bin";         Desc = "SNES (ota_3)" },
+    @{ Offset = "0xA10000"; File = "genesis_app.bin";      Desc = "Genesis (ota_4)" },
+    @{ Offset = "0xC10000"; File = "neogeo_app.bin";       Desc = "Neo Geo (ota_5)" }
 )
 
 # Build the esptool command arguments
