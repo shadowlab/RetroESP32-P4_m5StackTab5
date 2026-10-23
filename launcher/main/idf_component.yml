@@ -7,3 +7,13 @@ dependencies:
     version: "2.4.0"
   espressif/tinyusb:
     version: "0.21.0~2"
+  # Wi-Fi transfer (Tab5): Wi-Fi through the ESP32-C6 over SDIO. The host version must match the C6's
+  # ESP-Hosted firmware (3.0.9, flashed with shadowlab/tab5-p4-c6-sdio-ota).
+  espressif/esp_wifi_remote:
+    version: "1.6.5"
+    rules:
+      - if: "target == esp32p4"
+  espressif/esp_hosted:
+    version: "3.0.9"
+    rules:
+      - if: "target == esp32p4"

@@ -98,6 +98,9 @@ esp_err_t tab5_board_speaker_enable(bool enable);
 /** USB-A host port 5V rail (IO expander). Call before usb_host_install(). */
 esp_err_t tab5_board_usb_power_enable(bool enable);
 
+/** ESP32-C6 (Wi-Fi co-processor) supply (IO expander). Off after every boot. */
+esp_err_t tab5_board_wifi_power_enable(bool enable);
+
 /**
  * Detect the hardware revision, power the DSI PHY and bring up the panel.
  * The DPI frame buffer(s) (RGB565, 720x1280, PSRAM) are cleared to black.  With

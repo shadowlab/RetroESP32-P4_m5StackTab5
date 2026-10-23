@@ -1,0 +1,170 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>RetroESP Tab5 files</title>
+<style>
+:root{--bg:#14161a;--panel:#1d2026;--line:#2c3038;--fg:#e6e8eb;--dim:#9097a3;--acc:#e8b339;--bad:#e5534b;--ok:#57ab5a}
+*{box-sizing:border-box}
+body{margin:0;background:var(--bg);color:var(--fg);font:15px/1.4 system-ui,-apple-system,Segoe UI,Roboto,sans-serif}
+header{display:flex;flex-wrap:wrap;gap:8px;align-items:center;padding:12px 16px;background:var(--panel);border-bottom:1px solid var(--line);position:sticky;top:0;z-index:2}
+h1{font-size:17px;margin:0 12px 0 0;color:var(--acc);letter-spacing:.5px}
+#free{color:var(--dim);font-size:13px;margin-left:auto}
+button,label.btn{background:#2a2e36;color:var(--fg);border:1px solid var(--line);border-radius:6px;padding:7px 12px;font:inherit;cursor:pointer}
+button:hover,label.btn:hover{border-color:var(--acc)}
+main{padding:12px 16px 120px;max-width:1000px;margin:0 auto}
+#crumbs{margin:4px 0 10px;font-size:15px;word-break:break-all}
+#crumbs a{color:var(--acc);text-decoration:none}
+table{width:100%;border-collapse:collapse}
+td{padding:8px 6px;border-bottom:1px solid var(--line);vertical-align:middle}
+td.n{word-break:break-all}
+td.n a{color:var(--fg);text-decoration:none}
+td.n a.dir{color:var(--acc);font-weight:600}
+td.s{color:var(--dim);text-align:right;white-space:nowrap;width:1%}
+td.a{white-space:nowrap;width:1%;text-align:right}
+td.a button{padding:4px 8px;font-size:13px;margin-left:4px}
+.empty{color:var(--dim);padding:20px 6px}
+#drop{position:fixed;inset:0;background:rgba(232,179,57,.15);border:3px dashed var(--acc);display:none;align-items:center;justify-content:center;font-size:22px;z-index:5;pointer-events:none}
+body.drag #drop{display:flex}
+#queue{position:fixed;left:0;right:0;bottom:0;background:var(--panel);border-top:1px solid var(--line);padding:10px 16px;display:none;z-index:3}
+#qname{font-size:14px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+#qbar{height:8px;background:#2a2e36;border-radius:4px;margin-top:6px;overflow:hidden}
+#qfill{height:100%;width:0;background:var(--acc)}
+#qinfo{color:var(--dim);font-size:13px;margin-top:4px}
+input[type=file]{display:none}
+</style>
+</head>
+<body>
+<header>
+<h1>RetroESP Tab5</h1>
+<label class="btn">Upload files<input type="file" id="fFiles" multiple></label>
+<label class="btn">Upload folder<input type="file" id="fDir" webkitdirectory multiple></label>
+<button id="bMkdir">New folder</button>
+<button id="bRefresh">Refresh</button>
+<span id="free"></span>
+</header>
+<main>
+<div id="crumbs"></div>
+<table><tbody id="list"></tbody></table>
+</main>
+<div id="drop">Drop files or folders to upload here</div>
+<div id="queue"><div id="qname"></div><div id="qbar"><div id="qfill"></div></div><div id="qinfo"></div></div>
+<script>
+"use strict";
+let cwd = decodeURIComponent(location.hash.slice(1)) || "/";
+const $ = id => document.getElementById(id);
+const enc = encodeURIComponent;
+const join = (d, n) => (d.endsWith("/") ? d : d + "/") + n;
+function fmt(b) {
+  if (b < 1024) return b + " B";
+  const u = ["KB", "MB", "GB"]; let i = -1;
+  do { b /= 1024; i++; } while (b >= 1024 && i < 2);
+  return b.toFixed(b < 10 ? 1 : 0) + " " + u[i];
+}
+async function api(method, path, body) {
+  const r = await fetch(path, { method, body });
+  if (!r.ok) throw new Error((await r.text()) || r.statusText);
+  return r;
+}
+async function info() {
+  try { const j = await (await api("GET", "/api/info")).json(); $("free").textContent = fmt(j.free) + " free of " + fmt(j.total); } catch (e) {}
+}
+async function load() {
+  location.hash = cwd === "/" ? "" : enc(cwd);
+  const c = $("crumbs"); c.innerHTML = "";
+  const parts = cwd.split("/").filter(Boolean);
+  const add = (label, p) => { const a = document.createElement("a"); a.href = "#"; a.textContent = label; a.onclick = e => { e.preventDefault(); cwd = p; load(); }; c.append(a); };
+  add("SD card", "/");
+  parts.forEach((p, i) => { c.append(" / "); add(p, "/" + parts.slice(0, i + 1).join("/")); });
+  const tb = $("list"); tb.innerHTML = "";
+  let items;
+  try { items = await (await api("GET", "/api/list?path=" + enc(cwd))).json(); }
+  catch (e) { tb.innerHTML = '<tr><td class="empty"></td></tr>'; tb.querySelector("td").textContent = "Could not read this folder: " + e.message; return; }
+  items.sort((a, b) => (b.d - a.d) || a.n.localeCompare(b.n, undefined, { numeric: true, sensitivity: "base" }));
+  if (cwd !== "/") items.unshift({ n: "..", d: 1, up: 1 });
+  if (!items.length) { tb.innerHTML = '<tr><td class="empty">This folder is empty. Drop files here to upload them.</td></tr>'; }
+  for (const it of items) {
+    const tr = document.createElement("tr");
+    const p = it.up ? cwd.replace(/\/[^/]*$/, "") || "/" : join(cwd, it.n);
+    const tn = document.createElement("td"); tn.className = "n";
+    const a = document.createElement("a"); a.textContent = it.d ? it.n + "/" : it.n;
+    if (it.d) { a.className = "dir"; a.href = "#"; a.onclick = e => { e.preventDefault(); cwd = p; load(); }; }
+    else { a.href = "/api/file?path=" + enc(p); a.download = it.n; }
+    tn.append(a); tr.append(tn);
+    const ts = document.createElement("td"); ts.className = "s"; ts.textContent = it.d ? "" : fmt(it.s); tr.append(ts);
+    const ta = document.createElement("td"); ta.className = "a";
+    if (!it.up) {
+      const rn = document.createElement("button"); rn.textContent = "Rename";
+      rn.onclick = async () => {
+        const nn = prompt("New name", it.n); if (!nn || nn === it.n) return;
+        try { await api("POST", "/api/rename?from=" + enc(p) + "&to=" + enc(join(cwd, nn))); } catch (e) { alert(e.message); }
+        load();
+      };
+      const del = document.createElement("button"); del.textContent = "Delete";
+      del.onclick = async () => {
+        if (!confirm(it.d ? 'Delete the folder "' + it.n + '" and everything in it?' : 'Delete "' + it.n + '"?')) return;
+        try { await api("POST", "/api/delete?path=" + enc(p)); } catch (e) { alert(e.message); }
+        load(); info();
+      };
+      ta.append(rn, del);
+    }
+    tr.append(ta); tb.append(tr);
+  }
+}
+/* Uploads go one at a time: the card is faster with one writer. */
+const queue = []; let busy = false, doneN = 0;
+function enqueue(list) {
+  for (const f of list) queue.push(f);
+  if (!busy) next();
+}
+function next() {
+  const q = $("queue");
+  if (!queue.length) { busy = false; q.style.display = "none"; doneN = 0; load(); info(); return; }
+  busy = true; q.style.display = "block";
+  const { file, path } = queue.shift();
+  $("qname").textContent = "Uploading " + path + "  (" + (queue.length) + " more after this)";
+  const x = new XMLHttpRequest(), t0 = performance.now();
+  x.open("POST", "/api/file?path=" + enc(path));
+  x.upload.onprogress = e => {
+    if (!e.lengthComputable) return;
+    $("qfill").style.width = (100 * e.loaded / e.total) + "%";
+    const s = (performance.now() - t0) / 1000;
+    $("qinfo").textContent = fmt(e.loaded) + " of " + fmt(e.total) + (s > 0.5 ? "  -  " + fmt(e.loaded / s) + "/s" : "");
+  };
+  x.onload = () => { if (x.status >= 300) alert("Upload of " + path + " failed: " + x.responseText); doneN++; next(); };
+  x.onerror = () => { alert("Upload of " + path + " failed: connection lost"); next(); };
+  x.send(file);
+}
+$("fFiles").onchange = e => { enqueue([...e.target.files].map(f => ({ file: f, path: join(cwd, f.name) }))); e.target.value = ""; };
+$("fDir").onchange = e => { enqueue([...e.target.files].map(f => ({ file: f, path: join(cwd, f.webkitRelativePath || f.name) }))); e.target.value = ""; };
+$("bMkdir").onclick = async () => {
+  const n = prompt("Folder name"); if (!n) return;
+  try { await api("POST", "/api/mkdir?path=" + enc(join(cwd, n))); } catch (e) { alert(e.message); }
+  load();
+};
+$("bRefresh").onclick = () => { load(); info(); };
+/* Drag and drop, folders included */
+let dragN = 0;
+addEventListener("dragenter", e => { e.preventDefault(); dragN++; document.body.classList.add("drag"); });
+addEventListener("dragleave", e => { if (--dragN <= 0) { dragN = 0; document.body.classList.remove("drag"); } });
+addEventListener("dragover", e => e.preventDefault());
+addEventListener("drop", async e => {
+  e.preventDefault(); dragN = 0; document.body.classList.remove("drag");
+  const out = [], base = cwd;
+  async function walk(entry, rel) {
+    if (entry.isFile) { await new Promise(res => entry.file(f => { out.push({ file: f, path: join(base, rel + f.name) }); res(); }, res)); }
+    else if (entry.isDirectory) {
+      const rd = entry.createReader();
+      for (;;) { const ents = await new Promise(res => rd.readEntries(res, () => res([]))); if (!ents.length) break; for (const c of ents) await walk(c, rel + entry.name + "/"); }
+    }
+  }
+  const items = [...e.dataTransfer.items].map(i => i.webkitGetAsEntry && i.webkitGetAsEntry()).filter(Boolean);
+  if (items.length) { for (const it of items) await walk(it, ""); }
+  else for (const f of e.dataTransfer.files) out.push({ file: f, path: join(base, f.name) });
+  enqueue(out);
+});
+load(); info();
+</script>
+</body>
+</html>

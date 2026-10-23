@@ -192,6 +192,40 @@ parked with its pads off.
 * Only the launcher contains TinyUSB (`launcher/main/idf_component.yml`); the emulator apps are unchanged.
   It needed 64 KB more flash for the launcher, see the slot sizes below.
 
+## Wi-Fi transfer (SD card over Wi-Fi)
+
+**Settings → WI-FI TRANSFER** puts the SD card on the network: any browser on the same Wi-Fi (PC, phone)
+can browse it, upload files and whole folders (button or drag and drop), download, rename and delete.
+
+1. Pick WI-FI TRANSFER and press A. The first time, the Tab5 lists the networks it can see (strongest
+   first, a padlock for the ones with a password). Touch one (or move with the pad and press A), type the
+   password on the touch keyboard (SHIFT, `#+=` for symbols, SHOW/HIDE) and touch OK.
+2. The network is saved; next time the Tab5 joins it straight away. Y on the transfer screen picks another
+   one. A wrong password or a network out of range sends you back to the list.
+3. The screen shows an address like **http://192.168.1.23**: open it in a browser. The screen also shows
+   the transfer that is running and how many files went each way.
+4. Press **B** to leave. The Tab5 restarts, switches the C6 off and re-reads the ROM lists. B during a
+   transfer asks for a second B first.
+
+No router? **HOTSPOT (NO ROUTER)** at the end of the list makes the Tab5 its own Wi-Fi network,
+`RetroESP-Tab5`, with an 8-digit password made up once and then kept. Join it from the PC or phone, then
+open **http://192.168.4.1**. OTHER NETWORK takes a hidden network's name.
+
+How it works: the C6 is powered through the IO expander only when Wi-Fi transfer opens. The launcher
+starts ESP-Hosted itself (`launcher/main/wifi_link.c`, host 3.0.9, the version the
+[C6 updater](#before-flashing-update-the-esp32-c6-firmware-first) installs) on SDMMC slot 1, next to the SD
+card on slot 0 of the same controller; both run at 40 MHz. `launcher/main/file_server.c` is an
+`esp_http_server` with the page in `file_server.html`. Uploads are written in 32 KB blocks; a failed upload
+is deleted rather than left half-written. Folders are created as needed.
+
+* **Anyone on the same network can reach the card while the screen is open** (no password on the page).
+  Leave the screen when you are done; the server stops with it.
+* Only the launcher has Wi-Fi (`launcher/main/idf_component.yml`); the emulators never start the C6 and
+  keep all of their RAM.
+* The saved network and the hotspot password are in NVS (namespace `wifi`).
+* File names are passed through as they are; names with characters outside ASCII may not come out right
+  on the card (FatFs runs with its default code page).
+
 ## Building
 
 ```bash
@@ -225,7 +259,16 @@ from that file, so a partition change only needs editing there (and in the Windo
 image's size against its slot; the merged `RetroESP32_P4_Tab5_v1.bin` and the individual binaries are
 uploaded as the `RetroESP32_P4_Tab5-idf5.5.2` artifact.
 
-Pushing a tag `tab5-v<version>` builds the same way and publishes a GitHub release with the merged
+**Every merge to `main`** publishes a release too, tagged `tab5-build-<run number>`, with the merged image under
+its own name and as `RetroESP32_P4_Tab5.bin`. The newest one can be downloaded without a GitHub login (workflow
+artifacts need one), e.g. to flash it:
+
+```bash
+curl -L -o RetroESP32_P4_Tab5.bin https://github.com/shadowlab/RetroESP32-P4_m5StackTab5/releases/latest/download/RetroESP32_P4_Tab5.bin
+python -m esptool --chip esp32p4 -b 460800 write_flash 0x0 RetroESP32_P4_Tab5.bin
+```
+
+Pushing a tag `tab5-v<version>` builds the same way and publishes a versioned GitHub release with the merged
 image and its SHA-256 sum; a suffix (`tab5-v0.2.0-beta.1`) marks it as a pre-release:
 
 ```bash
@@ -241,9 +284,11 @@ The SD card layout, ROM folders and Neo Geo cache generation are identical to th
 was grown from 576 KB to 640 KB with 64 KB from the unused `ota_9` slot (`ota_1`…`ota_8` moved up by
 0x10000, sizes unchanged), so NES builds with full logging at ~590 KB. Atari 800 (`ota_8`, right before
 `ota_9`) got another 64 KB the same way: 832 KB for a ~757 KB build. The launcher's `factory` slot got a
-third 64 KB for [USB drive mode](#usb-drive-mode-sd-card-over-usb-c): 832 KB for a ~782 KB build (`ota_0`…`ota_8`
-moved up by another 0x10000; `ota_9`, still unused, is now 576 KB). The partition table is shared with the other targets: after
-updating, flash the full image (or the partition table plus every app) once.
+third 64 KB for [USB drive mode](#usb-drive-mode-sd-card-over-usb-c) (`ota_0`…`ota_8` moved up by another 0x10000;
+`ota_9`, still unused, is now 576 KB). [Wi-Fi transfer](#wi-fi-transfer-sd-card-over-wi-fi) took the launcher to ~1.1 MB, so
+the `factory` slot moved to the free flash after the apps: 2 MB at 0xC80000 (the app slots kept their offsets; the old
+slot at 0x10000 is free). The partition table is shared with the other targets: after updating, flash the full image
+(or the partition table plus every app) once.
 
 **ESP-IDF version.** Releases are built with **ESP-IDF 5.5.2**, the only supported toolchain for this
 target: the Tab5's ESP32-P4 is a pre-v3 chip, which 5.5 targets by default (`CONFIG_ESP32P4_SELECTS_REV_LESS_V3`,
@@ -284,4 +329,4 @@ defaults to C23 / C++26; `CONFIG_COMPILER_DISABLE_DEFAULT_ERRORS=y`; on 6.x only
 ## Ideas not done yet
 
 * Touch pad polish: "dead zone" tuning and a size setting once it has been tried on the device.
-* Tab5 extras: IMU (BMI270) tilt controls, RTC, the ESP32-C6 (Wi-Fi) co-processor.
+* Tab5 extras: IMU (BMI270) tilt controls, RTC.

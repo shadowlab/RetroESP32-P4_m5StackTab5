@@ -100,7 +100,6 @@ Bootloader is at **0x2000** (ESP32-P4 requirement, not 0x0); partition table at 
 |-----------|--------|------|----------|
 | nvs | 0x009000 | 16 KB | NVS store |
 | otadata | 0x00D000 | 8 KB | OTA boot selection |
-| factory | 0x010000 | 832 KB | Launcher |
 | ota_0 | 0x0E0000 | 640 KB | NES |
 | ota_1 | 0x180000 | 640 KB | GB/GBC |
 | ota_2 | 0x220000 | 1.31 MB | SMS/GG/COL |
@@ -114,6 +113,7 @@ Bootloader is at **0x2000** (ESP32-P4 requirement, not 0x0); partition table at 
 | ota_10 | 0x8C0000 | 960 KB | SNES |
 | ota_11 | 0x9B0000 | 1.31 MB | Genesis |
 | ota_12 | 0xB00000 | 1.5 MB | Neo Geo |
+| factory | 0xC80000 | 2 MB | Launcher (after the apps; 0x10000–0xDFFFF is free) |
 
 PSRAM `.papp` apps use no partition — they live on the SD card.
 
@@ -297,7 +297,7 @@ cd apps\snes ; idf.py build      # delete sdkconfig + build/ first if last built
 
 **Flash all:** `.\flash_all.ps1` — port is `$PORT` (script default COM30; hardware COM5 as of
 Phase 49). Flash map mirrors `partitions_ota.csv`: bootloader 0x2000, partition-table 0x8000,
-ota_data_initial 0xD000, launcher 0x10000, then each `*_app.bin` at its ota offset. Or flash the
+ota_data_initial 0xD000, launcher 0xC80000, then each `*_app.bin` at its ota offset. Or flash the
 merged `RetroESP32_P4_v1.bin` at 0x0.
 
 **Flash one app:**
@@ -325,9 +325,10 @@ For a native port, build a `.papp` from `ESP32_P4_PAPP_Template/` instead — no
 ## Binary Sizes
 
 Approximate (from `partitions_ota.csv`; re-measure after builds). Partitions that run **tight**:
-launcher (~706 KB / 832 KB; Tab5 ~782 KB with USB drive mode). NES, Atari 800 and the launcher each got 64 KB from the free ota_9 slot
+NES and Atari 800 each got 64 KB from the free ota_9 slot
 (NES now 640 KB, Tab5 build ~590 KB; Atari 800 now 832 KB, Tab5 build ~757 KB). Others carry
-60–360 KB headroom. Largest cores: sms ~1231 KB, genesis ~1212 KB, stella ~1184 KB, neogeo ~1177 KB.
+60–360 KB headroom. The launcher (~706 KB; Tab5 ~1.1 MB with USB drive mode and Wi-Fi transfer) has a
+2 MB slot at the end of the apps. Largest cores: sms ~1231 KB, genesis ~1212 KB, stella ~1184 KB, neogeo ~1177 KB.
 On overflow: shrink the app (`-Os`, strip) or grow the partition and shift later offsets.
 
 ---

@@ -41,3 +41,20 @@ CONFIG_TINYUSB_DESC_MANUFACTURER_STRING="RetroESP32"
 CONFIG_TINYUSB_DESC_PRODUCT_STRING="Tab5 SD card"
 CONFIG_TINYUSB_DESC_SERIAL_STRING=""
 CONFIG_TINYUSB_DESC_MSC_STRING="Tab5 SD card"
+
+# Wi-Fi transfer (launcher > Settings > WI-FI TRANSFER): Wi-Fi through the ESP32-C6 (ESP-Hosted over SDIO,
+# SDMMC slot 1 next to the SD card on slot 0). The launcher powers the C6 and starts ESP-Hosted itself, only
+# when Wi-Fi transfer is opened. Only the launcher depends on esp_hosted; the emulator apps ignore these.
+CONFIG_ESP32P4_TAB5_C6_BOARD=y
+# CONFIG_ESP_HOSTED_AUTO_CALL_INIT_BEFORE_APP_MAIN is not set
+# Same clock as the SD card (SDMMC_FREQ_HIGHSPEED): the two slots share the host clock divider
+CONFIG_ESP_HOSTED_HOST_SDIO_CLK_KHZ=40000
+CONFIG_WIFI_RMT_NVS_ENABLED=n
+# Browsers send more header bytes than the 512 default, and the API puts paths in the URL
+CONFIG_HTTPD_MAX_REQ_HDR_LEN=2048
+CONFIG_HTTPD_MAX_URI_LEN=2048
+# Bigger TCP windows for file transfer throughput (the buffers come from PSRAM)
+CONFIG_LWIP_TCP_SND_BUF_DEFAULT=65534
+CONFIG_LWIP_TCP_WND_DEFAULT=65534
+CONFIG_LWIP_TCP_RECVMBOX_SIZE=64
+CONFIG_LWIP_TCPIP_RECVMBOX_SIZE=64
