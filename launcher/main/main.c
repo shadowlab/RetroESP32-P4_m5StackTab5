@@ -9,6 +9,10 @@
   odroid_battery_state battery_state;
   /* Light blue level bar while USB power is charging the pack */
   #define BATTERY_CHARGING_COLOR 0x2D7F
+  /* Status icon states: active = green, idle = white, muted speaker = red */
+  #define ICON_ON_COLOR   0x07E0
+  #define ICON_OFF_COLOR  0xFFFF
+  #define ICON_MUTE_COLOR 0xF800
   /* Which battery icon is on screen, so the launcher loop can refresh it */
   static bool s_header_battery_shown = false;
 //}#pragma endregion Odroid
@@ -1548,8 +1552,8 @@
         for (int h = 0; h < 16; h++) {
           for (int sh = 0; sh < 2; sh++) {
             for (int w = 0; w < 16; w++) {
-              buffer[i++] = speaker[dh + h][w] == WHITE ? GUI.hl : 0x0000;
-              buffer[i++] = speaker[dh + h][w] == WHITE ? GUI.hl : 0x0000;
+              buffer[i++] = speaker[dh + h][w] == WHITE ? (vol == 0 ? ICON_MUTE_COLOR : ICON_ON_COLOR) : 0x0000;
+              buffer[i++] = speaker[dh + h][w] == WHITE ? (vol == 0 ? ICON_MUTE_COLOR : ICON_ON_COLOR) : 0x0000;
             }
           }
         }
@@ -1567,9 +1571,9 @@
           for (int sh = 0; sh < 2; sh++) {
             for (int w = 0; w < 16; w++) {
               buffer[i++] = usb_gamepad_icon[h][w] == WHITE
-                            ? (usb ? GUI.hl : 0x4208) : 0x0000;
+                            ? (usb ? ICON_ON_COLOR : ICON_OFF_COLOR) : 0x0000;
               buffer[i++] = usb_gamepad_icon[h][w] == WHITE
-                            ? (usb ? GUI.hl : 0x4208) : 0x0000;
+                            ? (usb ? ICON_ON_COLOR : ICON_OFF_COLOR) : 0x0000;
             }
           }
         }
@@ -1584,9 +1588,9 @@
           for (int sh = 0; sh < 2; sh++) {
             for (int w = 0; w < 16; w++) {
               buffer[i++] = gpio_gamepad_icon[h][w] == WHITE
-                            ? (gpio ? GUI.hl : 0x4208) : 0x0000;
+                            ? (gpio ? ICON_ON_COLOR : ICON_OFF_COLOR) : 0x0000;
               buffer[i++] = gpio_gamepad_icon[h][w] == WHITE
-                            ? (gpio ? GUI.hl : 0x4208) : 0x0000;
+                            ? (gpio ? ICON_ON_COLOR : ICON_OFF_COLOR) : 0x0000;
             }
           }
         }
@@ -1670,6 +1674,10 @@
     #endif
   }
 
+  /* Status icons share the top row with the carousel header icons (y=0) so
+   * they don't jump down when switching to Settings or a ROM list. */
+  #define STATUS_ICON_Y 0
+
   void draw_battery() {
     #ifdef BATTERY
       s_header_battery_shown = false;
@@ -1677,7 +1685,7 @@
 
       int i = 0;
       int x = SCREEN.w - 64;
-      int y = 16;
+      int y = STATUS_ICON_Y;
       int h = 0;
       int w = 0;
 
@@ -1719,7 +1727,7 @@
 
     int i = 0;
     int x = SCREEN.w - 104;
-    int y = 16;
+    int y = STATUS_ICON_Y;
     int h = 16;
     int w = 16;
 
@@ -1736,7 +1744,7 @@
     for(h = 0; h < 16; h++) {
       for(int sh = 0; sh < 2; sh++) {
         for(w = 0; w < 16; w++) {
-          uint16_t pixel = speaker[dh+h][w] == WHITE ? GUI.hl : GUI.bg;
+          uint16_t pixel = speaker[dh+h][w] == WHITE ? (volume == 0 ? ICON_MUTE_COLOR : ICON_ON_COLOR) : GUI.bg;
           buffer[i++] = pixel;
           buffer[i++] = pixel;
         }
@@ -1770,7 +1778,7 @@
     }
     int i = 0;
     int x = SCREEN.w - 144;
-    int y = 16;
+    int y = STATUS_ICON_Y;
     int h = 16;
     int w = 16;
 
@@ -1793,14 +1801,14 @@
     {
       int i = 0;
       int x = SCREEN.w - 184;
-      int y = 16;
+      int y = STATUS_ICON_Y;
       draw_mask(x, y, 32, 32);
       bool usb = odroid_input_usb_gamepad_connected();
       for (int h = 0; h < 16; h++) {
         for (int sh = 0; sh < 2; sh++) {
           for (int w = 0; w < 16; w++) {
             uint16_t pixel = usb_gamepad_icon[h][w] == WHITE
-                             ? (usb ? GUI.hl : GUI.fg) : GUI.bg;
+                             ? (usb ? ICON_ON_COLOR : ICON_OFF_COLOR) : GUI.bg;
             buffer[i++] = pixel;
             buffer[i++] = pixel;
           }
@@ -1812,14 +1820,14 @@
     {
       int i = 0;
       int x = SCREEN.w - 224;
-      int y = 16;
+      int y = STATUS_ICON_Y;
       draw_mask(x, y, 32, 32);
       bool gpio = odroid_input_gpio_pad_detected();
       for (int h = 0; h < 16; h++) {
         for (int sh = 0; sh < 2; sh++) {
           for (int w = 0; w < 16; w++) {
             uint16_t pixel = gpio_gamepad_icon[h][w] == WHITE
-                             ? (gpio ? GUI.hl : GUI.fg) : GUI.bg;
+                             ? (gpio ? ICON_ON_COLOR : ICON_OFF_COLOR) : GUI.bg;
             buffer[i++] = pixel;
             buffer[i++] = pixel;
           }
@@ -3962,8 +3970,8 @@
           for (int h = 0; h < 16; h++) {
             for (int sh = 0; sh < 2; sh++) {
               for (int w = 0; w < 16; w++) {
-                buffer[i++] = speaker[dh + h][w] == WHITE ? GUI.hl : 0x0000;
-                buffer[i++] = speaker[dh + h][w] == WHITE ? GUI.hl : 0x0000;
+                buffer[i++] = speaker[dh + h][w] == WHITE ? (vol == 0 ? ICON_MUTE_COLOR : ICON_ON_COLOR) : 0x0000;
+                buffer[i++] = speaker[dh + h][w] == WHITE ? (vol == 0 ? ICON_MUTE_COLOR : ICON_ON_COLOR) : 0x0000;
               }
             }
           }
@@ -3981,9 +3989,9 @@
             for (int sh = 0; sh < 2; sh++) {
               for (int w = 0; w < 16; w++) {
                 buffer[i++] = usb_gamepad_icon[h][w] == WHITE
-                              ? (usb ? GUI.hl : 0x4208) : 0x0000;
+                              ? (usb ? ICON_ON_COLOR : ICON_OFF_COLOR) : 0x0000;
                 buffer[i++] = usb_gamepad_icon[h][w] == WHITE
-                              ? (usb ? GUI.hl : 0x4208) : 0x0000;
+                              ? (usb ? ICON_ON_COLOR : ICON_OFF_COLOR) : 0x0000;
               }
             }
           }
@@ -3998,9 +4006,9 @@
             for (int sh = 0; sh < 2; sh++) {
               for (int w = 0; w < 16; w++) {
                 buffer[i++] = gpio_gamepad_icon[h][w] == WHITE
-                              ? (gpio ? GUI.hl : 0x4208) : 0x0000;
+                              ? (gpio ? ICON_ON_COLOR : ICON_OFF_COLOR) : 0x0000;
                 buffer[i++] = gpio_gamepad_icon[h][w] == WHITE
-                              ? (gpio ? GUI.hl : 0x4208) : 0x0000;
+                              ? (gpio ? ICON_ON_COLOR : ICON_OFF_COLOR) : 0x0000;
               }
             }
           }
@@ -4081,6 +4089,7 @@
         GUI.fg = saved_fg;
       }
       draw_contrast();
+      draw_gamepad_icons();
 
       int y = POS.y + 92;
       for (int i = 0; i < 4; i++) draw_mask(0, y+(i*80)-12, WIDTH, 80);
@@ -4112,6 +4121,7 @@
         draw_battery();
         draw_speaker();
         draw_contrast();
+        draw_gamepad_icons();
         draw_systems();
         draw_text(16,4,EMULATORS[STEP], false, true, false);
         draw_settings();
@@ -5154,6 +5164,29 @@
       odroid_input_gamepad_read(&gamepad);
 
       if (controller_board_changed()) continue;
+
+      /* Same for the gamepad icons: redraw when a pad is plugged or unplugged. */
+      if (!BROWSER && !LAUNCHER) {
+        static int64_t next_pad_us = 0;
+        static int last_usb = -1, last_gpio = -1;
+        int64_t now = esp_timer_get_time();
+        if (now >= next_pad_us) {
+          next_pad_us = now + 1000000;
+          int usb = odroid_input_usb_gamepad_connected();
+          int gpio = odroid_input_gpio_pad_detected();
+          if ((last_usb >= 0 && (usb != last_usb || gpio != last_gpio)) &&
+              (STEP == 0 || s_header_battery_shown)) {
+            uint16_t saved_bg = GUI.bg, saved_fg = GUI.fg;
+            if (STEP != 0) GUI.bg = 0x0000; /* black header */
+            draw_gamepad_icons();
+            GUI.bg = saved_bg;
+            GUI.fg = saved_fg;
+            display_flush();
+          }
+          last_usb = usb;
+          last_gpio = gpio;
+        }
+      }
 
       #ifdef BATTERY
       /* Battery icons are otherwise only drawn on navigation; refresh them when
