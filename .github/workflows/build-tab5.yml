@@ -36,14 +36,33 @@ jobs:
       matrix:
         idf: ['5.5.2']
         project: [launcher, nes, gb, sms, snes, genesis, neogeo]
+    env:
+      # ccache, kept between runs per app (see the cache step). Paths are made relative to the
+      # workspace and compilers are compared by content, so hits survive across runs and branches.
+      IDF_CCACHE_ENABLE: 1
+      CCACHE_DIR: ${{ github.workspace }}/.ccache
+      CCACHE_BASEDIR: ${{ github.workspace }}
+      CCACHE_COMPILERCHECK: content
+      CCACHE_MAXSIZE: 500M
     steps:
       - uses: actions/checkout@v5
+
+      # Each run saves a new cache entry; restore-keys picks the newest one for this app. PR runs
+      # can read caches saved by main, so a PR touching one core recompiles only that core.
+      - uses: actions/cache@v4
+        with:
+          path: .ccache
+          key: ccache-idf${{ matrix.idf }}-${{ matrix.project }}-${{ github.sha }}
+          restore-keys: ccache-idf${{ matrix.idf }}-${{ matrix.project }}-
 
       - name: Build
         shell: bash
         run: |
           . "$IDF_PATH/export.sh" > /dev/null
+          command -v ccache > /dev/null || { apt-get update -qq && apt-get install -y -qq ccache > /dev/null; }
+          ccache --zero-stats > /dev/null
           ./build_all_tab5.sh ${{ matrix.project }}
+          { echo "### ccache: ${{ matrix.project }}"; echo '```'; ccache --show-stats; echo '```'; } >> "$GITHUB_STEP_SUMMARY"
 
       - uses: actions/upload-artifact@v6
         with:
