@@ -42,6 +42,9 @@ static const char *TAG = "tab5_board";
 #define EXP_TOUCH_EN     IO_EXPANDER_PIN_NUM_5
 #define EXP1_USB_EN      IO_EXPANDER_PIN_NUM_3   /* expander @0x44 */
 #define EXP1_WLAN_PWR_EN IO_EXPANDER_PIN_NUM_0   /* expander @0x44: ESP32-C6 supply */
+#define EXP1_NCHG_QC_EN  IO_EXPANDER_PIN_NUM_5   /* expander @0x44: low = QuickCharge input allowed */
+#define EXP1_USBC_DET    IO_EXPANDER_PIN_NUM_6   /* expander @0x44: input, high = USB-C power present */
+#define EXP1_CHG_EN      IO_EXPANDER_PIN_NUM_7   /* expander @0x44: high = battery charger enabled */
 
 #define TAB5_TOUCH_INT_GPIO     23
 #define TAB5_DSI_PHY_LDO_CHAN   3
@@ -80,6 +83,8 @@ static SemaphoreHandle_t         s_vsync_sem = NULL;
 
 /* ─── I2C + IO expanders ───────────────────────────────────────── */
 
+static esp_err_t exp_push_pull(esp_io_expander_handle_t h, uint32_t pin, bool level);
+
 esp_err_t tab5_board_init(void)
 {
     if (s_exp1) return ESP_OK;
@@ -102,6 +107,15 @@ esp_err_t tab5_board_init(void)
     }
     ESP_RETURN_ON_ERROR(esp_io_expander_new_i2c_pi4ioe5v6408(
         s_i2c, ESP_IO_EXPANDER_I2C_PI4IOE5V6408_ADDRESS_HIGH, &s_exp1), TAG, "IO expander 1 init failed");
+
+    /* The expander driver resets the chip, which leaves CHG_EN floating (pulled low), so the
+     * pack never charged.  Set it up the way M5's BSP does on every boot: charger on, QC off
+     * (plain 5 V input), USB-C detect as a pulled-up input. */
+    esp_err_t ret = exp_push_pull(s_exp1, EXP1_CHG_EN, true);
+    ret |= exp_push_pull(s_exp1, EXP1_NCHG_QC_EN, true);
+    ret |= esp_io_expander_set_dir(s_exp1, EXP1_USBC_DET, IO_EXPANDER_INPUT);
+    ret |= esp_io_expander_set_pullupdown(s_exp1, EXP1_USBC_DET, IO_EXPANDER_PULL_UP);
+    if (ret != ESP_OK) ESP_LOGW(TAG, "charger pin setup failed");
     return ESP_OK;
 }
 
@@ -128,6 +142,14 @@ esp_err_t tab5_board_usb_power_enable(bool enable)
 {
     ESP_RETURN_ON_ERROR(tab5_board_init(), TAG, "board init");
     return exp_push_pull(s_exp1, EXP1_USB_EN, enable);
+}
+
+bool tab5_board_usb_power_present(void)
+{
+    uint32_t level = 0;
+    if (tab5_board_init() != ESP_OK) return false;
+    if (esp_io_expander_get_level(s_exp1, EXP1_USBC_DET, &level) != ESP_OK) return false;
+    return level != 0;
 }
 
 esp_err_t tab5_board_wifi_power_enable(bool enable)

@@ -7,6 +7,10 @@
 //{#pragma region Odroid
   static odroid_gamepad_state gamepad;
   odroid_battery_state battery_state;
+  /* Light blue level bar while USB power is charging the pack */
+  #define BATTERY_CHARGING_COLOR 0x2D7F
+  /* Which battery icon is on screen, so the launcher loop can refresh it */
+  static bool s_header_battery_shown = false;
 //}#pragma endregion Odroid
 
 
@@ -1354,6 +1358,7 @@
    * Buffer usage: 192*192 = 36864 pixels (safe, buffer is 64000).
    */
   void draw_system_logo() {
+    s_header_battery_shown = false;
     if (STEP == 0) return; /* no big logo for settings screen */
     int scale = 6;
     int w = 32 * scale; /* 192 */
@@ -1552,30 +1557,7 @@
       }
 
       /* Battery */
-      #ifdef BATTERY
-      {
-        odroid_input_battery_level_read(&battery_state);
-        int i = 0, x = SCREEN.w - 64;
-        for (int h = 0; h < 16; h++) {
-          for (int sh = 0; sh < 2; sh++) {
-            for (int w = 0; w < 16; w++) {
-              buffer[i++] = battery[h][w] == WHITE ? GUI.hl : 0x0000;
-              buffer[i++] = battery[h][w] == WHITE ? GUI.hl : 0x0000;
-            }
-          }
-        }
-        ili9341_write_frame_rectangleLE(x, 0, 32, 32, buffer);
-
-        int pct = battery_state.percentage / 10;
-        int bw = pct > 0 ? (pct > 10 ? 10 : pct) : 10;
-        int color[11] = {24576,24576,64288,64288,65504,65504,65504,26592,26592,26592,26592};
-        i = 0;
-        for (int c = 0; c < 8; c++)
-          for (int n = 0; n <= bw * 2; n++)
-            buffer[i++] = color[bw];
-        ili9341_write_frame_rectangleLE(x + 4, 12, bw * 2, 8, buffer);
-      }
-      #endif
+      draw_header_battery();
 
       /* USB gamepad icon */
       {
@@ -1661,8 +1643,36 @@
     ili9341_write_frame_rectangleLE(x, y, 32, 32, buffer);
   }
 
+  /* Battery icon in the 30 px black header above the system artwork */
+  void draw_header_battery() {
+    #ifdef BATTERY
+      s_header_battery_shown = true;
+      odroid_input_battery_level_read(&battery_state);
+      int i = 0, x = SCREEN.w - 64;
+      for (int h = 0; h < 16; h++) {
+        for (int sh = 0; sh < 2; sh++) {
+          for (int w = 0; w < 16; w++) {
+            buffer[i++] = battery[h][w] == WHITE ? GUI.hl : 0x0000;
+            buffer[i++] = battery[h][w] == WHITE ? GUI.hl : 0x0000;
+          }
+        }
+      }
+      ili9341_write_frame_rectangleLE(x, 0, 32, 32, buffer);
+
+      int pct = battery_state.percentage / 10;
+      int bw = pct > 0 ? (pct > 10 ? 10 : pct) : 10;
+      int color[11] = {24576,24576,64288,64288,65504,65504,65504,26592,26592,26592,26592};
+      i = 0;
+      for (int c = 0; c < 8; c++)
+        for (int n = 0; n <= bw * 2; n++)
+          buffer[i++] = battery_state.charging ? BATTERY_CHARGING_COLOR : color[bw];
+      ili9341_write_frame_rectangleLE(x + 4, 12, bw * 2, 8, buffer);
+    #endif
+  }
+
   void draw_battery() {
     #ifdef BATTERY
+      s_header_battery_shown = false;
       odroid_input_battery_level_read(&battery_state);
 
       int i = 0;
@@ -1683,7 +1693,7 @@
       }
       ili9341_write_frame_rectangleLE(x, y, 32, 32, buffer);
 
-      int percentage = battery_state.charging ? 100 : battery_state.percentage;
+      int percentage = battery_state.percentage;
       percentage /= 10;
       x += 4;
       y += 12;
@@ -1693,7 +1703,7 @@
 
       int color[11] = {24576,24576,64288,64288,65504,65504,65504,26592,26592,26592,26592};
 
-      int fill = color[w];
+      int fill = battery_state.charging ? BATTERY_CHARGING_COLOR : color[w];
       for(int c = 0; c < h; c++) {
         for(int n = 0; n <= w*2; n++) {
           buffer[i] = fill;
@@ -3961,30 +3971,7 @@
         }
 
         /* Battery */
-        #ifdef BATTERY
-        {
-          odroid_input_battery_level_read(&battery_state);
-          int i = 0, x = SCREEN.w - 64;
-          for (int h = 0; h < 16; h++) {
-            for (int sh = 0; sh < 2; sh++) {
-              for (int w = 0; w < 16; w++) {
-                buffer[i++] = battery[h][w] == WHITE ? GUI.hl : 0x0000;
-                buffer[i++] = battery[h][w] == WHITE ? GUI.hl : 0x0000;
-              }
-            }
-          }
-          ili9341_write_frame_rectangleLE(x, 0, 32, 32, buffer);
-
-          int pct = battery_state.percentage / 10;
-          int bw = pct > 0 ? (pct > 10 ? 10 : pct) : 10;
-          int color[11] = {24576,24576,64288,64288,65504,65504,65504,26592,26592,26592,26592};
-          i = 0;
-          for (int c = 0; c < 8; c++)
-            for (int n = 0; n <= bw * 2; n++)
-              buffer[i++] = color[bw];
-          ili9341_write_frame_rectangleLE(x + 4, 12, bw * 2, 8, buffer);
-        }
-        #endif
+        draw_header_battery();
 
         /* USB gamepad icon */
         {
@@ -5167,6 +5154,29 @@
       odroid_input_gamepad_read(&gamepad);
 
       if (controller_board_changed()) continue;
+
+      #ifdef BATTERY
+      /* Battery icons are otherwise only drawn on navigation; refresh them when
+       * the level or charging state changes (e.g. USB plugged or unplugged). */
+      if (!BROWSER && !LAUNCHER) {
+        static int64_t next_batt_us = 0;
+        static int last_level = -1;
+        static bool last_charging = false;
+        int64_t now = esp_timer_get_time();
+        if (now >= next_batt_us) {
+          next_batt_us = now + 1000000;
+          odroid_input_battery_level_read(&battery_state);
+          int level = battery_state.percentage / 10;
+          if (last_level >= 0 && (level != last_level || battery_state.charging != last_charging)) {
+            if (STEP == 0) draw_battery();
+            else if (s_header_battery_shown) draw_header_battery();
+            display_flush();
+          }
+          last_level = level;
+          last_charging = battery_state.charging;
+        }
+      }
+      #endif
 
       /* Auto-map wizard: trigger when a new unknown USB controller is plugged in */
       {

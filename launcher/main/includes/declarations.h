@@ -93,6 +93,7 @@ void draw_system_logo();
 void draw_media(int x, int y, bool current, int offset);
 void draw_folder(int x, int y, bool current);
 void draw_battery();
+void draw_header_battery();
 void draw_speaker();
 void draw_contrast();
 void draw_gamepad_icons();
