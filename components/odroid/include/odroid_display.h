@@ -176,6 +176,13 @@ void ili9341_write_frame_rgb565_custom(const uint16_t *buffer, uint16_t in_w,
                                         uint16_t in_h, float scale,
                                         bool byte_swap_input);
 
+/**
+ * @brief Present a console frame at the largest square-pixel scale that fits
+ *        (Tab5: between the touch pad bars; other boards: custom writer at 2x).
+ */
+void ili9341_write_frame_rgb565_fit(const uint16_t *buffer, uint16_t in_w,
+                                     uint16_t in_h, bool byte_swap_input);
+
 /** @brief Power off the display (no-op on P4 — LCD stays on). */
 void ili9341_poweroff(void);
 

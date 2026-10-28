@@ -363,10 +363,10 @@ static void genesis_video_task(void *arg)
 
         /* If H32 mode (256 wide), use the custom PPA path directly at 256×224 */
         if (w == 256) {
-            ili9341_write_frame_rgb565_custom(gen_rgb565, 256, h, 2.0f, false);
+            ili9341_write_frame_rgb565_fit(gen_rgb565, 256, h, false);
         } else {
             /* H40 mode: 320×224 — scale 2× + rotate via PPA */
-            ili9341_write_frame_rgb565_custom(gen_rgb565, 320, h, 2.0f, false);
+            ili9341_write_frame_rgb565_fit(gen_rgb565, 320, h, false);
         }
 
         /* Draw sidebar buttons on first frames */
@@ -599,7 +599,7 @@ static void genesis_show_volume(void)
                     fb[r * fw + c] = bar_col;
         }
 
-        ili9341_write_frame_rgb565_custom(fb, fw, fh, 2.0f, false);
+        ili9341_write_frame_rgb565_fit(fb, fw, fh, false);
 
         vTaskDelay(pdMS_TO_TICKS(80));
         odroid_gamepad_state state;
@@ -706,7 +706,7 @@ static bool genesis_show_menu(void)
             status_timeout--;
         }
 
-        ili9341_write_frame_rgb565_custom(fb, fw, fh, 2.0f, false);
+        ili9341_write_frame_rgb565_fit(fb, fw, fh, false);
 
         vTaskDelay(pdMS_TO_TICKS(100));
 

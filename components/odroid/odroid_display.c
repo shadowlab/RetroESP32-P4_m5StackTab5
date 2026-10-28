@@ -1023,6 +1023,32 @@ void ili9341_write_frame_rgb565_custom(const uint16_t *buffer, uint16_t in_w,
     odroid_display_unlock();
 }
 
+/* ─── Fit-to-screen emulator frame writer ───────────────────── */
+/* Console frames (SNES 256x224, Genesis 256/320x224, Neo Geo 320x224) get the largest uniform
+ * scale (square pixels, PPA 1/16 steps) that fits the 720 px panel height and the 1000 px
+ * between the pad bars: 256x224 -> 816x714 (3.1875x), 320x224 -> 1000x700 (3.125x).
+ * Elsewhere this is the legacy 2x custom path. */
+void ili9341_write_frame_rgb565_fit(const uint16_t *buffer, uint16_t in_w,
+                                     uint16_t in_h, bool byte_swap_input)
+{
+#if defined(CONFIG_BOARD_M5STACK_TAB5)
+    if (buffer == NULL || in_w == 0 || in_h == 0) {
+        ili9341_write_frame_rgb565_custom(buffer, in_w, in_h, 2.0f, byte_swap_input);
+        return;
+    }
+    odroid_display_lock();
+    float s = fminf((float)(TAB5_PANEL_H - 2 * TAB5_PAD_BAR_W) / in_w, (float)TAB5_PANEL_W / in_h);
+    s = floorf(s * 16.0f) / 16.0f;
+    esp_err_t ret = tab5_present(buffer, in_w, in_h, s, s, 1.0f, byte_swap_input, true);
+    if (ret != ESP_OK) {
+        ESP_LOGE(TAG, "Tab5 fit present %ux%u failed (0x%x)", (unsigned)in_w, (unsigned)in_h, ret);
+    }
+    odroid_display_unlock();
+#else
+    ili9341_write_frame_rgb565_custom(buffer, in_w, in_h, 2.0f, byte_swap_input);
+#endif
+}
+
 /* ─── Misc display functions ──────────────────────────────────── */
 void ili9341_poweroff(void)
 {
