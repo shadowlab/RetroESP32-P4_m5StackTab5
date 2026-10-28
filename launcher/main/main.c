@@ -7,6 +7,8 @@
 //{#pragma region Odroid
   static odroid_gamepad_state gamepad;
   odroid_battery_state battery_state;
+  /* Light blue level bar while USB power is charging the pack */
+  #define BATTERY_CHARGING_COLOR 0x2D7F
 //}#pragma endregion Odroid
 
 
@@ -1572,7 +1574,7 @@
         i = 0;
         for (int c = 0; c < 8; c++)
           for (int n = 0; n <= bw * 2; n++)
-            buffer[i++] = color[bw];
+            buffer[i++] = battery_state.charging ? BATTERY_CHARGING_COLOR : color[bw];
         ili9341_write_frame_rectangleLE(x + 4, 12, bw * 2, 8, buffer);
       }
       #endif
@@ -1683,7 +1685,7 @@
       }
       ili9341_write_frame_rectangleLE(x, y, 32, 32, buffer);
 
-      int percentage = battery_state.charging ? 100 : battery_state.percentage;
+      int percentage = battery_state.percentage;
       percentage /= 10;
       x += 4;
       y += 12;
@@ -1693,7 +1695,7 @@
 
       int color[11] = {24576,24576,64288,64288,65504,65504,65504,26592,26592,26592,26592};
 
-      int fill = color[w];
+      int fill = battery_state.charging ? BATTERY_CHARGING_COLOR : color[w];
       for(int c = 0; c < h; c++) {
         for(int n = 0; n <= w*2; n++) {
           buffer[i] = fill;
@@ -3981,7 +3983,7 @@
           i = 0;
           for (int c = 0; c < 8; c++)
             for (int n = 0; n <= bw * 2; n++)
-              buffer[i++] = color[bw];
+              buffer[i++] = battery_state.charging ? BATTERY_CHARGING_COLOR : color[bw];
           ili9341_write_frame_rectangleLE(x + 4, 12, bw * 2, 8, buffer);
         }
         #endif

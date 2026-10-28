@@ -522,24 +522,49 @@ static int tab5_cell_mv_to_percent(int cell_mv)
 
 static void tab5_battery_level_read(odroid_battery_state *state)
 {
+    /* Sampled at most every 500 ms; the voltage is smoothed so the gauge doesn't
+     * jump with the load (CPU, backlight, Wi-Fi). */
+    static odroid_battery_state s_last;
+    static int64_t s_next_us = 0;
+    static int s_avg_mv = 0;            /* smoothed pack voltage, 0 = not seeded */
+    static bool s_last_usb = false;
+
+    int64_t now = esp_timer_get_time();
+    if (s_next_us && now < s_next_us) { *state = s_last; return; }
+    s_next_us = now + 500000;
+
     int mv = 0, ma = 0;
     /* Defaults when the monitor is absent: behave like the old "no battery" case. */
     state->millivolts = 8400;
     state->percentage = 100;
     state->charging = false;
-    if (tab5_battery_read(&mv, &ma) != ESP_OK) return;
+    if (tab5_battery_read(&mv, &ma) != ESP_OK) { s_last = *state; return; }
 
     /* Standard Tab5 ships without a pack and runs from external power; the bus then
      * sits near the 5 V rail, well below an empty 2S pack (6 V). */
-    if (mv < 5500) return;
+    if (mv < 5500) { s_avg_mv = 0; s_last = *state; return; }
 
-    bool charging = TAB5_BATT_CHARGE_CURRENT_POSITIVE ? (ma > 50) : (ma < -50);
-    /* Voltage reads high while charging, so don't trust it for the percentage then. */
-    int pct = tab5_cell_mv_to_percent(mv / 2);
-    if (charging && pct > 95) pct = 100;
-    state->millivolts = mv;
+    /* Plugging or unplugging USB steps the pack voltage, so start the average again. */
+    bool usb = tab5_board_usb_power_present();
+    if (!s_avg_mv || usb != s_last_usb) s_avg_mv = mv;
+    else s_avg_mv += (mv - s_avg_mv) / 8;
+    s_last_usb = usb;
+
+    int in_ma = TAB5_BATT_CHARGE_CURRENT_POSITIVE ? ma : -ma;
+    /* On USB the charger runs until the pack is full (CV phase tails off below ~50 mA). */
+    bool full = usb && s_avg_mv >= 8300 && in_ma < 50;
+    bool charging = usb && !full;
+
+    /* The charger lifts the terminal voltage ~0.1 V per cell above rest, so knock that
+     * off before using the discharge curve; otherwise the gauge reads high on USB. */
+    int cell_mv = s_avg_mv / 2 - (charging ? 100 : 0);
+    int pct = full ? 100 : tab5_cell_mv_to_percent(cell_mv);
+    if (charging && pct > 99) pct = 99;
+
+    state->millivolts = s_avg_mv;
     state->percentage = pct;
     state->charging = charging;
+    s_last = *state;
 }
 #endif
 
