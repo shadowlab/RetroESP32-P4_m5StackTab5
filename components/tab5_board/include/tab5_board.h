@@ -169,8 +169,8 @@ esp_err_t tab5_battery_read(int *mv, int *ma);
 /** true while USB-C power is plugged in (expander @0x44 P6).  The charger is enabled in tab5_board_init(). */
 bool tab5_board_usb_power_present(void);
 
-/** 1 if positive INA226 current means "charging" (unverified on hardware - flip if the icon is inverted). */
-#define TAB5_BATT_CHARGE_CURRENT_POSITIVE 1
+/** 1 if positive INA226 current means "charging" (verified on hardware: INA226 reads negative while charging, so 0). */
+#define TAB5_BATT_CHARGE_CURRENT_POSITIVE 0
 
 #ifdef __cplusplus
 }

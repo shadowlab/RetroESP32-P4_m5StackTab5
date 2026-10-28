@@ -527,7 +527,7 @@ static void tab5_battery_level_read(odroid_battery_state *state)
     static odroid_battery_state s_last;
     static int64_t s_next_us = 0;
     static int s_avg_mv = 0;            /* smoothed pack voltage, 0 = not seeded */
-    static bool s_last_usb = false;
+    static bool s_last_charging = false;
     static bool s_last_logged_usb = false;
 
     int64_t now = esp_timer_get_time();
@@ -545,21 +545,24 @@ static void tab5_battery_level_read(odroid_battery_state *state)
      * sits near the 5 V rail, well below an empty 2S pack (6 V). */
     if (mv < 5500) { s_avg_mv = 0; s_last = *state; return; }
 
-    /* Plugging or unplugging USB steps the pack voltage, so start the average again. */
-    bool usb = tab5_board_usb_power_present();
-    if (!s_avg_mv || usb != s_last_usb) s_avg_mv = mv;
-    else s_avg_mv += (mv - s_avg_mv) / 8;
-    s_last_usb = usb;
-
+    /* The USB-C detect pin on the expander read 1 whether or not a cable was plugged in
+     * (checked on hardware), so charging comes from the INA226 current alone: it reads
+     * negative while the pack charges and positive while it discharges.  Hysteresis keeps
+     * the icon from flickering around zero. */
+    bool usb = tab5_board_usb_power_present();   /* logged only */
     int in_ma = TAB5_BATT_CHARGE_CURRENT_POSITIVE ? ma : -ma;
-    /* On USB the charger runs until the pack is full (CV phase tails off below ~50 mA). */
-    bool full = usb && s_avg_mv >= 8300 && in_ma < 50;
-    bool charging = usb && !full;
+    bool charging = s_last_charging ? (in_ma > 20) : (in_ma > 60);
 
-    /* The charger lifts the terminal voltage ~0.1 V per cell above rest, so knock that
+    /* Plugging or unplugging steps the pack voltage, so start the average again. */
+    if (!s_avg_mv || charging != s_last_charging) s_avg_mv = mv;
+    else s_avg_mv += (mv - s_avg_mv) / 8;
+    s_last_charging = charging;
+
+    /* Charging lifts the terminal voltage by about 0.12 mV per mA per cell, so take that
      * off before using the discharge curve; otherwise the gauge reads high on USB. */
-    int cell_mv = s_avg_mv / 2 - (charging ? 100 : 0);
-    int pct = full ? 100 : tab5_cell_mv_to_percent(cell_mv);
+    int comp = charging ? in_ma / 8 : 0;
+    if (comp > 100) comp = 100;
+    int pct = tab5_cell_mv_to_percent(s_avg_mv / 2 - comp);
     if (charging && pct > 99) pct = 99;
 
     state->millivolts = s_avg_mv;
@@ -570,12 +573,12 @@ static void tab5_battery_level_read(odroid_battery_state *state)
     static int s_log_count = 0;
     if (charging != s_last.charging || usb != s_last_logged_usb || ++s_log_count >= 20) {
         ESP_LOGI(TAG, "batt: %d mV (avg %d) %d mA usb=%d -> %d%% %s",
-                 mv, s_avg_mv, ma, usb, pct, charging ? "charging" : (full ? "full" : "discharging"));
+                 mv, s_avg_mv, ma, usb, pct, charging ? "charging" : "discharging");
         /* The serial log is lost when the USB cable is pulled, so keep a copy on the card too */
         FILE *f = fopen("/sd/batt.log", "a");
         if (f) {
             fprintf(f, "%lld s: %d mV (avg %d) %d mA usb=%d -> %d%% %s\n", (long long)(now / 1000000),
-                    mv, s_avg_mv, ma, usb, pct, charging ? "charging" : (full ? "full" : "discharging"));
+                    mv, s_avg_mv, ma, usb, pct, charging ? "charging" : "discharging");
             fclose(f);
         }
         s_log_count = 0;
