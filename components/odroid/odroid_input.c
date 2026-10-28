@@ -569,18 +569,11 @@ static void tab5_battery_level_read(odroid_battery_state *state)
     state->percentage = pct;
     state->charging = charging;
 
-    /* One line every ~10 s (and on any state change) to check the gauge on hardware */
+    /* Serial line every ~10 s and on any state change, to check the gauge on hardware */
     static int s_log_count = 0;
     if (charging != s_last.charging || usb != s_last_logged_usb || ++s_log_count >= 20) {
         ESP_LOGI(TAG, "batt: %d mV (avg %d) %d mA usb=%d -> %d%% %s",
                  mv, s_avg_mv, ma, usb, pct, charging ? "charging" : "discharging");
-        /* The serial log is lost when the USB cable is pulled, so keep a copy on the card too */
-        FILE *f = fopen("/sd/batt.log", "a");
-        if (f) {
-            fprintf(f, "%lld s: %d mV (avg %d) %d mA usb=%d -> %d%% %s\n", (long long)(now / 1000000),
-                    mv, s_avg_mv, ma, usb, pct, charging ? "charging" : "discharging");
-            fclose(f);
-        }
         s_log_count = 0;
         s_last_logged_usb = usb;
     }
