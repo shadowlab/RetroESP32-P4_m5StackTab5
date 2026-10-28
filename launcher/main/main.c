@@ -5361,9 +5361,7 @@
               run_wifi_transfer();    /* leaving restarts the launcher */
             }
             if (SETTING == 6) {
-              run_sleep_mode();
-              draw_background();
-              draw_settings();
+              run_sleep_mode();   /* the screen is left as it was, nothing to redraw */
             }
 #endif
           } else if (STEP >= 3) {
