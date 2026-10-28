@@ -5161,6 +5161,29 @@
 
       if (controller_board_changed()) continue;
 
+      /* Same for the gamepad icons: redraw when a pad is plugged or unplugged. */
+      if (!BROWSER && !LAUNCHER) {
+        static int64_t next_pad_us = 0;
+        static int last_usb = -1, last_gpio = -1;
+        int64_t now = esp_timer_get_time();
+        if (now >= next_pad_us) {
+          next_pad_us = now + 1000000;
+          int usb = odroid_input_usb_gamepad_connected();
+          int gpio = odroid_input_gpio_pad_detected();
+          if ((last_usb >= 0 && (usb != last_usb || gpio != last_gpio)) &&
+              (STEP == 0 || s_header_battery_shown)) {
+            uint16_t saved_bg = GUI.bg, saved_fg = GUI.fg;
+            if (STEP != 0) { GUI.bg = 0x0000; GUI.fg = 0x4208; } /* black header */
+            draw_gamepad_icons();
+            GUI.bg = saved_bg;
+            GUI.fg = saved_fg;
+            display_flush();
+          }
+          last_usb = usb;
+          last_gpio = gpio;
+        }
+      }
+
       #ifdef BATTERY
       /* Battery icons are otherwise only drawn on navigation; refresh them when
        * the level or charging state changes (e.g. USB plugged or unplugged). */
