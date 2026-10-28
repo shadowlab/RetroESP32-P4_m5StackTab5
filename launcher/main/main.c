@@ -867,8 +867,13 @@
       active = false;
       for (int i = 0; i < ODROID_INPUT_MAX; i++) active |= pad.values[i] != 0;
     } while (active);
+    int ticks = 0;
     do {
       vTaskDelay(pdMS_TO_TICKS(100));
+      if (++ticks % 50 == 1) {          /* every 5 s: charging check over the serial log (negative mA = charging) */
+        int mv = 0, ma = 0;
+        if (tab5_battery_read(&mv, &ma) == ESP_OK) printf("sleep: battery %d mV %d mA\n", mv, ma);
+      }
       tab5_touch_point_t pt;
       odroid_input_gamepad_read(&pad);
       active = tab5_touch_read(&pt, 1) > 0;
