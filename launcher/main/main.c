@@ -5209,6 +5209,24 @@
 
       if (controller_board_changed()) continue;
 
+#if CONFIG_BOARD_M5STACK_TAB5
+      /* SELECT + DOWN held for 0.3 s: sleep (screen off, still charging). */
+      {
+        static int64_t combo_since_us = 0;
+        if (gamepad.values[ODROID_INPUT_SELECT] && gamepad.values[ODROID_INPUT_DOWN]) {
+          int64_t t = esp_timer_get_time();
+          if (!combo_since_us) combo_since_us = t;
+          if (t - combo_since_us > 300000) {
+            combo_since_us = 0;
+            run_sleep_mode();
+            continue;
+          }
+        } else {
+          combo_since_us = 0;
+        }
+      }
+#endif
+
       /* Same for the gamepad icons: redraw when a pad is plugged or unplugged. */
       if (!BROWSER && !LAUNCHER) {
         static int64_t next_pad_us = 0;
