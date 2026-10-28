@@ -11,6 +11,9 @@
 #include "display.h"
 #include "srtc.h"
 #include "soundux.h"
+#include "sa1.h"
+#include <stdlib.h>
+#include "esp_heap_caps.h"
 
 /* Version 004: bumped after the WRAM/VRAM/SRAM allocation-placement change
  * (Phase 50). States written by an older build serialized APU/CPU pointers
@@ -65,6 +68,14 @@ bool S9xSaveState(const char *filename)
    /* SoundData */
    ok = ok && wr(fp, &SoundData, sizeof(SoundData));
 
+   /* SA-1 carts only, so states of other games keep the same layout */
+   if (Settings.SA1)
+   {
+      SA1.Registers.PC = SA1.PC - SA1.PCBase;
+      S9xSA1PackStatus();
+      ok = ok && wr(fp, &SA1, sizeof(SA1));
+   }
+
    fclose(fp);
 
    if (ok)
@@ -111,6 +122,35 @@ bool S9xLoadState(const char *filename)
    ok = ok && rd(fp, IAPU_RAM, 0x10000);
 
    ok = ok && rd(fp, &SoundData, sizeof(SoundData));
+
+   if (ok && Settings.SA1)
+   {
+      /* Only plain values are taken from the file; the pointers in SSA1
+       * are rebuilt from the registers by S9xFixSA1AfterSnapshotLoad(). */
+      SSA1* sa1_buf = (SSA1*) heap_caps_malloc(sizeof(SSA1), MALLOC_CAP_SPIRAM);  /* 32 KB */
+      ok = sa1_buf && rd(fp, sa1_buf, sizeof(SSA1));
+      if (ok)
+      {
+         const SSA1* sa1_state = sa1_buf;
+         int i;
+         SA1.Flags               = sa1_state->Flags;
+         SA1.NMIActive           = sa1_state->NMIActive;
+         SA1.IRQActive           = sa1_state->IRQActive;
+         SA1.WaitingForInterrupt = sa1_state->WaitingForInterrupt;
+         SA1.op1                 = sa1_state->op1;
+         SA1.op2                 = sa1_state->op2;
+         SA1.arithmetic_op       = sa1_state->arithmetic_op;
+         SA1.sum                 = sa1_state->sum;
+         SA1.overflow            = sa1_state->overflow;
+         SA1.in_char_dma         = sa1_state->in_char_dma;
+         SA1.variable_bit_pos    = sa1_state->variable_bit_pos;
+         memcpy(&SA1.Registers, &sa1_state->Registers, sizeof(SA1.Registers));
+         for (i = 0; i < 4; i++)
+            S9xSetSA1MemMap(i, Memory.FillRAM [0x2220 + i]);
+         S9xFixSA1AfterSnapshotLoad();
+      }
+      free(sa1_buf);
+   }
 
    fclose(fp);
 

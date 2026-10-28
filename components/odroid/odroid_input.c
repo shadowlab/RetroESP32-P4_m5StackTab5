@@ -522,24 +522,62 @@ static int tab5_cell_mv_to_percent(int cell_mv)
 
 static void tab5_battery_level_read(odroid_battery_state *state)
 {
+    /* Sampled at most every 500 ms; the voltage is smoothed so the gauge doesn't
+     * jump with the load (CPU, backlight, Wi-Fi). */
+    static odroid_battery_state s_last;
+    static int64_t s_next_us = 0;
+    static int s_avg_mv = 0;            /* smoothed pack voltage, 0 = not seeded */
+    static bool s_last_charging = false;
+    static bool s_last_logged_usb = false;
+
+    int64_t now = esp_timer_get_time();
+    if (s_next_us && now < s_next_us) { *state = s_last; return; }
+    s_next_us = now + 500000;
+
     int mv = 0, ma = 0;
     /* Defaults when the monitor is absent: behave like the old "no battery" case. */
     state->millivolts = 8400;
     state->percentage = 100;
     state->charging = false;
-    if (tab5_battery_read(&mv, &ma) != ESP_OK) return;
+    if (tab5_battery_read(&mv, &ma) != ESP_OK) { s_last = *state; return; }
 
     /* Standard Tab5 ships without a pack and runs from external power; the bus then
      * sits near the 5 V rail, well below an empty 2S pack (6 V). */
-    if (mv < 5500) return;
+    if (mv < 5500) { s_avg_mv = 0; s_last = *state; return; }
 
-    bool charging = TAB5_BATT_CHARGE_CURRENT_POSITIVE ? (ma > 50) : (ma < -50);
-    /* Voltage reads high while charging, so don't trust it for the percentage then. */
-    int pct = tab5_cell_mv_to_percent(mv / 2);
-    if (charging && pct > 95) pct = 100;
-    state->millivolts = mv;
+    /* The USB-C detect pin on the expander read 1 whether or not a cable was plugged in
+     * (checked on hardware), so charging comes from the INA226 current alone: it reads
+     * negative while the pack charges and positive while it discharges.  Hysteresis keeps
+     * the icon from flickering around zero. */
+    bool usb = tab5_board_usb_power_present();   /* logged only */
+    int in_ma = TAB5_BATT_CHARGE_CURRENT_POSITIVE ? ma : -ma;
+    bool charging = s_last_charging ? (in_ma > 20) : (in_ma > 60);
+
+    /* Plugging or unplugging steps the pack voltage, so start the average again. */
+    if (!s_avg_mv || charging != s_last_charging) s_avg_mv = mv;
+    else s_avg_mv += (mv - s_avg_mv) / 8;
+    s_last_charging = charging;
+
+    /* Charging lifts the terminal voltage by about 0.12 mV per mA per cell, so take that
+     * off before using the discharge curve; otherwise the gauge reads high on USB. */
+    int comp = charging ? in_ma / 8 : 0;
+    if (comp > 100) comp = 100;
+    int pct = tab5_cell_mv_to_percent(s_avg_mv / 2 - comp);
+    if (charging && pct > 99) pct = 99;
+
+    state->millivolts = s_avg_mv;
     state->percentage = pct;
     state->charging = charging;
+
+    /* Serial line every ~10 s and on any state change, to check the gauge on hardware */
+    static int s_log_count = 0;
+    if (charging != s_last.charging || usb != s_last_logged_usb || ++s_log_count >= 20) {
+        ESP_LOGI(TAG, "batt: %d mV (avg %d) %d mA usb=%d -> %d%% %s",
+                 mv, s_avg_mv, ma, usb, pct, charging ? "charging" : "discharging");
+        s_log_count = 0;
+        s_last_logged_usb = usb;
+    }
+    s_last = *state;
 }
 #endif
 

@@ -8,6 +8,7 @@
 #include "dma.h"
 #include "display.h"
 #include "srtc.h"
+#include "sa1.h"
 #include "fxemu.h"
 #include "fxinst.h"
 
@@ -629,7 +630,15 @@ IRAM_ATTR void S9xSetPPU(uint8_t Byte, uint16_t Address)
    else
    {
       else_branch_count++;
-      if (Address == 0x2801 && Settings.SRTC) /* Dai Kaijyu Monogatari II */
+      if (Settings.SA1)
+      {
+         if (Address >= 0x2200 && Address < 0x23ff)
+            S9xSetSA1(Byte, Address);
+         else
+            Memory.FillRAM [Address] = Byte;
+         return;
+      }
+      else if (Address == 0x2801 && Settings.SRTC) /* Dai Kaijyu Monogatari II */
          S9xSetSRTC(Byte, Address);
       else if (Address >= 0x3000 && Address < 0x3400) {
          /* Write to FillRAM for cache/data area ($3040+),
@@ -896,7 +905,9 @@ IRAM_ATTR uint8_t S9xGetPPU(uint16_t Address)
    }
    else
    {
-      if (Settings.SRTC && Address == 2800)
+      if (Settings.SA1 && Address >= 0x2200)
+         return S9xGetSA1(Address);
+      else if (Settings.SRTC && Address == 2800)
          return S9xGetSRTC(Address);
 
       if (Address <= 0x2fff || Address >= 0x3300)

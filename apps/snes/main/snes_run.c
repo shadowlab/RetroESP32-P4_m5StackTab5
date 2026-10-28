@@ -205,8 +205,7 @@ static void snes_video_task(void *arg)
          * so no post-render green expansion loop is needed. */
 
         /* Direct 2× scale + 270° rotate — no 320×240 staging buffer */
-        ili9341_write_frame_rgb565_custom(frame, SNES_FB_W, SNES_FB_H,
-                                           2.0f, false);
+        ili9341_write_frame_rgb565_fit(frame, SNES_FB_W, SNES_FB_H, false);
 
         /* Draw sidebar buttons once after the first frame clears borders */
         if (sidebar_countdown > 0) {
@@ -538,7 +537,7 @@ static void snes_show_volume(void)
                     fb[r * SNES_FB_W + c] = bar_col;
         }
 
-        ili9341_write_frame_rgb565_custom(fb, SNES_FB_W, SNES_FB_H, 2.0f, false);
+        ili9341_write_frame_rgb565_fit(fb, SNES_FB_W, SNES_FB_H, false);
 
         vTaskDelay(pdMS_TO_TICKS(80));
         odroid_gamepad_state state;
@@ -646,8 +645,7 @@ static bool snes_show_menu(void)
             status_timeout--;
         }
 
-        ili9341_write_frame_rgb565_custom(fb, SNES_FB_W, SNES_FB_H,
-                                          2.0f, false);
+        ili9341_write_frame_rgb565_fit(fb, SNES_FB_W, SNES_FB_H, false);
 
         vTaskDelay(pdMS_TO_TICKS(100));
 
@@ -985,7 +983,7 @@ void snes_run(const char *rom_path)
     ESP_LOGI(TAG, "ROM: %s (%s, %s)", Memory.ROMName,
              Memory.HiROM ? "HiROM" : "LoROM",
              Settings.PAL ? "PAL" : "NTSC");
-    ESP_LOGI(TAG, "ROMType=0x%02X, SuperFX=%d", Memory.ROMType, Settings.SuperFX);
+    ESP_LOGI(TAG, "ROMType=0x%02X, SuperFX=%d, SA1=%d", Memory.ROMType, Settings.SuperFX, Settings.SA1);
 
     /* ── SuperFX / GSU co-processor init ── */
     if (Settings.SuperFX) {
