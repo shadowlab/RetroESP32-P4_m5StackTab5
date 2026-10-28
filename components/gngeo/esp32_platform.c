@@ -505,7 +505,7 @@ static void neo_show_volume(void)
                     lcd_fb[r * NEO_FB_W + c] = bar_col;
         }
 
-        ili9341_write_frame_rgb565_custom(lcd_fb, NEO_FB_W, NEO_FB_H, 2.0f, false);
+        ili9341_write_frame_rgb565_fit(lcd_fb, NEO_FB_W, NEO_FB_H, false);
 
         vTaskDelay(pdMS_TO_TICKS(80));
         odroid_gamepad_state state;
@@ -595,7 +595,7 @@ static bool neo_show_menu(void)
             menu_draw_str(lcd_fb, NEO_FB_W, NEO_FB_H, tx, ty, labels[i], color);
         }
 
-        ili9341_write_frame_rgb565_custom(lcd_fb, NEO_FB_W, NEO_FB_H, 2.0f, false);
+        ili9341_write_frame_rgb565_fit(lcd_fb, NEO_FB_W, NEO_FB_H, false);
 
         vTaskDelay(pdMS_TO_TICKS(100));
 
@@ -622,7 +622,7 @@ static bool neo_show_menu(void)
                     } else {
                         menu_draw_str(lcd_fb, NEO_FB_W, NEO_FB_H, box_x + 20, box_y + box_h + 4, "SAVE FAILED", COL_RED);
                     }
-                    ili9341_write_frame_rgb565_custom(lcd_fb, NEO_FB_W, NEO_FB_H, 2.0f, false);
+                    ili9341_write_frame_rgb565_fit(lcd_fb, NEO_FB_W, NEO_FB_H, false);
                     vTaskDelay(pdMS_TO_TICKS(800));
                 }
                 return false;
@@ -638,7 +638,7 @@ static bool neo_show_menu(void)
                     } else {
                         menu_draw_str(lcd_fb, NEO_FB_W, NEO_FB_H, box_x + 20, box_y + box_h + 4, "NO SAVE FOUND", COL_YELLOW);
                     }
-                    ili9341_write_frame_rgb565_custom(lcd_fb, NEO_FB_W, NEO_FB_H, 2.0f, false);
+                    ili9341_write_frame_rgb565_fit(lcd_fb, NEO_FB_W, NEO_FB_H, false);
                     vTaskDelay(pdMS_TO_TICKS(800));
                 }
                 return false;
@@ -747,7 +747,7 @@ static void neo_video_task(void *arg) {
         xQueuePeek(neo_vidQueue, &frame, portMAX_DELAY);
         if (frame == (uint16_t *)1) break;  /* quit sentinel */
 
-        ili9341_write_frame_rgb565_custom(frame, NEO_FB_W, NEO_FB_H, 2.0f, false);
+        ili9341_write_frame_rgb565_fit(frame, NEO_FB_W, NEO_FB_H, false);
 
         /* Blit sidebar button labels after frame push */
         if (sidebar_countdown > 0) {
@@ -908,7 +908,7 @@ void screen_update(void) {
         lcd_fb = lcd_fb_arr[lcd_fb_write];
     } else {
         /* Fallback: synchronous push */
-        ili9341_write_frame_rgb565_custom(lcd_fb, vis_w, vis_h, 2.0f, false);
+        ili9341_write_frame_rgb565_fit(lcd_fb, vis_w, vis_h, false);
         if (sidebar_countdown > 0) {
             neo_blit_sidebar_buttons();
             sidebar_countdown--;
