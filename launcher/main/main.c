@@ -853,8 +853,6 @@
   {
     wifi_link_power_off();
     tab5_board_speaker_enable(false);
-    ili9341_clear(0x0000);
-    display_flush();
     ili9341_poweroff();                 /* backlight off; the panel stays on because the ST712x touch is part of its driver IC */
 
     /* Wake on a touch or any controller/keyboard button. */
@@ -880,8 +878,6 @@
       for (int i = 0; i < ODROID_INPUT_MAX; i++) active |= pad.values[i] != 0;
     } while (!active);
 
-    draw_background();
-    draw_settings();
     apply_brightness();
     do {
       vTaskDelay(pdMS_TO_TICKS(50));
