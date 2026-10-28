@@ -9,6 +9,10 @@
   odroid_battery_state battery_state;
   /* Light blue level bar while USB power is charging the pack */
   #define BATTERY_CHARGING_COLOR 0x2D7F
+  /* Status icon states: active = green, idle = white, muted speaker = red */
+  #define ICON_ON_COLOR   0x07E0
+  #define ICON_OFF_COLOR  0xFFFF
+  #define ICON_MUTE_COLOR 0xF800
   /* Which battery icon is on screen, so the launcher loop can refresh it */
   static bool s_header_battery_shown = false;
 //}#pragma endregion Odroid
@@ -1548,8 +1552,8 @@
         for (int h = 0; h < 16; h++) {
           for (int sh = 0; sh < 2; sh++) {
             for (int w = 0; w < 16; w++) {
-              buffer[i++] = speaker[dh + h][w] == WHITE ? GUI.hl : 0x0000;
-              buffer[i++] = speaker[dh + h][w] == WHITE ? GUI.hl : 0x0000;
+              buffer[i++] = speaker[dh + h][w] == WHITE ? (vol == 0 ? ICON_MUTE_COLOR : ICON_ON_COLOR) : 0x0000;
+              buffer[i++] = speaker[dh + h][w] == WHITE ? (vol == 0 ? ICON_MUTE_COLOR : ICON_ON_COLOR) : 0x0000;
             }
           }
         }
@@ -1567,9 +1571,9 @@
           for (int sh = 0; sh < 2; sh++) {
             for (int w = 0; w < 16; w++) {
               buffer[i++] = usb_gamepad_icon[h][w] == WHITE
-                            ? (usb ? GUI.hl : 0x4208) : 0x0000;
+                            ? (usb ? ICON_ON_COLOR : ICON_OFF_COLOR) : 0x0000;
               buffer[i++] = usb_gamepad_icon[h][w] == WHITE
-                            ? (usb ? GUI.hl : 0x4208) : 0x0000;
+                            ? (usb ? ICON_ON_COLOR : ICON_OFF_COLOR) : 0x0000;
             }
           }
         }
@@ -1584,9 +1588,9 @@
           for (int sh = 0; sh < 2; sh++) {
             for (int w = 0; w < 16; w++) {
               buffer[i++] = gpio_gamepad_icon[h][w] == WHITE
-                            ? (gpio ? GUI.hl : 0x4208) : 0x0000;
+                            ? (gpio ? ICON_ON_COLOR : ICON_OFF_COLOR) : 0x0000;
               buffer[i++] = gpio_gamepad_icon[h][w] == WHITE
-                            ? (gpio ? GUI.hl : 0x4208) : 0x0000;
+                            ? (gpio ? ICON_ON_COLOR : ICON_OFF_COLOR) : 0x0000;
             }
           }
         }
@@ -1740,7 +1744,7 @@
     for(h = 0; h < 16; h++) {
       for(int sh = 0; sh < 2; sh++) {
         for(w = 0; w < 16; w++) {
-          uint16_t pixel = speaker[dh+h][w] == WHITE ? GUI.hl : GUI.bg;
+          uint16_t pixel = speaker[dh+h][w] == WHITE ? (volume == 0 ? ICON_MUTE_COLOR : ICON_ON_COLOR) : GUI.bg;
           buffer[i++] = pixel;
           buffer[i++] = pixel;
         }
@@ -1804,7 +1808,7 @@
         for (int sh = 0; sh < 2; sh++) {
           for (int w = 0; w < 16; w++) {
             uint16_t pixel = usb_gamepad_icon[h][w] == WHITE
-                             ? (usb ? GUI.hl : GUI.fg) : GUI.bg;
+                             ? (usb ? ICON_ON_COLOR : ICON_OFF_COLOR) : GUI.bg;
             buffer[i++] = pixel;
             buffer[i++] = pixel;
           }
@@ -1823,7 +1827,7 @@
         for (int sh = 0; sh < 2; sh++) {
           for (int w = 0; w < 16; w++) {
             uint16_t pixel = gpio_gamepad_icon[h][w] == WHITE
-                             ? (gpio ? GUI.hl : GUI.fg) : GUI.bg;
+                             ? (gpio ? ICON_ON_COLOR : ICON_OFF_COLOR) : GUI.bg;
             buffer[i++] = pixel;
             buffer[i++] = pixel;
           }
@@ -3966,8 +3970,8 @@
           for (int h = 0; h < 16; h++) {
             for (int sh = 0; sh < 2; sh++) {
               for (int w = 0; w < 16; w++) {
-                buffer[i++] = speaker[dh + h][w] == WHITE ? GUI.hl : 0x0000;
-                buffer[i++] = speaker[dh + h][w] == WHITE ? GUI.hl : 0x0000;
+                buffer[i++] = speaker[dh + h][w] == WHITE ? (vol == 0 ? ICON_MUTE_COLOR : ICON_ON_COLOR) : 0x0000;
+                buffer[i++] = speaker[dh + h][w] == WHITE ? (vol == 0 ? ICON_MUTE_COLOR : ICON_ON_COLOR) : 0x0000;
               }
             }
           }
@@ -3985,9 +3989,9 @@
             for (int sh = 0; sh < 2; sh++) {
               for (int w = 0; w < 16; w++) {
                 buffer[i++] = usb_gamepad_icon[h][w] == WHITE
-                              ? (usb ? GUI.hl : 0x4208) : 0x0000;
+                              ? (usb ? ICON_ON_COLOR : ICON_OFF_COLOR) : 0x0000;
                 buffer[i++] = usb_gamepad_icon[h][w] == WHITE
-                              ? (usb ? GUI.hl : 0x4208) : 0x0000;
+                              ? (usb ? ICON_ON_COLOR : ICON_OFF_COLOR) : 0x0000;
               }
             }
           }
@@ -4002,9 +4006,9 @@
             for (int sh = 0; sh < 2; sh++) {
               for (int w = 0; w < 16; w++) {
                 buffer[i++] = gpio_gamepad_icon[h][w] == WHITE
-                              ? (gpio ? GUI.hl : 0x4208) : 0x0000;
+                              ? (gpio ? ICON_ON_COLOR : ICON_OFF_COLOR) : 0x0000;
                 buffer[i++] = gpio_gamepad_icon[h][w] == WHITE
-                              ? (gpio ? GUI.hl : 0x4208) : 0x0000;
+                              ? (gpio ? ICON_ON_COLOR : ICON_OFF_COLOR) : 0x0000;
               }
             }
           }
@@ -5173,7 +5177,7 @@
           if ((last_usb >= 0 && (usb != last_usb || gpio != last_gpio)) &&
               (STEP == 0 || s_header_battery_shown)) {
             uint16_t saved_bg = GUI.bg, saved_fg = GUI.fg;
-            if (STEP != 0) { GUI.bg = 0x0000; GUI.fg = 0x4208; } /* black header */
+            if (STEP != 0) GUI.bg = 0x0000; /* black header */
             draw_gamepad_icons();
             GUI.bg = saved_bg;
             GUI.fg = saved_fg;
