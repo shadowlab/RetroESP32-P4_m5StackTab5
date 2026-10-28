@@ -847,25 +847,43 @@
   }
 
 #if CONFIG_BOARD_M5STACK_TAB5
-  /* ─── SLEEP: screen, audio, Wi-Fi and USB host off; the P4 stays up so the charger (CHG_EN) keeps running.
-   * Touch the screen to wake. */
+  /* ─── SLEEP: screen, audio and Wi-Fi off (USB host stays powered so a controller can wake it); the P4 stays up so the charger (CHG_EN) keeps running.
+   * Touch the screen or press a button to wake. */
   static void run_sleep_mode(void)
   {
     wifi_link_power_off();
     tab5_board_speaker_enable(false);
-    tab5_board_usb_power_enable(false);
-    ili9341_poweroff();                 /* backlight off */
-    tab5_display_sleep(true);
+    ili9341_clear(0x0000);
+    display_flush();
+    ili9341_poweroff();                 /* backlight off; the panel stays on because the ST712x touch is part of its driver IC */
 
-    tab5_touch_point_t pt;
+    /* Wake on a touch or any controller/keyboard button. */
+    odroid_gamepad_state pad;
+    bool active;
     vTaskDelay(pdMS_TO_TICKS(500));     /* let the finger that chose SLEEP lift */
-    while (tab5_touch_read(&pt, 1) > 0) vTaskDelay(pdMS_TO_TICKS(50));
-    while (tab5_touch_read(&pt, 1) == 0) vTaskDelay(pdMS_TO_TICKS(100));
+    do {
+      vTaskDelay(pdMS_TO_TICKS(50));
+      odroid_input_gamepad_read(&pad);
+      active = false;
+      for (int i = 0; i < ODROID_INPUT_MAX; i++) active |= pad.values[i] != 0;
+    } while (active);
+    do {
+      vTaskDelay(pdMS_TO_TICKS(100));
+      tab5_touch_point_t pt;
+      odroid_input_gamepad_read(&pad);
+      active = tab5_touch_read(&pt, 1) > 0;
+      for (int i = 0; i < ODROID_INPUT_MAX; i++) active |= pad.values[i] != 0;
+    } while (!active);
 
-    tab5_display_sleep(false);
-    vTaskDelay(pdMS_TO_TICKS(120));
+    draw_background();
+    draw_settings();
     apply_brightness();
-    while (tab5_touch_read(&pt, 1) > 0) vTaskDelay(pdMS_TO_TICKS(50));
+    do {
+      vTaskDelay(pdMS_TO_TICKS(50));
+      odroid_input_gamepad_read(&pad);
+      active = false;
+      for (int i = 0; i < ODROID_INPUT_MAX; i++) active |= pad.values[i] != 0;
+    } while (active);
   }
 
   /* ─── USB DRIVE: SD card on the USB-C port ───────────────────────── */
