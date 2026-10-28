@@ -77,3 +77,6 @@ validation_matrix.xlsx
 # === Vendored third-party libraries (see docs/LVGL_PAPP.md to re-fetch) ===
 third_party/
 build_papp/
+
+# === CI compiler cache ===
+.ccache/
