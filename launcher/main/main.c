@@ -1670,6 +1670,10 @@
     #endif
   }
 
+  /* Status icons share the top row with the carousel header icons (y=0) so
+   * they don't jump down when switching to Settings or a ROM list. */
+  #define STATUS_ICON_Y 0
+
   void draw_battery() {
     #ifdef BATTERY
       s_header_battery_shown = false;
@@ -1677,7 +1681,7 @@
 
       int i = 0;
       int x = SCREEN.w - 64;
-      int y = 16;
+      int y = STATUS_ICON_Y;
       int h = 0;
       int w = 0;
 
@@ -1719,7 +1723,7 @@
 
     int i = 0;
     int x = SCREEN.w - 104;
-    int y = 16;
+    int y = STATUS_ICON_Y;
     int h = 16;
     int w = 16;
 
@@ -1770,7 +1774,7 @@
     }
     int i = 0;
     int x = SCREEN.w - 144;
-    int y = 16;
+    int y = STATUS_ICON_Y;
     int h = 16;
     int w = 16;
 
@@ -1793,7 +1797,7 @@
     {
       int i = 0;
       int x = SCREEN.w - 184;
-      int y = 16;
+      int y = STATUS_ICON_Y;
       draw_mask(x, y, 32, 32);
       bool usb = odroid_input_usb_gamepad_connected();
       for (int h = 0; h < 16; h++) {
@@ -1812,7 +1816,7 @@
     {
       int i = 0;
       int x = SCREEN.w - 224;
-      int y = 16;
+      int y = STATUS_ICON_Y;
       draw_mask(x, y, 32, 32);
       bool gpio = odroid_input_gpio_pad_detected();
       for (int h = 0; h < 16; h++) {
@@ -4081,6 +4085,7 @@
         GUI.fg = saved_fg;
       }
       draw_contrast();
+      draw_gamepad_icons();
 
       int y = POS.y + 92;
       for (int i = 0; i < 4; i++) draw_mask(0, y+(i*80)-12, WIDTH, 80);
@@ -4112,6 +4117,7 @@
         draw_battery();
         draw_speaker();
         draw_contrast();
+        draw_gamepad_icons();
         draw_systems();
         draw_text(16,4,EMULATORS[STEP], false, true, false);
         draw_settings();
