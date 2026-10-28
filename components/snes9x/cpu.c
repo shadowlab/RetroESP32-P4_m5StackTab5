@@ -8,6 +8,7 @@
 #include "apu.h"
 #include "dma.h"
 #include "srtc.h"
+#include "sa1.h"
 #include "obc1.h"
 
 void S9xResetCPU()
@@ -68,6 +69,7 @@ static void CommonS9xReset()
    S9xResetDSP1();
    if (Settings.OBC1)
       ResetOBC1();
+   S9xSA1Init();
    if (Settings.C4)
       S9xInitC4();
 }

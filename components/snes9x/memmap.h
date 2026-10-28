@@ -103,6 +103,7 @@ typedef struct
    uint8_t* SRAM;
    uint8_t* FillRAM;
    uint8_t* C4RAM;
+   uint8_t* BWRAM;     /* SA-1 BW-RAM window seen by the main CPU at $6000-$7FFF */
    bool     HiROM;
    bool     LoROM;
    uint16_t SRAMMask;

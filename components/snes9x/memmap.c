@@ -17,6 +17,7 @@
 #include "apu.h"
 #include "dsp1.h"
 #include "srtc.h"
+#include "sa1.h"
 
 #ifdef __W32_HEAP
 #include <malloc.h>
@@ -899,7 +900,16 @@ void InitROM(bool Interleaved)
       if ((Memory.ROMType & 0xf0) == 0xf0 && (strncmp(Memory.ROMName, "MEGAMAN X", 9) == 0 || strncmp(Memory.ROMName, "ROCKMAN X", 9) == 0))
          Settings.C4 = !Settings.ForceNoC4;
 
-      if ((Memory.ROMSpeed & ~0x10) == 0x25)
+      if (Settings.ForceSA1 || (!Settings.ForceNoSA1 && (Memory.ROMSpeed & ~0x10) == 0x23 && (Memory.ROMType & 0xf) > 3 && (Memory.ROMType & 0xf0) == 0x30))
+      {
+         Settings.SA1 = true;
+         Settings.SuperFX = false;
+         Settings.DSP1Master = false;
+         Settings.C4 = false;
+         Settings.SDD1 = false;
+         SA1ROMMap();
+      }
+      else if ((Memory.ROMSpeed & ~0x10) == 0x25)
          TalesROMMap(Interleaved);
       else if (Memory.ExtendedFormat != NOPE)
          JumboLoROMMap(Interleaved);
@@ -1325,6 +1335,82 @@ void LoROMMap(void)
 
    MapRAM();
    WriteProtectROM();
+}
+
+/* SA-1 carts: I-RAM at 000-7FF, BW-RAM window at 000-FFF and banks
+ * 40-4F, ROM super-MMC banks switched at runtime by S9xSetSA1MemMap(). The
+ * SA-1 CPU gets its own copy of the map with I-RAM at /bin/bash000 and the BW-RAM
+ * bitmap view in banks 60-6F. */
+void SA1ROMMap(void)
+{
+   int32_t c;
+   int32_t i;
+
+   /* Banks 00->3f and 80->bf */
+   for (c = 0; c < 0x400; c += 16)
+   {
+      Memory.Map [c + 0] = Memory.Map [c + 0x800] = Memory.RAM;
+      Memory.Map [c + 1] = Memory.Map [c + 0x801] = Memory.RAM;
+      Memory.BlockType [c + 0] = Memory.BlockType [c + 0x800] = MAP_TYPE_RAM;
+      Memory.BlockType [c + 1] = Memory.BlockType [c + 0x801] = MAP_TYPE_RAM;
+
+      Memory.Map [c + 2] = Memory.Map [c + 0x802] = (uint8_t*) MAP_PPU;
+      Memory.Map [c + 3] = Memory.Map [c + 0x803] = (uint8_t*) &Memory.FillRAM [0x3000] - 0x3000;
+      Memory.Map [c + 4] = Memory.Map [c + 0x804] = (uint8_t*) MAP_CPU;
+      Memory.Map [c + 5] = Memory.Map [c + 0x805] = (uint8_t*) MAP_CPU;
+      Memory.Map [c + 6] = Memory.Map [c + 0x806] = (uint8_t*) MAP_BWRAM;
+      Memory.Map [c + 7] = Memory.Map [c + 0x807] = (uint8_t*) MAP_BWRAM;
+      for (i = c + 8; i < c + 16; i++)
+      {
+         Memory.Map [i] = Memory.Map [i + 0x800] = &Memory.ROM [(c << 11) % Memory.CalculatedSize] - 0x8000;
+         Memory.BlockType [i] = Memory.BlockType [i + 0x800] = MAP_TYPE_ROM;
+      }
+   }
+
+   /* Banks 40->7f */
+   for (c = 0; c < 0x400; c += 16)
+      for (i = c; i < c + 16; i++)
+         Memory.Map [i + 0x400] = (uint8_t*) &Memory.SRAM [(c << 12) & 0x1ffff];
+
+   /* c0->ff */
+   for (c = 0; c < 0x400; c += 16)
+   {
+      for (i = c;  i < c + 16; i++)
+      {
+         Memory.Map [i + 0xc00] = &Memory.ROM [(c << 12) % Memory.CalculatedSize];
+         Memory.BlockType [i + 0xc00] = MAP_TYPE_ROM;
+      }
+   }
+
+   for (c = 0; c < 16; c++)
+   {
+      Memory.Map [c + 0x7e0] = Memory.RAM;
+      Memory.Map [c + 0x7f0] = Memory.RAM + 0x10000;
+      Memory.BlockType [c + 0x7e0] = MAP_TYPE_RAM;
+      Memory.BlockType [c + 0x7f0] = MAP_TYPE_RAM;
+   }
+   WriteProtectROM();
+
+   /* Now copy the map and correct it for the SA1 CPU. The main CPU write-
+    * protects ROM through BlockType; the SA-1 keeps a WriteMap instead. */
+   memcpy((void*) SA1.Map, (void*) Memory.Map, sizeof(Memory.Map));
+   for (c = 0; c < MEMMAP_NUM_BLOCKS; c++)
+      SA1.WriteMap [c] = Memory.BlockType [c] == MAP_TYPE_ROM ? (uint8_t*) MAP_NONE : Memory.Map [c];
+
+   /* Banks 00->3f and 80->bf */
+   for (c = 0; c < 0x400; c += 16)
+   {
+      SA1.Map [c + 0] = SA1.Map [c + 0x800] = &Memory.FillRAM [0x3000];
+      SA1.Map [c + 1] = SA1.Map [c + 0x801] = (uint8_t*) MAP_NONE;
+      SA1.WriteMap [c + 0] = SA1.WriteMap [c + 0x800] = &Memory.FillRAM [0x3000];
+      SA1.WriteMap [c + 1] = SA1.WriteMap [c + 0x801] = (uint8_t*) MAP_NONE;
+   }
+
+   /* Banks 60->6f */
+   for (c = 0; c < 0x100; c++)
+      SA1.Map [c + 0x600] = SA1.WriteMap [c + 0x600] = (uint8_t*) MAP_BWRAM_BITMAP;
+
+   Memory.BWRAM = Memory.SRAM;
 }
 
 void DSPMap(void)
@@ -2107,6 +2193,180 @@ void ApplyROMFixes(void)
    else if (strncmp(Memory.ROMId, "A9D", 3) == 0 && Settings.CyclesPercentage == 100)
       Settings.H_Max = (SNES_CYCLES_PER_SCANLINE * 110) / 100;
 
+   /* SA-1 Speedup settings */
+   SA1.WaitAddress = NULL;
+   SA1.WaitByteAddress1 = NULL;
+   SA1.WaitByteAddress2 = NULL;
+
+   if (Settings.SA1)
+   {
+      /* Itoi Shigesato no Bass Tsuri No.1 (J) */
+      if (match_id("ZBPJ"))
+      {
+         SA1.WaitAddress = SA1.Map [0x0093f1 >> MEMMAP_SHIFT] + 0x93f1;
+         SA1.WaitByteAddress1 = Memory.FillRAM + 0x304a;
+      }
+      /* Daisenryaku Expert WWII (J) */
+      else if (match_id("AEVJ"))
+      {
+         SA1.WaitAddress = SA1.Map [0x0ed18d >> MEMMAP_SHIFT] + 0xd18d;
+         SA1.WaitByteAddress1 = Memory.FillRAM + 0x3000;
+      }
+      /* Derby Jockey 2 (J) */
+      else if (match_id("A2DJ"))
+         SA1.WaitAddress = SA1.Map [0x008b62 >> MEMMAP_SHIFT] + 0x8b62;
+      /* Dragon Ball Z - Hyper Dimension (J) */
+      else if (match_id("AZIJ"))
+      {
+         SA1.WaitAddress = SA1.Map [0x008083 >> MEMMAP_SHIFT] + 0x8083;
+         SA1.WaitByteAddress1 = Memory.FillRAM + 0x3020;
+      }
+      /* SD Gundam G NEXT (J) */
+      else if (match_id("ZX3J"))
+      {
+         SA1.WaitAddress = SA1.Map [0x0087f2 >> MEMMAP_SHIFT] + 0x87f2;
+         SA1.WaitByteAddress1 = Memory.FillRAM + 0x30c4;
+      }
+      /* Shougi no Hanamichi (J) */
+      else if (match_id("AARJ"))
+      {
+         SA1.WaitAddress = SA1.Map [0xc1f85a >> MEMMAP_SHIFT] + 0xf85a;
+         SA1.WaitByteAddress1 = Memory.SRAM + 0x0c64;
+         SA1.WaitByteAddress2 = Memory.SRAM + 0x0c66;
+      }
+      /* Asahi Shinbun Rensai Katou Hifumi Kudan Shougi Shingiryu (J) */
+      if (match_id("A23J"))
+      {
+         SA1.WaitAddress = SA1.Map [0xc25037 >> MEMMAP_SHIFT] + 0x5037;
+         SA1.WaitByteAddress1 = Memory.SRAM + 0x0c06;
+         SA1.WaitByteAddress2 = Memory.SRAM + 0x0c08;
+      }
+      /* Taikyoku Igo - Idaten (J) */
+      else if (match_id("AIIJ"))
+      {
+         SA1.WaitAddress = SA1.Map [0xc100be >> MEMMAP_SHIFT] + 0x00be;
+         SA1.WaitByteAddress1 = Memory.SRAM + 0x1002;
+         SA1.WaitByteAddress2 = Memory.SRAM + 0x1004;
+      }
+      /* Takemiya Masaki Kudan no Igo Taishou (J) */
+      else if (match_id("AITJ"))
+         SA1.WaitAddress = SA1.Map [0x0080b7 >> MEMMAP_SHIFT] + 0x80b7;
+      /* J. League '96 Dream Stadium (J) */
+      else if (match_id("AJ6J"))
+         SA1.WaitAddress = SA1.Map [0xc0f74a >> MEMMAP_SHIFT] + 0xf74a;
+      /* Jumpin' Derby (J) */
+      else if (match_id("AJUJ"))
+         SA1.WaitAddress = SA1.Map [0x00d926 >> MEMMAP_SHIFT] + 0xd926;
+      /* Kakinoki Shougi (J) */
+      else if (match_id("AKAJ"))
+         SA1.WaitAddress = SA1.Map [0x00f070 >> MEMMAP_SHIFT] + 0xf070;
+      /* Hoshi no Kirby 3 (J), Kirby's Dream Land 3 (U) */
+      else if (match_id("AFJJ") || match_id("AFJE"))
+      {
+         SA1.WaitAddress = SA1.Map [0x0082d4 >> MEMMAP_SHIFT] + 0x82d4;
+         SA1.WaitByteAddress1 = Memory.SRAM + 0x72a4;
+      }
+      /* Hoshi no Kirby - Super Deluxe (J) */
+      else if (match_id("AKFJ"))
+      {
+         SA1.WaitAddress = SA1.Map [0x008c93 >> MEMMAP_SHIFT] + 0x8c93;
+         SA1.WaitByteAddress1 = Memory.FillRAM + 0x300a;
+         SA1.WaitByteAddress2 = Memory.FillRAM + 0x300e;
+      }
+      /* Kirby Super Star (U) */
+      else if (match_id("AKFE"))
+      {
+         SA1.WaitAddress = SA1.Map [0x008cb8 >> MEMMAP_SHIFT] + 0x8cb8;
+         SA1.WaitByteAddress1 = Memory.FillRAM + 0x300a;
+         SA1.WaitByteAddress2 = Memory.FillRAM + 0x300e;
+      }
+      /* Super Mario RPG (J), (U) */
+      else if (match_id("ARWJ") || match_id("ARWE"))
+      {
+         SA1.WaitAddress = SA1.Map [0xc0816f >> MEMMAP_SHIFT] + 0x816f;
+         SA1.WaitByteAddress1 = Memory.FillRAM + 0x3000;
+      }
+      /* Marvelous (J) */
+      else if (match_id("AVRJ"))
+      {
+         SA1.WaitAddress = SA1.Map [0x0085f2 >> MEMMAP_SHIFT] + 0x85f2;
+         SA1.WaitByteAddress1 = Memory.FillRAM + 0x3024;
+      }
+      /* Harukanaru Augusta 3 - Masters New (J) */
+      else if (match_id("AO3J"))
+      {
+         SA1.WaitAddress = SA1.Map [0x00dddb >> MEMMAP_SHIFT] + 0xdddb;
+         SA1.WaitByteAddress1 = Memory.FillRAM + 0x37b4;
+      }
+      /* Jikkyou Oshaberi Parodius (J) */
+      else if (match_id("AJOJ"))
+         SA1.WaitAddress = SA1.Map [0x8084e5 >> MEMMAP_SHIFT] + 0x84e5;
+      /* Super Bomberman - Panic Bomber W (J) */
+      else if (match_id("APBJ"))
+         SA1.WaitAddress = SA1.Map [0x00857a >> MEMMAP_SHIFT] + 0x857a;
+      /* Pebble Beach no Hatou New - Tournament Edition (J) */
+      else if (match_id("AONJ"))
+      {
+         SA1.WaitAddress = SA1.Map [0x00df33 >> MEMMAP_SHIFT] + 0xdf33;
+         SA1.WaitByteAddress1 = Memory.FillRAM + 0x37b4;
+      }
+      /* PGA European Tour (U) */
+      else if (match_id("AEPE"))
+      {
+         SA1.WaitAddress = SA1.Map [0x003700 >> MEMMAP_SHIFT] + 0x3700;
+         SA1.WaitByteAddress1 = Memory.FillRAM + 0x3102;
+      }
+      /* PGA Tour 96 (U) */
+      else if (match_id("A3GE"))
+      {
+         SA1.WaitAddress = SA1.Map [0x003700 >> MEMMAP_SHIFT] + 0x3700;
+         SA1.WaitByteAddress1 = Memory.FillRAM + 0x3102;
+      }
+      /* Power Rangers Zeo - Battle Racers (U) */
+      else if (match_id("A4RE"))
+      {
+         SA1.WaitAddress = SA1.Map [0x009899 >> MEMMAP_SHIFT] + 0x9899;
+         SA1.WaitByteAddress1 = Memory.FillRAM + 0x3000;
+      }
+      /* SD F-1 Grand Prix (J) */
+      else if (match_id("AGFJ"))
+         SA1.WaitAddress = SA1.Map [0x0181bc >> MEMMAP_SHIFT] + 0x81bc;
+      /* Saikousoku Shikou Shougi Mahjong (J) */
+      else if (match_id("ASYJ"))
+      {
+         SA1.WaitAddress = SA1.Map [0x00f2cc >> MEMMAP_SHIFT] + 0xf2cc;
+         SA1.WaitByteAddress1 = Memory.SRAM + 0x7ffe;
+         SA1.WaitByteAddress2 = Memory.SRAM + 0x7ffc;
+      }
+      /* Shougi Saikyou II (J) */
+      else if (match_id("AX2J"))
+         SA1.WaitAddress = SA1.Map [0x00d675 >> MEMMAP_SHIFT] + 0xd675;
+      /* Mini Yonku Shining Scorpion - Let's & Go!! (J) */
+      else if (match_id("A4WJ"))
+         SA1.WaitAddress = SA1.Map [0xc048be >> MEMMAP_SHIFT] + 0x48be;
+      /* Shin Shougi Club (J) */
+      else if (match_id("AHJJ"))
+      {
+         SA1.WaitAddress = SA1.Map [0xc1002a >> MEMMAP_SHIFT] + 0x002a;
+         SA1.WaitByteAddress1 = Memory.SRAM + 0x0806;
+         SA1.WaitByteAddress2 = Memory.SRAM + 0x0808;
+      }
+      /* ｼｮｳｷﾞｻｲｷｮｳ */
+      else if (match_id("AMSJ"))
+         SA1.WaitAddress = SA1.Map [0x00CD6A >> MEMMAP_SHIFT] + 0xCD6A;
+      /* ﾊﾌﾞﾒｲｼﾞﾝﾉｵﾓｼﾛｼｮｳｷﾞ */
+      else if (match_id("IL"))
+         SA1.WaitAddress = SA1.Map [0x008549 >> MEMMAP_SHIFT] + 0x8549;
+      /* MASOUKISHIN */
+      else if (match_id("ALXJ"))
+      {
+         SA1.WaitAddress = SA1.Map [0x00EC9C >> MEMMAP_SHIFT] + 0xEC9C;
+         SA1.WaitByteAddress1 = Memory.FillRAM + 0x3072;
+      }
+      /* SUPER SHOGI3 */
+      else if (match_id("A3IJ"))
+         SA1.WaitAddress = SA1.Map [0x00F669 >> MEMMAP_SHIFT] + 0xF669;
+   }
    /* Other */
 
    /* Additional game fixes by sanmaiwashi ... */

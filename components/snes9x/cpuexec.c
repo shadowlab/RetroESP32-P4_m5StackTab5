@@ -9,10 +9,13 @@
 #include "apu.h"
 #include "dma.h"
 #include "fxemu.h"
+#include "sa1.h"
 
 #include "esp_attr.h"
 
-void S9xMainLoop()
+/* The loop body is instantiated twice (see S9xMainLoop below) so non-SA-1
+ * games don't pay for the per-opcode SA1.Executing check. */
+static inline __attribute__((always_inline)) void MainLoop(const bool sa1)
 {
 #ifdef LAGFIX
    do
@@ -64,6 +67,9 @@ void S9xMainLoop()
          CPU.PCAtOpcodeStart = CPU.PC;
          CPU.Cycles += CPU.MemSpeed;
          (*ICPU.S9xOpcodes [*CPU.PC++].S9xOpcode)();
+
+         if (sa1 && SA1.Executing)
+            S9xSA1MainLoop();
       if (CPU.Cycles >= CPU.NextEvent)
          S9xDoHBlankProcessing();
 
@@ -97,6 +103,17 @@ void S9xMainLoop()
       }
    } while(!finishedFrame);
 #endif
+}
+
+static void MainLoop_SA1(void)   { MainLoop(true); }
+static void MainLoop_NoSA1(void) { MainLoop(false); }
+
+void S9xMainLoop()
+{
+   if (Settings.SA1)
+      MainLoop_SA1();
+   else
+      MainLoop_NoSA1();
 }
 
 void S9xSetIRQ(uint32_t source)
