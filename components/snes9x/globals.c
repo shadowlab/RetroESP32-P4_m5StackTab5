@@ -9,6 +9,8 @@
 #include "dma.h"
 #include "gfx.h"
 #include "soundux.h"
+#include "sa1.h"
+#include "esp_attr.h"
 
 SICPU ICPU;
 SCPUState CPU;
@@ -21,6 +23,8 @@ SSoundData SoundData;
 
 SSettings Settings;
 SDSP1 DSP1;
+/* SSA1 holds two 4096-entry memory maps (32 KB); keep it out of internal RAM */
+EXT_RAM_BSS_ATTR SSA1 SA1;
 SnesModel M1SNES = {1, 3, 2};
 SnesModel M2SNES = {2, 4, 3};
 SnesModel* Model = &M1SNES;

@@ -1,6 +1,8 @@
 # snes9x emulation core for RetroESP32-P4
 set(SNES9X_SRCS
     spc700.c
+    sa1.c
+    sa1cpu.c
     memmap.c
     apu.c
     globals.c

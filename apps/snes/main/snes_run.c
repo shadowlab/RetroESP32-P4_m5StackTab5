@@ -985,7 +985,7 @@ void snes_run(const char *rom_path)
     ESP_LOGI(TAG, "ROM: %s (%s, %s)", Memory.ROMName,
              Memory.HiROM ? "HiROM" : "LoROM",
              Settings.PAL ? "PAL" : "NTSC");
-    ESP_LOGI(TAG, "ROMType=0x%02X, SuperFX=%d", Memory.ROMType, Settings.SuperFX);
+    ESP_LOGI(TAG, "ROMType=0x%02X, SuperFX=%d, SA1=%d", Memory.ROMType, Settings.SuperFX, Settings.SA1);
 
     /* ── SuperFX / GSU co-processor init ── */
     if (Settings.SuperFX) {
