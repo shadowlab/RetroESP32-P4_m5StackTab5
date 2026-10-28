@@ -29,21 +29,75 @@ permissions:
 jobs:
   build:
     name: ${{ matrix.project }} (IDF ${{ matrix.idf }})
-    runs-on: ubuntu-latest
-    container: espressif/idf:v${{ matrix.idf }}
+    # No job container: pulling the multi-GB espressif/idf image took about a minute per job. ESP-IDF
+    # with only the ESP32-P4 tools is installed once and kept in the Actions cache (see below).
+    runs-on: ubuntu-24.04
     strategy:
       fail-fast: false
       matrix:
         idf: ['5.5.2']
         project: [launcher, nes, gb, sms, snes, genesis, neogeo]
+    env:
+      IDF_PATH: ${{ github.workspace }}/../esp-idf
+      IDF_TOOLS_PATH: ${{ github.workspace }}/../.espressif
+      CCACHE_VERSION: 4.11.3
+      # ccache, kept between runs per app (see the cache step). Paths are made relative to the
+      # workspace and compilers are compared by content, so hits survive across runs and branches.
+      IDF_CCACHE_ENABLE: 1
+      CCACHE_DIR: ${{ github.workspace }}/.ccache
+      CCACHE_BASEDIR: ${{ github.workspace }}
+      CCACHE_COMPILERCHECK: content
+      CCACHE_MAXSIZE: 500M
     steps:
       - uses: actions/checkout@v5
+
+      # The Python venv inside the tools dir points at the runner's python3, so its version is in the key.
+      - name: ESP-IDF cache key
+        id: idf-key
+        shell: bash
+        run: echo "key=idf${{ matrix.idf }}-esp32p4-$ImageOS-py$(python3 -c 'import platform; print(platform.python_version())')-ccache$CCACHE_VERSION-v1" >> "$GITHUB_OUTPUT"
+
+      # One entry shared by every app job. Caches saved on main are readable by pull requests.
+      - name: Restore ESP-IDF
+        id: idf-cache
+        uses: actions/cache@v4
+        with:
+          path: |
+            ${{ env.IDF_PATH }}
+            ${{ env.IDF_TOOLS_PATH }}
+          key: ${{ steps.idf-key.outputs.key }}
+
+      - name: Install ESP-IDF (cache miss only)
+        if: steps.idf-cache.outputs.cache-hit != 'true'
+        shell: bash
+        run: |
+          git clone -q -b v${{ matrix.idf }} --depth 1 --recursive --shallow-submodules \
+            https://github.com/espressif/esp-idf.git "$IDF_PATH"
+          rm -rf "$IDF_PATH/.git" "$IDF_PATH"/.git* # not needed to build; keeps the cache small
+          "$IDF_PATH/install.sh" esp32p4 > /dev/null
+          python3 "$IDF_PATH/tools/idf_tools.py" install cmake ninja > /dev/null
+          mkdir -p "$IDF_TOOLS_PATH/bin"
+          curl -sSfL "https://github.com/ccache/ccache/releases/download/v$CCACHE_VERSION/ccache-$CCACHE_VERSION-linux-x86_64.tar.xz" \
+            | tar -xJ --strip-components=1 -C "$IDF_TOOLS_PATH/bin" "ccache-$CCACHE_VERSION-linux-x86_64/ccache"
+          rm -rf "$IDF_TOOLS_PATH/dist"              # downloaded archives, already unpacked
+          du -sh "$IDF_PATH" "$IDF_TOOLS_PATH"
+
+      # Each run saves a new cache entry; restore-keys picks the newest one for this app. PR runs
+      # can read caches saved by main, so a PR touching one core recompiles only that core.
+      - uses: actions/cache@v4
+        with:
+          path: .ccache
+          key: ccache-idf${{ matrix.idf }}-${{ matrix.project }}-${{ github.sha }}
+          restore-keys: ccache-idf${{ matrix.idf }}-${{ matrix.project }}-
 
       - name: Build
         shell: bash
         run: |
+          export PATH="$IDF_TOOLS_PATH/bin:$PATH"
           . "$IDF_PATH/export.sh" > /dev/null
+          ccache --zero-stats > /dev/null
           ./build_all_tab5.sh ${{ matrix.project }}
+          { echo "### ccache: ${{ matrix.project }}"; echo '```'; ccache --show-stats; echo '```'; } >> "$GITHUB_STEP_SUMMARY"
 
       - uses: actions/upload-artifact@v6
         with:
@@ -55,8 +109,8 @@ jobs:
   merge:
     name: Merge image (IDF ${{ matrix.idf }})
     needs: build
-    runs-on: ubuntu-latest
-    container: espressif/idf:v${{ matrix.idf }}
+    # Merging only needs esptool (the 4.x series ESP-IDF 5.5 uses), not the whole ESP-IDF.
+    runs-on: ubuntu-24.04
     strategy:
       fail-fast: false
       matrix:
@@ -73,7 +127,9 @@ jobs:
       - name: Merge
         shell: bash
         run: |
-          . "$IDF_PATH/export.sh" > /dev/null
+          python3 -m venv "$RUNNER_TEMP/venv"
+          . "$RUNNER_TEMP/venv/bin/activate"
+          pip install -q 'esptool~=4.12'
           ./build_all_tab5.sh --merge-only | tee merge.log
           {
             echo "### Tab5 image sizes (ESP-IDF ${{ matrix.idf }})"
