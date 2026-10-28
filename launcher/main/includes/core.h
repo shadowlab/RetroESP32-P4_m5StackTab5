@@ -61,6 +61,7 @@
   USB drive mode: SD card over USB-C (Tab5)
 */
 #if CONFIG_BOARD_M5STACK_TAB5
+#include "tab5_board.h"
 #include "usb_drive.h"
 #include "wifi_link.h"
 #include "file_server.h"

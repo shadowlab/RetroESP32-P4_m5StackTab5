@@ -837,12 +837,37 @@
     y+=42;
     draw_mask(x,y-1,400,38);
     draw_text(x,y,(char *)"WI-FI TRANSFER",false, SETTING == 5 ? true : false, false);
+
+    y+=42;
+    draw_mask(x,y-1,400,38);
+    draw_text(x,y,(char *)"SLEEP (KEEPS CHARGING)",false, SETTING == 6 ? true : false, false);
 #endif
 
     display_flush();
   }
 
 #if CONFIG_BOARD_M5STACK_TAB5
+  /* ─── SLEEP: screen, audio, Wi-Fi and USB host off; the P4 stays up so the charger (CHG_EN) keeps running.
+   * Touch the screen to wake. */
+  static void run_sleep_mode(void)
+  {
+    wifi_link_power_off();
+    tab5_board_speaker_enable(false);
+    tab5_board_usb_power_enable(false);
+    ili9341_poweroff();                 /* backlight off */
+    tab5_display_sleep(true);
+
+    tab5_touch_point_t pt;
+    vTaskDelay(pdMS_TO_TICKS(500));     /* let the finger that chose SLEEP lift */
+    while (tab5_touch_read(&pt, 1) > 0) vTaskDelay(pdMS_TO_TICKS(50));
+    while (tab5_touch_read(&pt, 1) == 0) vTaskDelay(pdMS_TO_TICKS(100));
+
+    tab5_display_sleep(false);
+    vTaskDelay(pdMS_TO_TICKS(120));
+    apply_brightness();
+    while (tab5_touch_read(&pt, 1) > 0) vTaskDelay(pdMS_TO_TICKS(50));
+  }
+
   /* ─── USB DRIVE: SD card on the USB-C port ───────────────────────── */
   static void usb_drive_draw_status(const char *line1, const char *line2, bool warn)
   {
@@ -896,7 +921,7 @@
       vTaskDelay(pdMS_TO_TICKS(50));
     }
   }
-  #define SETTING_LAST 5
+  #define SETTING_LAST 6
 #else
   #define SETTING_LAST 3
 #endif
@@ -5315,6 +5340,11 @@
             }
             if (SETTING == 5) {
               run_wifi_transfer();    /* leaving restarts the launcher */
+            }
+            if (SETTING == 6) {
+              run_sleep_mode();
+              draw_background();
+              draw_settings();
             }
 #endif
           } else if (STEP >= 3) {

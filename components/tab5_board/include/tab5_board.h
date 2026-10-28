@@ -109,6 +109,9 @@ esp_err_t tab5_board_wifi_power_enable(bool enable);
  */
 esp_err_t tab5_display_init(void);
 
+/** Panel display-off / display-on (sleep mode).  The backlight is the caller's business. */
+esp_err_t tab5_display_sleep(bool sleep);
+
 /** Detected hardware revision (valid after tab5_display_init()). */
 tab5_revision_t tab5_board_revision(void);
 
