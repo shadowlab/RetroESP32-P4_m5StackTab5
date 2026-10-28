@@ -5223,6 +5223,17 @@
           usleep(100000);
         }
 
+        /* --- L/R: previous/next system (also from the settings page, where LEFT/RIGHT adjust values) --- */
+        if (gamepad.values[ODROID_INPUT_L] || gamepad.values[ODROID_INPUT_R]) {
+          int dir = gamepad.values[ODROID_INPUT_R] ? 1 : -1;
+          STEP += dir;
+          if (STEP < 0) STEP = COUNT - 1;
+          if (STEP > COUNT - 1) STEP = 0;
+          ROMS.offset = 0;
+          animate(dir);
+          usleep(100000);
+        }
+
         /* --- UP/DOWN: settings navigation when on STEP 0 --- */
         if (gamepad.values[ODROID_INPUT_UP]) {
           if (STEP == 0) {
@@ -5371,8 +5382,8 @@
           usleep(150000);
         }
 
-        /* --- LEFT: page up --- */
-        if (gamepad.values[ODROID_INPUT_LEFT]) {
+        /* --- LEFT / L: page up --- */
+        if (gamepad.values[ODROID_INPUT_LEFT] || gamepad.values[ODROID_INPUT_L]) {
           if (ROMS.total > 0) {
             ROMS.offset -= BROWSER_LIMIT;
             if (ROMS.offset < 0) ROMS.offset = 0;
@@ -5386,8 +5397,8 @@
           usleep(200000);
         }
 
-        /* --- RIGHT: page down --- */
-        if (gamepad.values[ODROID_INPUT_RIGHT]) {
+        /* --- RIGHT / R: page down --- */
+        if (gamepad.values[ODROID_INPUT_RIGHT] || gamepad.values[ODROID_INPUT_R]) {
           if (ROMS.total > 0) {
             ROMS.offset += BROWSER_LIMIT;
             if (ROMS.offset >= ROMS.total) ROMS.offset = ROMS.total - 1;
