@@ -528,6 +528,7 @@ static void tab5_battery_level_read(odroid_battery_state *state)
     static int64_t s_next_us = 0;
     static int s_avg_mv = 0;            /* smoothed pack voltage, 0 = not seeded */
     static bool s_last_usb = false;
+    static bool s_last_logged_usb = false;
 
     int64_t now = esp_timer_get_time();
     if (s_next_us && now < s_next_us) { *state = s_last; return; }
@@ -564,6 +565,15 @@ static void tab5_battery_level_read(odroid_battery_state *state)
     state->millivolts = s_avg_mv;
     state->percentage = pct;
     state->charging = charging;
+
+    /* One line every ~10 s (and on any state change) to check the gauge on hardware */
+    static int s_log_count = 0;
+    if (charging != s_last.charging || usb != s_last_logged_usb || ++s_log_count >= 20) {
+        ESP_LOGI(TAG, "batt: %d mV (avg %d) %d mA usb=%d -> %d%% %s",
+                 mv, s_avg_mv, ma, usb, pct, charging ? "charging" : (full ? "full" : "discharging"));
+        s_log_count = 0;
+        s_last_logged_usb = usb;
+    }
     s_last = *state;
 }
 #endif
