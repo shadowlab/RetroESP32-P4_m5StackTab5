@@ -410,13 +410,10 @@ static void parse_gamepad_report(const uint8_t *data, int len)
     /* Descriptor layout with report IDs: ignore reports for other collections */
     if (s_format == GP_FORMAT_DESCRIPTOR && s_layout.report_id && data[0] != s_layout.report_id) return;
 
-    /* Always capture latest raw report for gamepad_get_raw_report() API;
-     * flag changed reports so gamepad_task can log them */
+    /* Always capture latest raw report for gamepad_get_raw_report() API */
     {
         int copy_len = (len > 64) ? 64 : len;
-        if (copy_len != s_raw_dump_len || memcmp(s_raw_dump_buf, data, copy_len) != 0) {
-            s_raw_dump_pending = 1;
-        }
+        if (s_raw_dump_len == 0) s_raw_dump_pending = 1;  /* log the first report */
         memcpy(s_raw_dump_buf, data, copy_len);
         s_raw_dump_len = copy_len;
     }
@@ -597,6 +594,9 @@ static void parse_gamepad_report(const uint8_t *data, int len)
     }
 
     xSemaphoreTake(s_mutex, portMAX_DELAY);
+    /* Flag decoded-state changes for gamepad_task to log (raw bytes alone are too noisy:
+     * some pads stream jittering vendor fields) */
+    if (memcmp(&s_state, &gs, sizeof(gs)) != 0) s_raw_dump_pending = 1;
     memcpy(&s_state, &gs, sizeof(gs));
     xSemaphoreGive(s_mutex);
 }
