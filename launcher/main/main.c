@@ -5210,10 +5210,10 @@
       if (controller_board_changed()) continue;
 
 #if CONFIG_BOARD_M5STACK_TAB5
-      /* SELECT + DOWN held for 0.3 s: sleep (screen off, still charging). */
+      /* L + R held for 0.3 s: sleep (screen off, still charging). */
       {
         static int64_t combo_since_us = 0;
-        if (gamepad.values[ODROID_INPUT_SELECT] && gamepad.values[ODROID_INPUT_DOWN]) {
+        if (gamepad.values[ODROID_INPUT_L] && gamepad.values[ODROID_INPUT_R]) {
           int64_t t = esp_timer_get_time();
           if (!combo_since_us) combo_since_us = t;
           if (t - combo_since_us > 300000) {
