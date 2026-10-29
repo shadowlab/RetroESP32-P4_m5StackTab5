@@ -837,12 +837,56 @@
     y+=42;
     draw_mask(x,y-1,400,38);
     draw_text(x,y,(char *)"WI-FI TRANSFER",false, SETTING == 5 ? true : false, false);
+
+    y+=42;
+    draw_mask(x,y-1,400,38);
+    draw_text(x,y,(char *)"SLEEP (KEEPS CHARGING)",false, SETTING == 6 ? true : false, false);
 #endif
 
     display_flush();
   }
 
 #if CONFIG_BOARD_M5STACK_TAB5
+  /* ─── SLEEP: screen, audio and Wi-Fi off (USB host stays powered so a controller can wake it); the P4 stays up so the charger (CHG_EN) keeps running.
+   * Touch the screen or press a button to wake. */
+  static void run_sleep_mode(void)
+  {
+    wifi_link_power_off();
+    tab5_board_speaker_enable(false);
+    ili9341_poweroff();                 /* backlight off; the panel stays on because the ST712x touch is part of its driver IC */
+
+    /* Wake on a touch or any controller/keyboard button. */
+    odroid_gamepad_state pad;
+    bool active;
+    vTaskDelay(pdMS_TO_TICKS(500));     /* let the finger that chose SLEEP lift */
+    do {
+      vTaskDelay(pdMS_TO_TICKS(50));
+      odroid_input_gamepad_read(&pad);
+      active = false;
+      for (int i = 0; i < ODROID_INPUT_MAX; i++) active |= pad.values[i] != 0;
+    } while (active);
+    int ticks = 0;
+    do {
+      vTaskDelay(pdMS_TO_TICKS(100));
+      if (++ticks % 50 == 1) {          /* every 5 s: charging check over the serial log (negative mA = charging) */
+        int mv = 0, ma = 0;
+        if (tab5_battery_read(&mv, &ma) == ESP_OK) printf("sleep: battery %d mV %d mA\n", mv, ma);
+      }
+      tab5_touch_point_t pt;
+      odroid_input_gamepad_read(&pad);
+      active = tab5_touch_read(&pt, 1) > 0;
+      for (int i = 0; i < ODROID_INPUT_MAX; i++) active |= pad.values[i] != 0;
+    } while (!active);
+
+    apply_brightness();
+    do {
+      vTaskDelay(pdMS_TO_TICKS(50));
+      odroid_input_gamepad_read(&pad);
+      active = false;
+      for (int i = 0; i < ODROID_INPUT_MAX; i++) active |= pad.values[i] != 0;
+    } while (active);
+  }
+
   /* ─── USB DRIVE: SD card on the USB-C port ───────────────────────── */
   static void usb_drive_draw_status(const char *line1, const char *line2, bool warn)
   {
@@ -896,7 +940,7 @@
       vTaskDelay(pdMS_TO_TICKS(50));
     }
   }
-  #define SETTING_LAST 5
+  #define SETTING_LAST 6
 #else
   #define SETTING_LAST 3
 #endif
@@ -5165,6 +5209,24 @@
 
       if (controller_board_changed()) continue;
 
+#if CONFIG_BOARD_M5STACK_TAB5
+      /* L + R held for 0.3 s: sleep (screen off, still charging). */
+      {
+        static int64_t combo_since_us = 0;
+        if (gamepad.values[ODROID_INPUT_L] && gamepad.values[ODROID_INPUT_R]) {
+          int64_t t = esp_timer_get_time();
+          if (!combo_since_us) combo_since_us = t;
+          if (t - combo_since_us > 300000) {
+            combo_since_us = 0;
+            run_sleep_mode();
+            continue;
+          }
+        } else {
+          combo_since_us = 0;
+        }
+      }
+#endif
+
       /* Same for the gamepad icons: redraw when a pad is plugged or unplugged. */
       if (!BROWSER && !LAUNCHER) {
         static int64_t next_pad_us = 0;
@@ -5315,6 +5377,9 @@
             }
             if (SETTING == 5) {
               run_wifi_transfer();    /* leaving restarts the launcher */
+            }
+            if (SETTING == 6) {
+              run_sleep_mode();   /* the screen is left as it was, nothing to redraw */
             }
 #endif
           } else if (STEP >= 3) {

@@ -119,6 +119,12 @@ esp_err_t tab5_board_init(void)
     return ESP_OK;
 }
 
+esp_err_t tab5_display_sleep(bool sleep)
+{
+    if (!s_panel) return ESP_ERR_INVALID_STATE;
+    return esp_lcd_panel_disp_on_off(s_panel, !sleep);
+}
+
 i2c_master_bus_handle_t tab5_board_i2c_bus(void)
 {
     return s_i2c;
