@@ -70,14 +70,21 @@ static const char *TAG = "hdmi_out";
 /* Selectable output timings.  The pixel clock stays at or below the module's 74.25 MHz base clock
  * (above that the FPGA needs its half-clock mode).  The mode is picked by name from
  * /sd/system/hdmi_mode.txt, default 1280x720. */
-typedef struct { const char *name; uint16_t w, h; uint8_t hz; uint32_t clock; } hdmi_mode_t;
+typedef struct {
+    const char *name;
+    uint16_t w, h;
+    uint32_t clock;
+    uint16_t hfp, hs, hbp;     /* horizontal front porch / sync / back porch, pixels */
+    uint16_t vfp, vs, vbp;     /* vertical, lines */
+} hdmi_mode_t;
+/* Standard CEA / VESA DMT timings (sync widths matter: older monitors reject odd ones). */
 static const hdmi_mode_t k_modes[] = {
-    { "1280x720",    1280, 720, 60, 74250000 },
-    { "1280x720@50", 1280, 720, 50, 74250000 },
-    { "1280x800",    1280, 800, 60, 71000000 },
-    { "1024x768",    1024, 768, 60, 65000000 },
-    { "800x600",      800, 600, 60, 40000000 },
-    { "640x480",      640, 480, 60, 25175000 },
+    { "1280x720",    1280, 720, 74250000, 110,  40, 220,  5, 5, 20 },   /* 1650x750, 60 Hz */
+    { "1280x720@50", 1280, 720, 74250000, 440,  40, 220,  5, 5, 20 },   /* 1980x750, 50 Hz */
+    { "1280x800",    1280, 800, 71000000,  48,  32,  80,  3, 6, 14 },   /* CVT reduced blanking, 1440x823 */
+    { "1024x768",    1024, 768, 65000000,  24, 136, 160,  3, 6, 29 },   /* 1344x806 */
+    { "800x600",      800, 600, 40000000,  40, 128,  88,  1, 4, 23 },   /* 1056x628 */
+    { "640x480",      640, 480, 25175000,  16,  96,  48, 10, 2, 33 },   /* 800x525 */
 };
 #define N_MODES (sizeof(k_modes) / sizeof(k_modes[0]))
 #define MODE_PATH "/sd/system/hdmi_mode.txt"
@@ -669,53 +676,17 @@ static void send_clock(const pll_t *vc)
     send_cmd(b, sizeof(b));
 }
 
-/* Same timing search as M5GFX Panel_M5HDMI::_init_resolution (no half-clock mode). */
+/* Timing from the mode table.  When the game canvas is smaller than the mode (whole-number scaling), the
+ * unused pixels move into the porches, so the line and frame rates stay those of the mode. */
 static void init_resolution(int mem_w, int mem_h, int scale)
 {
+    const hdmi_mode_t *m = s_mode;
     pll_t vc;
-    const int32_t out_clock = (int32_t)get_pll(&vc, s_mode->clock);
-    const int32_t total = out_clock / s_mode->hz;
-    int vert_total = mem_h + 9;
-    int hori_total = total / vert_total;
-    int hori_tmp = hori_total, vert_tmp = vert_total;
-    int hori_min = mem_w + (32 + (mem_w >> (1 + scale)));
-    int hori_max = mem_w + (768 + (mem_w >> 3));
-    if (hori_tmp > hori_max) hori_tmp = hori_max;
+    get_pll(&vc, m->clock);
 
-    uint32_t diff = ~0u;
-    for (;;) {
-        int d1 = total - hori_tmp * vert_tmp;
-        uint32_t da = (uint32_t)abs(d1);
-        if (diff > da) {
-            diff = da;
-            hori_total = hori_tmp;
-            vert_total = vert_tmp;
-            if (diff == 0) break;
-        }
-        if (d1 >= 0) ++vert_tmp;
-        else if (--hori_tmp < hori_min) break;
-    }
-    if (hori_total <= hori_min) {
-        hori_total = hori_min;
-        ESP_LOGW(TAG, "video timing out of range for %dx%d", mem_w, mem_h);
-    }
-
-    int remain = vert_total - mem_h;
-    int sync = 1;
-    remain -= sync;
-    int porch = remain >> 1;
-    remain -= porch;
-    int v_front = porch, v_sync = sync, v_back = remain;
-
-    remain = hori_total - mem_w;
-    sync = 24 + (remain >> 8);
-    remain -= sync;
-    porch = (remain * 131) >> 8;
-    remain -= porch;
-    int h_front = porch, h_sync = sync, h_back = remain;
-
-    send_timing(CMD_VIDEO_TIMING_V, v_sync, v_back, mem_h, v_front);
-    send_timing(CMD_VIDEO_TIMING_H, h_sync, h_back, mem_w, h_front);
+    int xr = m->w - mem_w, yr = m->h - mem_h;
+    send_timing(CMD_VIDEO_TIMING_V, m->vs, m->vbp + (yr - yr / 2), mem_h, m->vfp + yr / 2);
+    send_timing(CMD_VIDEO_TIMING_H, m->hs, m->hbp + (xr - xr / 2), mem_w, m->hfp + xr / 2);
     send_scaling(scale, scale, mem_w, mem_h);
     send_clock(&vc);
 }
