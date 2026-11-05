@@ -52,7 +52,7 @@ static const char *TAG = "hdmi_out";
 
 #define LT_ADDR    0x39
 #define SPI_HOST_ID SPI2_HOST
-#define SPI_CHUNK  32768
+#define SPI_CHUNK  32704   /* multiple of 64, and < 2^18 bits: the P4 DMA limit is 262143 bits */
 
 /* FPGA command set */
 #define CMD_NOP           0x00
@@ -885,25 +885,28 @@ static bool bring_up(void)
             spi_down();
             return false;
         }
-        spi_down();
-        fpga_load(img, len);
-        free(img);
-        if (spi_up(wr_hz[wi], rd_hz[ri]) != ESP_OK) { ESP_LOGE(TAG, "SPI re-init failed"); return false; }
+        /* The first load after a firmware flash has been seen to leave the FPGA mute: load again. */
+        bool alive = false;
+        for (int attempt = 1; attempt <= 3 && !alive; ++attempt) {
+            spi_down();
+            fpga_load(img, len);
+            if (spi_up(wr_hz[wi], rd_hz[ri]) != ESP_OK) { ESP_LOGE(TAG, "SPI re-init failed"); free(img); return false; }
 
-        /* wait for the FPGA to come up: it reads 0xFFFFFFFF when idle */
-        int retry = 200;   /* ~2 s */
-        cs(0);
-        spi_read32();
-        uint32_t v;
-        do {
-            vTaskDelay(pdMS_TO_TICKS(10));
-            v = spi_read32();
-        } while (v != 0xFFFFFFFFu && --retry);
-        cs(1);
-        if (retry == 0) {
-            /* keep going: the ID read below says whether the FPGA is alive at all */
-            ESP_LOGW(TAG, "FPGA did not become idle (last read 0x%08x), trying the ID read anyway", (unsigned)v);
+            /* wait for the FPGA to come up: it reads 0xFFFFFFFF when idle */
+            int retry = 200;   /* ~2 s */
+            cs(0);
+            spi_read32();
+            uint32_t v;
+            do {
+                vTaskDelay(pdMS_TO_TICKS(10));
+                v = spi_read32();
+            } while (v != 0xFFFFFFFFu && --retry);
+            cs(1);
+            if (retry == 0) ESP_LOGW(TAG, "FPGA did not become idle (last read 0x%08x)", (unsigned)v);
+            alive = fpga_id_is_hd(fpga_read_id());
+            if (!alive) ESP_LOGW(TAG, "FPGA silent after load attempt %d", attempt);
         }
+        free(img);
     }
 
     int tries = 8;
