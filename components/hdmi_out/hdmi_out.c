@@ -35,6 +35,7 @@
 #include "freertos/FreeRTOS.h"
 #include "freertos/task.h"
 #include "freertos/semphr.h"
+#include "freertos/idf_additions.h"
 
 static const char *TAG = "hdmi_out";
 
@@ -826,6 +827,8 @@ static esp_err_t audio_init(void)
 {
     i2s_chan_config_t cc = I2S_CHANNEL_DEFAULT_CONFIG(I2S_NUM_1, I2S_ROLE_MASTER);
     cc.auto_clear = true;
+    cc.dma_desc_num = 3;        /* internal RAM is tight in the emulator apps: 3 x 240 frames is plenty */
+    cc.dma_frame_num = 240;
     esp_err_t e = i2s_new_channel(&cc, &s_i2s, NULL);
     if (e != ESP_OK) return e;
 
@@ -1030,7 +1033,9 @@ static void hdmi_task(void *arg)
     if (!s_audio_ok) ESP_LOGW(TAG, "HDMI audio init failed (0x%x), video only", ae);
 
     s_ready = true;
-    ESP_LOGI(TAG, "HDMI output ready%s", s_audio_ok ? " (audio on HDMI)" : "");
+    ESP_LOGI(TAG, "HDMI output ready%s; internal RAM free %u, largest block %u", s_audio_ok ? " (audio on HDMI)" : "",
+             (unsigned)heap_caps_get_free_size(MALLOC_CAP_INTERNAL | MALLOC_CAP_8BIT),
+             (unsigned)heap_caps_get_largest_free_block(MALLOC_CAP_INTERNAL | MALLOC_CAP_8BIT));
 
     vTaskDelay(pdMS_TO_TICKS(3000));
     lt_dump("3 s after init");
@@ -1073,7 +1078,8 @@ void hdmi_out_start(i2c_master_bus_handle_t i2c)
     if (s_started) return;
     s_started = true;
     s_bus = i2c;
-    if (xTaskCreate(hdmi_task, "hdmi_out", 8192, NULL, 4, &s_task) != pdPASS) {
+    /* stack in PSRAM: internal RAM is nearly full in the SNES app */
+    if (xTaskCreateWithCaps(hdmi_task, "hdmi_out", 8192, NULL, 4, &s_task, MALLOC_CAP_SPIRAM) != pdPASS) {
         s_started = false;
         ESP_LOGE(TAG, "task create failed");
     }
