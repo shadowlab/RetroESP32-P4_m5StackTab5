@@ -18,6 +18,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+#include <strings.h>
 
 #include "esp_log.h"
 #include "esp_timer.h"
@@ -66,8 +67,24 @@ static const char *TAG = "hdmi_out";
 #define CMD_VIDEO_TIMING_H 0xB1
 #define CMD_VIDEO_CLOCK   0xB2
 
-#define OUT_W 1280
-#define OUT_H 720
+/* Selectable output timings.  The pixel clock stays at or below the module's 74.25 MHz base clock
+ * (above that the FPGA needs its half-clock mode).  The mode is picked by name from
+ * /sd/system/hdmi_mode.txt, default 1280x720. */
+typedef struct { const char *name; uint16_t w, h; uint8_t hz; uint32_t clock; } hdmi_mode_t;
+static const hdmi_mode_t k_modes[] = {
+    { "1280x720",    1280, 720, 60, 74250000 },
+    { "1280x720@50", 1280, 720, 50, 74250000 },
+    { "1280x800",    1280, 800, 60, 71000000 },
+    { "1024x768",    1024, 768, 60, 65000000 },
+    { "800x600",      800, 600, 60, 40000000 },
+    { "640x480",      640, 480, 60, 25175000 },
+};
+#define N_MODES (sizeof(k_modes) / sizeof(k_modes[0]))
+#define MODE_PATH "/sd/system/hdmi_mode.txt"
+#define BASE_CLOCK 74250000
+static const hdmi_mode_t *s_mode = &k_modes[0];
+#define OUT_W (s_mode->w)
+#define OUT_H (s_mode->h)
 
 /* ───────────────────────── state ───────────────────────── */
 static volatile bool s_started;
@@ -606,18 +623,58 @@ static void send_scaling(int sx, int sy, int mem_w, int mem_h)
     send_cmd(b, sizeof(b));
 }
 
-/* Pixel clock 74.25 MHz: M5GFX's PLL search gives feedback 1, input 1, output 8 (VCO 594 MHz). */
-static void send_clock(void)
+typedef struct { uint32_t in_div, fb_div, out_div; } pll_t;
+
+/* Port of M5GFX getPllParams: input/feedback dividers approximate the target clock from the 74.25 MHz
+ * base, the output divider puts the VCO close to 800 MHz.  Returns the achieved pixel clock. */
+static uint32_t get_pll(pll_t *vc, uint32_t target)
 {
-    uint8_t b[9] = { CMD_VIDEO_CLOCK, 0, 1, 0, 1, 0, 8, 0, 0 };
+    uint32_t fb_clock = BASE_CLOCK, save_diff = ~0u, fb_div = 1;
+    uint32_t in_div = BASE_CLOCK / (target + 1);
+    if (in_div == 0) in_div = 1;
+    vc->fb_div = vc->in_div = 1;
+    for (;;) {
+        uint32_t tmp = fb_clock / in_div;
+        uint32_t diff = (uint32_t)abs((int32_t)target - (int32_t)tmp);
+        if (save_diff > diff) {
+            save_diff = diff;
+            vc->fb_div = fb_div;
+            vc->in_div = in_div;
+            if (diff == 0) break;
+        }
+        if (target < tmp) {
+            if (++in_div > 24) break;
+        } else {
+            if (++fb_div > 64) break;
+            fb_clock = BASE_CLOCK * fb_div;
+        }
+    }
+    uint32_t result = (uint32_t)((uint64_t)BASE_CLOCK * vc->fb_div / vc->in_div);
+    static const uint8_t odiv_tbl[] = { 2, 4, 8, 16, 32, 48, 64, 80, 96, 112, 128 };
+    save_diff = ~0u;
+    vc->out_div = 2;
+    for (size_t i = 0; i < sizeof(odiv_tbl); ++i) {
+        uint32_t diff = (uint32_t)abs((int32_t)(result * odiv_tbl[i]) - 800000000);
+        if (save_diff < diff) break;
+        save_diff = diff;
+        vc->out_div = odiv_tbl[i];
+    }
+    return result;
+}
+
+static void send_clock(const pll_t *vc)
+{
+    uint8_t b[9] = { CMD_VIDEO_CLOCK, 0, (uint8_t)vc->in_div, 0, (uint8_t)vc->fb_div, 0, (uint8_t)vc->out_div, 0, 0 };
     b[8] = sum_not(b, 8);
     send_cmd(b, sizeof(b));
 }
 
-/* Same timing search as M5GFX Panel_M5HDMI::_init_resolution at 60 Hz / 74.25 MHz. */
+/* Same timing search as M5GFX Panel_M5HDMI::_init_resolution (no half-clock mode). */
 static void init_resolution(int mem_w, int mem_h, int scale)
 {
-    const int32_t total = 74250000 / 60;
+    pll_t vc;
+    const int32_t out_clock = (int32_t)get_pll(&vc, s_mode->clock);
+    const int32_t total = out_clock / s_mode->hz;
     int vert_total = mem_h + 9;
     int hori_total = total / vert_total;
     int hori_tmp = hori_total, vert_tmp = vert_total;
@@ -660,7 +717,7 @@ static void init_resolution(int mem_w, int mem_h, int scale)
     send_timing(CMD_VIDEO_TIMING_V, v_sync, v_back, mem_h, v_front);
     send_timing(CMD_VIDEO_TIMING_H, h_sync, h_back, mem_w, h_front);
     send_scaling(scale, scale, mem_w, mem_h);
-    send_clock();
+    send_clock(&vc);
 }
 
 static void fpga_clear(int mem_w, int mem_h)
@@ -684,13 +741,15 @@ static void apply_mode(int scale)
 {
     s_canvas_w = OUT_W / scale;
     s_canvas_h = OUT_H / scale;
+    while ((s_canvas_w * scale) & 1) --s_canvas_w;     /* the FPGA wants an even output size */
+    while ((s_canvas_h * scale) & 1) --s_canvas_h;
     s_mem_w = s_canvas_w * scale;
     s_mem_h = s_canvas_h * scale;
     init_resolution(s_mem_w, s_mem_h, scale);
     fpga_clear(s_mem_w, s_mem_h);
     s_scale = scale;
     s_last_w = s_last_h = 0;
-    ESP_LOGI(TAG, "video mode: %dx%d output, %dx scale, %dx%d canvas", s_mem_w, s_mem_h, scale, s_canvas_w, s_canvas_h);
+    ESP_LOGI(TAG, "video mode %s: %dx%d output, %dx scale, %dx%d canvas", s_mode->name, s_mem_w, s_mem_h, scale, s_canvas_w, s_canvas_h);
 }
 
 /* One window write: CASET + RASET + WRITE_RAW_16, then w*h big-endian RGB565 pixels. */
@@ -872,6 +931,24 @@ void hdmi_out_audio_write(const int16_t *in, int frames, int rate)
 }
 
 /* ───────────────────────── bring-up and sender task ───────────────────────── */
+static void select_mode(void)
+{
+    char name[32] = "";
+    FILE *f = fopen(MODE_PATH, "r");
+    if (f) {
+        if (fscanf(f, "%31s", name) != 1) name[0] = 0;
+        fclose(f);
+    }
+    s_mode = &k_modes[0];
+    if (name[0]) {
+        bool found = false;
+        for (size_t i = 0; i < N_MODES; ++i) {
+            if (strcasecmp(name, k_modes[i].name) == 0) { s_mode = &k_modes[i]; found = true; break; }
+        }
+        if (!found) ESP_LOGW(TAG, "unknown mode '%s' in " MODE_PATH ", using %s", name, s_mode->name);
+    }
+}
+
 static bool bring_up(void)
 {
     uint8_t id[3];
@@ -943,6 +1020,7 @@ static bool bring_up(void)
              (unsigned)((fid >> 16) & 0xFF), (unsigned)((fid >> 24) & 0xFF),
              (unsigned)(wr_hz[wi] / 1000000), (unsigned)(rd_hz[ri] / 1000000));
 
+    select_mode();
     apply_mode(1);
     if (!lt_init()) return false;
     return true;

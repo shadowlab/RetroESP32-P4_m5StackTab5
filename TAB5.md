@@ -244,6 +244,8 @@ a PSRAM slot and sent by a background task; a newer frame replaces one that has 
 paced by the link (like the DSI path).
 
 **Limits.** SPI carries about 4-5 Mpixel/s: 256x224 games reach 60 fps, 320x224 Genesis / Neo Geo may drop frames.
+The output mode (default 1280x720 at 60 Hz) can be changed with `/system/hdmi_mode.txt` on the SD card, see `SDcard/system/README.md`; useful when an older monitor does not accept 720p.
+
 The launcher at 800x480 refreshes at about 10 Hz on HDMI. No HDMI audio before the module is up (the speaker plays
 until then).
 
