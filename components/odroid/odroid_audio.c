@@ -9,6 +9,9 @@
 #include "odroid_audio.h"
 #include "odroid_settings.h"
 #include "audio.h"
+#ifdef CONFIG_TAB5_HDMI_OUT
+#include "hdmi_out.h"
+#endif
 
 #include "esp_log.h"
 #include "freertos/FreeRTOS.h"
@@ -83,6 +86,12 @@ void odroid_audio_submit(short *stereoAudioBuffer, int frameCount)
         }
     }
 
+#ifdef CONFIG_TAB5_HDMI_OUT
+    if (hdmi_out_audio_active()) {   /* sound goes to the TV, the speaker stays quiet */
+        hdmi_out_audio_write(stereoAudioBuffer, frameCount, s_sample_rate);
+        return;
+    }
+#endif
     size_t len = total_samples * sizeof(short);
     audio_play_pcm(stereoAudioBuffer, len, s_sample_rate);
 }
@@ -92,6 +101,12 @@ void odroid_audio_submit_zero(void)
     /* Submit a small silent buffer to clear any DMA queues */
     short silence[512];
     memset(silence, 0, sizeof(silence));
+#ifdef CONFIG_TAB5_HDMI_OUT
+    if (hdmi_out_audio_active()) {
+        hdmi_out_audio_write(silence, sizeof(silence) / (2 * sizeof(short)), s_sample_rate);
+        return;
+    }
+#endif
     audio_play_pcm(silence, sizeof(silence), s_sample_rate);
 }
 

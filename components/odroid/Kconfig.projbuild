@@ -10,6 +10,16 @@ menu "RetroESP32 Platform"
             host for gamepads.  The GPIO gamepad is disabled (its pins are used by
             the audio codec).
 
+    config TAB5_HDMI_OUT
+        bool "Tab5: HDMI output through the Module Display 13.2"
+        default y
+        depends on BOARD_M5STACK_TAB5
+        help
+            When the M5Stack Module Display 13.2 sits on the M-Bus, mirror the picture to it and play
+            the sound on HDMI instead of the Tab5 speaker.  The module is found at boot; without it
+            nothing changes.  The module's FPGA image is read from /sd/system/hdmi_fpga.bin the first
+            time after it is powered up.
+
     config TAB5_DOUBLE_BUFFER
         bool "Tab5: double-buffered, tear-free display"
         default y
