@@ -54,7 +54,7 @@ static const char *TAG = "hdmi_out";
 
 #define LT_ADDR    0x39
 #define SPI_HOST_ID SPI2_HOST
-#define SPI_CHUNK  32704   /* multiple of 64, and < 2^18 bits: the P4 DMA limit is 262143 bits */
+#define SPI_CHUNK  2048    /* pixel data goes out through two internal bounce buffers of this size (see spi_write_stream) */
 
 /* FPGA command set */
 #define CMD_NOP           0x00
@@ -312,6 +312,7 @@ static void lt_dump(const char *why)
 static spi_device_handle_t s_spi_w;
 static spi_device_handle_t s_spi_r;
 static bool s_spi_bus_up;
+static uint8_t *s_bounce[2];      /* internal DMA-capable chunk buffers: the SPI driver cannot DMA straight from PSRAM here */
 static uint8_t *s_small;          /* 64-byte DMA-capable bounce buffer for short transfers */
 
 static inline void cs(int level) { gpio_set_level(PIN_CS, level); }
@@ -374,10 +375,44 @@ static void spi_down(void)
     }
 }
 
+static uint32_t s_wr_hz = 80000000;   /* current SPI write clock */
+static esp_err_t s_spi_err;       /* first SPI write error since the last check (diagnostic) */
+
 static void spi_write(const void *p, size_t n)
 {
     spi_transaction_t t = { .length = n * 8, .tx_buffer = p };
-    spi_device_transmit(s_spi_w, &t);
+    esp_err_t e = spi_device_transmit(s_spi_w, &t);
+    if (e != ESP_OK && s_spi_err == ESP_OK) s_spi_err = e;
+}
+
+/* PSRAM data is not DMA-capable for the SPI driver (SOC_DMA covers internal RAM only), which would otherwise
+ * allocate a bounce buffer of the whole transfer size for every call and fail silently when internal RAM is
+ * fragmented.  So pixels are copied chunk by chunk into two fixed buffers and sent with queued transactions. */
+static void spi_write_stream(const uint8_t *p, size_t n)
+{
+    spi_transaction_t t[2];
+    int inflight = 0, cur = 0;
+    for (size_t off = 0; off < n; off += SPI_CHUNK) {
+        size_t c = n - off;
+        if (c > SPI_CHUNK) c = SPI_CHUNK;
+        if (inflight == 2) {
+            spi_transaction_t *r;
+            if (spi_device_get_trans_result(s_spi_w, &r, portMAX_DELAY) != ESP_OK && s_spi_err == ESP_OK) s_spi_err = ESP_FAIL;
+            --inflight;
+        }
+        memcpy(s_bounce[cur], p + off, c);
+        memset(&t[cur], 0, sizeof(t[cur]));
+        t[cur].length = c * 8;
+        t[cur].tx_buffer = s_bounce[cur];
+        esp_err_t e = spi_device_queue_trans(s_spi_w, &t[cur], portMAX_DELAY);
+        if (e != ESP_OK) { if (s_spi_err == ESP_OK) s_spi_err = e; continue; }
+        ++inflight;
+        cur ^= 1;
+    }
+    while (inflight-- > 0) {
+        spi_transaction_t *r;
+        if (spi_device_get_trans_result(s_spi_w, &r, portMAX_DELAY) != ESP_OK && s_spi_err == ESP_OK) s_spi_err = ESP_FAIL;
+    }
 }
 
 /* short writes go through the internal bounce buffer (n <= 64) */
@@ -735,6 +770,8 @@ static void apply_mode(int scale)
     ESP_LOGI(TAG, "video mode %s: %dx%d output, %dx scale, %dx%d canvas", s_mode->name, s_mem_w, s_mem_h, scale, s_canvas_w, s_canvas_h);
 }
 
+static int s_fail_step;           /* 1: FPGA never idle before the frame, 2: never idle after it (diagnostic) */
+
 /* One window write: CASET + RASET + WRITE_RAW_16, then w*h big-endian RGB565 pixels. */
 static bool send_frame(const uint8_t *px, int w, int h)
 {
@@ -746,17 +783,13 @@ static bool send_frame(const uint8_t *px, int w, int h)
         CMD_WRITE_RAW_16,
     };
 
-    if (!wait_idle(50)) return false;
+    if (!wait_idle(50)) { s_fail_step = 1; return false; }
     cs(0);
     spi_write_small(hdr, sizeof(hdr));
 
     size_t total = (size_t)w * h * 2;
     size_t body = total & ~(size_t)63;
-    for (size_t off = 0; off < body; off += SPI_CHUNK) {
-        size_t n = body - off;
-        if (n > SPI_CHUNK) n = SPI_CHUNK;
-        spi_write(px + off, n);
-    }
+    spi_write_stream(px, body);
     if (total > body) spi_write_small(px + body, total - body);
 
     /* wait until the FPGA has taken all pixels (it answers 0x00 while busy) */
@@ -766,6 +799,7 @@ static bool send_frame(const uint8_t *px, int w, int h)
         if (spi_read8() != 0x00) { ok = true; break; }
     } while (esp_timer_get_time() < end);
     cs(1);
+    if (!ok) s_fail_step = 2;
     return ok;
 }
 
@@ -957,7 +991,8 @@ static bool bring_up(void)
     lt_wr_set(lt_reset, sizeof(lt_reset));
 
     s_small = heap_caps_aligned_alloc(64, 64, MALLOC_CAP_INTERNAL | MALLOC_CAP_DMA);
-    if (!s_small) return false;
+    for (int i = 0; i < 2; ++i) s_bounce[i] = heap_caps_aligned_alloc(64, SPI_CHUNK, MALLOC_CAP_INTERNAL | MALLOC_CAP_DMA);
+    if (!s_small || !s_bounce[0] || !s_bounce[1]) return false;
 
     static const uint32_t wr_hz[] = { 80000000, 66000000, 53000000, 40000000, 33000000, 26000000, 20000000, 13000000 };
     static const uint32_t rd_hz[] = { 16000000, 13000000, 10000000, 8000000, 6000000, 5000000, 4000000, 3000000 };
@@ -1012,6 +1047,7 @@ static bool bring_up(void)
         }
         spi_up(wr_hz[wi], rd_hz[ri]);
     }
+    s_wr_hz = wr_hz[wi];
     ESP_LOGI(TAG, "FPGA ID 'HD' v%u.%u, SPI write %u MHz / read %u MHz",
              (unsigned)((fid >> 16) & 0xFF), (unsigned)((fid >> 24) & 0xFF),
              (unsigned)(wr_hz[wi] / 1000000), (unsigned)(rd_hz[ri] / 1000000));
@@ -1051,7 +1087,7 @@ static void hdmi_task(void *arg)
     vTaskDelay(pdMS_TO_TICKS(3000));
     lt_dump("3 s after init");
 
-    int fails = 0;
+    int fails = 0, recoveries = 0;
     for (;;) {
         ulTaskNotifyTake(pdTRUE, portMAX_DELAY);
         for (;;) {
@@ -1072,9 +1108,22 @@ static void hdmi_task(void *arg)
             }
             if (send_frame(s_slot_buf[idx], w, h)) {
                 fails = 0;
-            } else if (++fails == 30) {
-                ESP_LOGE(TAG, "FPGA stopped answering, HDMI off");
-                s_ready = false;
+            } else if (++fails == 10) {
+                ESP_LOGW(TAG, "FPGA not answering (step %d, SPI err %s, scale %d, frame %dx%d, wr %u MHz, internal RAM free %u / largest %u)",
+                         s_fail_step, esp_err_to_name(s_spi_err), s_scale, w, h, (unsigned)(s_wr_hz / 1000000),
+                         (unsigned)heap_caps_get_free_size(MALLOC_CAP_INTERNAL | MALLOC_CAP_8BIT),
+                         (unsigned)heap_caps_get_largest_free_block(MALLOC_CAP_INTERNAL | MALLOC_CAP_8BIT));
+                s_spi_err = ESP_OK;
+                if (++recoveries > 6) {
+                    ESP_LOGE(TAG, "FPGA stopped answering, HDMI off");
+                    s_ready = false;
+                } else {
+                    /* try again at a lower SPI clock and with the video mode re-sent */
+                    if (recoveries > 1 && s_wr_hz > 20000000) s_wr_hz = s_wr_hz * 2 / 3;
+                    spi_up(s_wr_hz, 16000000);
+                    apply_mode(s_scale ? s_scale : 1);
+                    fails = 0;
+                }
             }
 
             xSemaphoreTake(s_lock, portMAX_DELAY);
