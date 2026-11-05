@@ -701,20 +701,31 @@ static void fpga_clear(int mem_w, int mem_h)
 }
 
 /* Largest integer scale whose canvas (1280/s x 720/s) still holds the frame. */
+/* Canvas (logical pixel area) for an integer scale: the FPGA output size is canvas * scale, and it wants
+ * widths that are a multiple of 16 and even heights (1278 and 1020 wide stalled it). */
+static void canvas_for(int scale, int *cw, int *ch)
+{
+    int w = OUT_W / scale, h = OUT_H / scale;
+    while (w > 1 && ((w * scale) & 15)) --w;
+    while (h > 1 && ((h * scale) & 1)) --h;
+    *cw = w;
+    *ch = h;
+}
+
+/* Largest integer scale whose canvas still holds the frame. */
 static int pick_scale(uint32_t w, uint32_t h)
 {
     for (int s = 8; s > 1; --s) {
-        if (w <= (uint32_t)(OUT_W / s) && h <= (uint32_t)(OUT_H / s)) return s;
+        int cw, ch;
+        canvas_for(s, &cw, &ch);
+        if (w <= (uint32_t)cw && h <= (uint32_t)ch) return s;
     }
     return 1;
 }
 
 static void apply_mode(int scale)
 {
-    s_canvas_w = OUT_W / scale;
-    s_canvas_h = OUT_H / scale;
-    while ((s_canvas_w * scale) & 1) --s_canvas_w;     /* the FPGA wants an even output size */
-    while ((s_canvas_h * scale) & 1) --s_canvas_h;
+    canvas_for(scale, &s_canvas_w, &s_canvas_h);
     s_mem_w = s_canvas_w * scale;
     s_mem_h = s_canvas_h * scale;
     init_resolution(s_mem_w, s_mem_h, scale);
