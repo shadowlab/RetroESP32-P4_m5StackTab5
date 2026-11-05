@@ -267,6 +267,22 @@ static bool lt_init(void)
     return false;
 }
 
+/* Diagnostic: dump the transmitter registers (banks 0x80-0x84) to the log. */
+static void lt_dump(const char *why)
+{
+    static const uint8_t banks[] = { 0x80, 0x81, 0x82, 0x84 };
+    ESP_LOGI(TAG, "LT8618 register dump (%s)", why);
+    for (size_t b = 0; b < sizeof(banks); ++b) {
+        lt_wr(0xff, banks[b]);
+        for (int r = 0; r < 256; r += 16) {
+            char line[16 * 3 + 1];
+            for (int i = 0; i < 16; ++i) snprintf(line + i * 3, 4, "%02x ", lt_rd8((uint8_t)(r + i)));
+            ESP_LOGI(TAG, "LT %02x:%02x  %s", banks[b], r, line);
+        }
+    }
+    lt_wr(0xff, 0x82);
+}
+
 /* ───────────────────────── SPI to the FPGA ───────────────────────── */
 static spi_device_handle_t s_spi_w;
 static spi_device_handle_t s_spi_r;
@@ -951,6 +967,9 @@ static void hdmi_task(void *arg)
 
     s_ready = true;
     ESP_LOGI(TAG, "HDMI output ready%s", s_audio_ok ? " (audio on HDMI)" : "");
+
+    vTaskDelay(pdMS_TO_TICKS(3000));
+    lt_dump("3 s after init");
 
     int fails = 0;
     for (;;) {
