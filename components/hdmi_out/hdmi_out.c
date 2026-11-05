@@ -543,7 +543,7 @@ static void fpga_load(const uint8_t *img, size_t len)
     jt_move(TAP_DREXIT1, TAP_IDLE);
     jt_inst(ISC_DISABLE);
     jt_inst(ISC_NOOP);
-    ESP_LOGI(TAG, "FPGA image written");
+    ESP_LOGI(TAG, "FPGA image written, JTAG status 0x%08x", (unsigned)jt_status());
 }
 
 static uint8_t *read_file(const char *path, size_t *len)
@@ -876,6 +876,7 @@ static bool bring_up(void)
     if (spi_up(wr_hz[wi], rd_hz[ri]) != ESP_OK) { ESP_LOGE(TAG, "SPI init failed"); return false; }
 
     uint32_t fid = fpga_read_id();
+    ESP_LOGI(TAG, "FPGA ID before load: 0x%08x", (unsigned)fid);
     if (!fpga_id_is_hd(fid)) {
         size_t len = 0;
         uint8_t *img = read_file(FPGA_IMAGE_PATH, &len);
@@ -890,7 +891,7 @@ static bool bring_up(void)
         if (spi_up(wr_hz[wi], rd_hz[ri]) != ESP_OK) { ESP_LOGE(TAG, "SPI re-init failed"); return false; }
 
         /* wait for the FPGA to come up: it reads 0xFFFFFFFF when idle */
-        int retry = 1024;
+        int retry = 200;   /* ~2 s */
         cs(0);
         spi_read32();
         uint32_t v;
@@ -899,14 +900,19 @@ static bool bring_up(void)
             v = spi_read32();
         } while (v != 0xFFFFFFFFu && --retry);
         cs(1);
-        if (retry == 0) { ESP_LOGW(TAG, "FPGA did not become idle"); return false; }
+        if (retry == 0) {
+            /* keep going: the ID read below says whether the FPGA is alive at all */
+            ESP_LOGW(TAG, "FPGA did not become idle (last read 0x%08x), trying the ID read anyway", (unsigned)v);
+        }
     }
 
     int tries = 8;
     for (;;) {
         fid = fpga_read_id();
         if (fpga_id_is_hd(fid)) break;
-        if (--tries == 0) { ESP_LOGW(TAG, "FPGA ID read failed (last 0x%08x)", (unsigned)fid); return false; }
+        ESP_LOGW(TAG, "FPGA ID read 0x%08x (SPI write %u / read %u MHz)", (unsigned)fid,
+                 (unsigned)(wr_hz[wi] / 1000000), (unsigned)(rd_hz[ri] / 1000000));
+        if (--tries == 0) { ESP_LOGW(TAG, "FPGA ID read failed"); return false; }
         if (fid == 0 || fid == 0xFFFFFFFFu) {       /* MISO does not change: assume the command was lost */
             if (wi + 1 < (int)(sizeof(wr_hz) / sizeof(wr_hz[0]))) ++wi;
         } else {
