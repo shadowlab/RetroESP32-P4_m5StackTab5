@@ -812,9 +812,14 @@ void hdmi_out_audio_write(const int16_t *in, int frames, int rate)
 {
     if (!hdmi_out_audio_active() || !in || frames <= 0 || rate <= 0) return;
 
+    /* PSRAM, not a static array: the SNES app has no spare internal RAM (it links by a few KB) */
     enum { OUT_FRAMES = 1024 };
-    static int16_t out[OUT_FRAMES * 2];
+    static int16_t *out;
     size_t written;
+    if (!out) {
+        out = heap_caps_malloc(OUT_FRAMES * 2 * sizeof(int16_t), MALLOC_CAP_SPIRAM);
+        if (!out) return;
+    }
 
     if (rate == 48000) {
         for (int off = 0; off < frames; off += OUT_FRAMES) {
