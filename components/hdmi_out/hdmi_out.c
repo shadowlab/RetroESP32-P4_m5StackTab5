@@ -902,12 +902,23 @@ void hdmi_out_audio_write(const int16_t *in, int frames, int rate)
 }
 
 /* ───────────────────────── bring-up and sender task ───────────────────────── */
+/* Experiment knobs from the mode file: "dvi" clears the HDMI bit of LT8618 reg 82:d6; "d6=hh" / "d7=hh" write raw. */
+static int s_d6_override = -1, s_d7_override = -1;
+static bool s_dvi;
+
 static void select_mode(void)
 {
     char name[32] = "";
     FILE *f = fopen(MODE_PATH, "r");
     if (f) {
         if (fscanf(f, "%31s", name) != 1) name[0] = 0;
+        char opt[16];
+        while (fscanf(f, "%15s", opt) == 1) {
+            unsigned v;
+            if (strcasecmp(opt, "dvi") == 0) s_dvi = true;
+            else if (sscanf(opt, "d6=%x", &v) == 1) s_d6_override = (int)(v & 0xff);
+            else if (sscanf(opt, "d7=%x", &v) == 1) s_d7_override = (int)(v & 0xff);
+        }
         fclose(f);
     }
     s_mode = &k_modes[0];
@@ -994,6 +1005,10 @@ static bool bring_up(void)
     select_mode();
     apply_mode(1);
     if (!lt_init()) return false;
+    lt_wr(0xff, 0x82);
+    if (s_dvi) { uint8_t d6 = lt_rd8(0xd6); lt_wr(0xd6, d6 & 0x7f); ESP_LOGI(TAG, "DVI mode: 82:d6 %02x -> %02x", d6, d6 & 0x7f); }
+    if (s_d6_override >= 0) { lt_wr(0xd6, (uint8_t)s_d6_override); ESP_LOGI(TAG, "82:d6 = %02x", s_d6_override); }
+    if (s_d7_override >= 0) { lt_wr(0xd7, (uint8_t)s_d7_override); ESP_LOGI(TAG, "82:d7 = %02x", s_d7_override); }
     return true;
 }
 

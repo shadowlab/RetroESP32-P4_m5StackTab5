@@ -14,3 +14,5 @@ Output timing for the HDMI module. Put one mode name on the first line of `/syst
 `1280x720` (default), `1280x720@50`, `1280x800`, `1024x768`, `800x600` or `640x480`. Use one your display lists
 if it shows no picture at 1280x720 (older PC monitors on a DVI adapter often do not accept 720p). Games are scaled by whole
 numbers to fit the chosen mode; a frame bigger than the mode (the 800x480 launcher in `640x480`) is not shown.
+
+Experiment options after the mode name on the same line: `dvi` (clear the HDMI bit of the transmitter, for DVI monitors), `d6=hh` / `d7=hh` (write LT8618 registers 82:d6 / 82:d7 directly). Example: `1024x768 dvi`.
