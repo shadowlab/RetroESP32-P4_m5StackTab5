@@ -1,0 +1,3 @@
+# SNES is the tightest app for internal RAM: keep the SPI master ISR in flash
+# (the HDMI module driver is the only SPI master user here).
+# CONFIG_SPI_MASTER_ISR_IN_IRAM is not set
