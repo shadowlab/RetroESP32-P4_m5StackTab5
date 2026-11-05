@@ -80,8 +80,8 @@ static i2c_master_bus_handle_t s_bus;
  * 0 V and the I2C peripheral can read it as a NACK (M5GFX documents this).  The normal driver is
  * tried first; when its reads fail the registers are accessed by bit-banging the same two pins
  * with the ACK ignored. */
-typedef enum { I2C_NONE, I2C_DRIVER, I2C_BITBANG } i2c_mode_t;
-static i2c_mode_t s_i2c_mode;
+typedef enum { I2C_NONE, I2C_DRIVER, I2C_BITBANG } lt_bus_t;
+static lt_bus_t s_i2c_mode;
 static i2c_master_dev_handle_t s_lt_dev;
 
 static inline void bb_delay(void) { esp_rom_delay_us(3); }
