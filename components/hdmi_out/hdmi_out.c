@@ -86,10 +86,16 @@ static const hdmi_mode_t k_modes[] = {
     { "1024x768",    1024, 768, 65000000,  24, 136, 160,  3, 6, 29 },   /* 1344x806 */
     { "800x600",      800, 600, 40000000,  40, 128,  88,  1, 4, 23 },   /* 1056x628 */
     { "640x480",      640, 480, 25175000,  16,  96,  48, 10, 2, 33 },   /* 800x525 */
+    /* Above the 74.25 MHz base clock the FPGA runs in half-clock mode (two pixels per FPGA clock): the
+     * horizontal resolution of its frame buffer is halved, so only even scales are possible there. */
+    { "1440x900",   1440,  900,  88750000,  48,  32,  80,  3, 6, 17 },  /* CVT reduced blanking, 1600x926 */
+    { "1680x1050",  1680, 1050, 119000000,  48,  32,  80,  3, 6, 21 },  /* CVT reduced blanking, 1840x1080 */
+    { "1920x1080",  1920, 1080, 148500000,  88,  44, 148,  4, 5, 36 },  /* CEA 1080p60, 2200x1125 */
 };
 #define N_MODES (sizeof(k_modes) / sizeof(k_modes[0]))
 #define MODE_PATH "/sd/system/hdmi_mode.txt"
 #define BASE_CLOCK 74250000
+#define MODE_HALF (s_mode->clock > BASE_CLOCK)
 static const hdmi_mode_t *s_mode = &k_modes[0];
 #define OUT_W (s_mode->w)
 #define OUT_H (s_mode->h)
@@ -707,7 +713,8 @@ static uint32_t get_pll(pll_t *vc, uint32_t target)
 
 static void send_clock(const pll_t *vc)
 {
-    uint8_t b[9] = { CMD_VIDEO_CLOCK, 0, (uint8_t)vc->in_div, 0, (uint8_t)vc->fb_div, 0, (uint8_t)vc->out_div, 0, 0 };
+    uint8_t b[9] = { CMD_VIDEO_CLOCK, 0, (uint8_t)vc->in_div, 0, (uint8_t)vc->fb_div, 0, (uint8_t)vc->out_div,
+                     (uint8_t)(MODE_HALF ? 1 : 0), 0 };
     b[8] = sum_not(b, 8);
     send_cmd(b, sizeof(b));
 }
@@ -721,15 +728,21 @@ static void init_resolution(int mem_w, int mem_h, int scale)
     get_pll(&vc, m->clock);
 
     int xr = m->w - mem_w, yr = m->h - mem_h;
+    int hs = m->hs, hbp = m->hbp + (xr - xr / 2), hfp = m->hfp + xr / 2, hact = mem_w;
+    int sx = scale;
+    if (MODE_HALF) {      /* the FPGA counts in units of two pixels */
+        hs /= 2; hbp /= 2; hfp /= 2; hact /= 2;
+        sx = scale / 2;
+    }
     send_timing(CMD_VIDEO_TIMING_V, m->vs, m->vbp + (yr - yr / 2), mem_h, m->vfp + yr / 2);
-    send_timing(CMD_VIDEO_TIMING_H, m->hs, m->hbp + (xr - xr / 2), mem_w, m->hfp + xr / 2);
-    send_scaling(scale, scale, mem_w, mem_h);
+    send_timing(CMD_VIDEO_TIMING_H, hs, hbp, hact, hfp);
+    send_scaling(sx, scale, hact, mem_h);
     send_clock(&vc);
 }
 
 static void fpga_clear(int mem_w, int mem_h)
 {
-    int xe = mem_w - 1, ye = mem_h - 1;
+    int xe = (MODE_HALF ? mem_w / 2 : mem_w) - 1, ye = mem_h - 1;
     uint8_t b[10] = { CMD_FILLRECT_8, 0, 0, 0, 0, (uint8_t)(xe >> 8), (uint8_t)xe,
                       (uint8_t)(ye >> 8), (uint8_t)ye, 0x00 };
     send_cmd(b, sizeof(b));
@@ -741,7 +754,8 @@ static void fpga_clear(int mem_w, int mem_h)
 static void canvas_for(int scale, int *cw, int *ch)
 {
     int w = OUT_W / scale, h = OUT_H / scale;
-    while (w > 1 && ((w * scale) & 15)) --w;
+    int align = MODE_HALF ? 31 : 15;
+    while (w > 1 && ((w * scale) & align)) --w;
     while (h > 1 && ((h * scale) & 1)) --h;
     *cw = w;
     *ch = h;
@@ -751,10 +765,12 @@ static void canvas_for(int scale, int *cw, int *ch)
 static int pick_scale(uint32_t w, uint32_t h)
 {
     for (int s = 8; s > 1; --s) {
+        if (MODE_HALF && (s & 1)) continue;
         int cw, ch;
         canvas_for(s, &cw, &ch);
         if (w <= (uint32_t)cw && h <= (uint32_t)ch) return s;
     }
+    if (MODE_HALF) return 0;      /* scale 1 is not possible in half-clock mode: the frame is not shown */
     return 1;
 }
 
@@ -1053,7 +1069,7 @@ static bool bring_up(void)
              (unsigned)(wr_hz[wi] / 1000000), (unsigned)(rd_hz[ri] / 1000000));
 
     select_mode();
-    apply_mode(1);
+    apply_mode(MODE_HALF ? 2 : 1);
     if (!lt_init()) return false;
     lt_wr(0xff, 0x82);
     if (s_dvi) { uint8_t d6 = lt_rd8(0xd6); lt_wr(0xd6, d6 & 0x7f); ESP_LOGI(TAG, "DVI mode: 82:d6 %02x -> %02x", d6, d6 & 0x7f); }
@@ -1100,6 +1116,12 @@ static void hdmi_task(void *arg)
 
             int w = s_slot_w[idx], h = s_slot_h[idx];
             int scale = pick_scale(w, h);
+            if (scale == 0) {         /* does not fit this mode at any possible scale */
+                xSemaphoreTake(s_lock, portMAX_DELAY);
+                s_inflight = -1;
+                xSemaphoreGive(s_lock);
+                continue;
+            }
             if (scale != s_scale) apply_mode(scale);
             if (w != s_last_w || h != s_last_h) {
                 fpga_clear(s_mem_w, s_mem_h);
@@ -1121,7 +1143,7 @@ static void hdmi_task(void *arg)
                     /* try again at a lower SPI clock and with the video mode re-sent */
                     if (recoveries > 1 && s_wr_hz > 20000000) s_wr_hz = s_wr_hz * 2 / 3;
                     spi_up(s_wr_hz, 16000000);
-                    apply_mode(s_scale ? s_scale : 1);
+                    apply_mode(s_scale ? s_scale : (MODE_HALF ? 2 : 1));
                     fails = 0;
                 }
             }
