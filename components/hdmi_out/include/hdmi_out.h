@@ -13,6 +13,7 @@
 
 #include <stdbool.h>
 #include <stdint.h>
+#include <stddef.h>
 #include "driver/i2c_master.h"
 
 #ifdef __cplusplus
@@ -45,6 +46,13 @@ bool hdmi_out_audio_active(void);
 
 /** Play 16-bit stereo PCM on HDMI (resampled to 48 kHz).  Blocks at the audio rate. */
 void hdmi_out_audio_write(const int16_t *stereo, int frames, int sample_rate);
+
+/* Video mode choice, stored in /sd/system/hdmi_mode.txt (read at the next boot).  Entries are the modes
+ * of the table, each once for HDMI and once for a DVI monitor (HDMI bit off): entry = 2 * mode + dvi. */
+int hdmi_out_mode_count(void);                          /* number of entries */
+void hdmi_out_mode_label(int entry, char *buf, size_t n);   /* e.g. "1680x1050 DVI" */
+int hdmi_out_mode_saved(void);                          /* entry now stored on the SD card (default 0) */
+bool hdmi_out_mode_save(int entry);                     /* write the file, true on success */
 
 #ifdef __cplusplus
 }

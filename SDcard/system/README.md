@@ -16,3 +16,7 @@ if it shows no picture at 1280x720 (older PC monitors on a DVI adapter often do 
 numbers to fit the chosen mode; a frame bigger than the mode (the 800x480 launcher in `640x480`) is not shown.
 
 Experiment options after the mode name on the same line: `dvi` (clear the HDMI bit of the transmitter, for DVI monitors), `d6=hh` / `d7=hh` (write LT8618 registers 82:d6 / 82:d7 directly). Example: `1024x768 dvi`.
+
+## Choosing the mode from the launcher
+
+Open Settings in the launcher and use the last row ("HDMI <mode>"): LEFT/RIGHT cycle through the modes (each also exists as a "DVI" variant for HDMI-to-DVI cables), and A saves the choice to `hdmi_mode.txt` and restarts. Editing the file by hand still works for the `d6=`/`d7=` options.

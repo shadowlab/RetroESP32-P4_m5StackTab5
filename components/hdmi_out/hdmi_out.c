@@ -1171,3 +1171,42 @@ bool hdmi_out_ready(void)
 {
     return s_ready;
 }
+
+
+/* ───────────────────────── mode choice (settings page) ───────────────────────── */
+int hdmi_out_mode_count(void)
+{
+    return (int)N_MODES * 2;
+}
+
+void hdmi_out_mode_label(int entry, char *buf, size_t n)
+{
+    if (entry < 0 || entry >= hdmi_out_mode_count()) entry = 0;
+    snprintf(buf, n, "%s%s", k_modes[entry / 2].name, (entry & 1) ? " DVI" : "");
+}
+
+int hdmi_out_mode_saved(void)
+{
+    char name[32] = "", opt[16];
+    int dvi = 0;
+    FILE *f = fopen(MODE_PATH, "r");
+    if (!f) return 0;
+    if (fscanf(f, "%31s", name) != 1) name[0] = 0;
+    while (fscanf(f, "%15s", opt) == 1) {
+        if (strcasecmp(opt, "dvi") == 0) dvi = 1;
+    }
+    fclose(f);
+    for (size_t i = 0; i < N_MODES; ++i) {
+        if (strcasecmp(name, k_modes[i].name) == 0) return (int)i * 2 + dvi;
+    }
+    return 0;
+}
+
+bool hdmi_out_mode_save(int entry)
+{
+    if (entry < 0 || entry >= hdmi_out_mode_count()) return false;
+    FILE *f = fopen(MODE_PATH, "w");
+    if (!f) return false;
+    fprintf(f, "%s%s\n", k_modes[entry / 2].name, (entry & 1) ? " dvi" : "");
+    return fclose(f) == 0;
+}
