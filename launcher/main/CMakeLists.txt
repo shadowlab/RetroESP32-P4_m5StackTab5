@@ -7,7 +7,7 @@ idf_component_register(
              driver esp_lcd esp_psram fatfs vfs sdmmc nvs_flash
              esp_partition esp_app_format esp_event app_update
              psram_app_loader serial_upload hal soc
-             tab5_board esp_wifi esp_netif esp_http_server
+             tab5_board hdmi_out esp_wifi esp_netif esp_http_server
 )
 
 # The original RetroESP32 code uses unsafe sprintf patterns.

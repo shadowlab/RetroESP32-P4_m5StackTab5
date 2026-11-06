@@ -155,6 +155,9 @@ jobs:
     permissions:
       contents: write
     steps:
+      - uses: actions/checkout@v5
+        with:
+          sparse-checkout: SDcard/system
       - uses: actions/download-artifact@v7
         with:
           name: RetroESP32_P4_Tab5-idf5.5.2
@@ -168,6 +171,7 @@ jobs:
           RUN_NUMBER: ${{ github.run_number }}
           COMMIT_MSG: ${{ github.event.head_commit.message }}
         run: |
+          cp SDcard/system/hdmi_fpga.bin dist/hdmi_fpga.bin   # FPGA image for the HDMI module, goes on the SD card
           cd dist
           if [ "$REF_TYPE" = tag ]; then
             TAG="$REF_NAME"                       # versioned release: tab5-v1.2.0
@@ -205,6 +209,8 @@ jobs:
             echo "python -m esptool --chip esp32p4 -b 460800 write_flash 0x0 $main"
             echo '```'
             echo
+            echo "Using the Module Display 13.2 for HDMI out? Copy \`hdmi_fpga.bin\` (attached) to \`/system/hdmi_fpga.bin\` on the SD card."
+            echo
             echo "Build steps, the hardware map and a first-boot checklist are in [TAB5.md](https://github.com/$GITHUB_REPOSITORY/blob/$GITHUB_SHA/TAB5.md)."
             if [ ${#prerelease[@]} -ne 0 ]; then
               echo
@@ -224,12 +230,12 @@ jobs:
 
           if gh release view "$TAG" --repo "$GITHUB_REPOSITORY" > /dev/null 2>&1; then
             # release already drafted/published on GitHub (which also creates the tag): attach the images
-            gh release upload "$TAG" --repo "$GITHUB_REPOSITORY" --clobber "$main" RetroESP32_P4_Tab5.bin SHA256SUMS
+            gh release upload "$TAG" --repo "$GITHUB_REPOSITORY" --clobber "$main" RetroESP32_P4_Tab5.bin SHA256SUMS hdmi_fpga.bin
             gh release edit "$TAG" --repo "$GITHUB_REPOSITORY" --notes-file notes.md
           else
             verify=(--verify-tag)               # tag pushes: the tag exists; main builds: create it here
             [ "$REF_TYPE" = tag ] || verify=(--target "$GITHUB_SHA")
             gh release create "$TAG" --repo "$GITHUB_REPOSITORY" "${verify[@]}" \
               --title "$title" --notes-file notes.md "${prerelease[@]}" \
-              "$main" RetroESP32_P4_Tab5.bin SHA256SUMS
+              "$main" RetroESP32_P4_Tab5.bin SHA256SUMS hdmi_fpga.bin
           fi

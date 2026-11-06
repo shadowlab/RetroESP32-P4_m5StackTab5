@@ -14,6 +14,9 @@
 #ifdef CONFIG_BOARD_M5STACK_TAB5
 #include "tab5_board.h"
 #include "tab5_pad.h"
+#ifdef CONFIG_TAB5_HDMI_OUT
+#include "hdmi_out.h"
+#endif
 #include <math.h>
 #endif
 
@@ -130,6 +133,10 @@ static esp_err_t tab5_present(const uint16_t *src, uint32_t in_w, uint32_t in_h,
                               float legacy_sx, float legacy_sy, float factor, bool byte_swap,
                               bool may_drop)
 {
+#ifdef CONFIG_TAB5_HDMI_OUT
+    /* mirror to the Module Display (no-op without it); byte_swap marks big-endian pixels */
+    hdmi_out_present(src, in_w, in_h, byte_swap);
+#endif
     void *fb = tab5_display_begin_frame(may_drop);
     if (!fb) return tab5_display_fb_count() ? ESP_OK /* dropped */ : ESP_ERR_INVALID_STATE;
 

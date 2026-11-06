@@ -416,7 +416,17 @@ static void snes_save_sram(void)
 
     FILE *f = fopen(path, "wb");
     if (f) {
-        size_t n = fwrite(Memory.SRAM, 1, sram_bytes, f);
+        /* 4 KB pieces: a PSRAM buffer is copied through an internal DMA bounce buffer of the same size,
+         * and a big contiguous block is often not left in internal RAM at the end of a game */
+        size_t n = 0;
+        while (n < (size_t)sram_bytes) {
+            size_t part = (size_t)sram_bytes - n;
+            if (part > 4096) part = 4096;
+            size_t w = fwrite((const uint8_t *)Memory.SRAM + n, 1, part, f);
+            n += w;
+            if (w != part) break;
+            fflush(f);
+        }
         fclose(f);
         ESP_LOGI(TAG, "SRAM saved: %d bytes to %s", (int)n, path);
     } else {

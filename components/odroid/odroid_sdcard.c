@@ -7,6 +7,10 @@
 
 #include "odroid_sdcard.h"
 #include "pins_config.h"
+#ifdef CONFIG_TAB5_HDMI_OUT
+#include "hdmi_out.h"
+#include "odroid_system.h"
+#endif
 
 #include <string.h>
 #include "esp_log.h"
@@ -111,6 +115,10 @@ esp_err_t odroid_sdcard_open(const char* base_path)
             s_mounted = true;
             s_card = card;
             strlcpy(s_base_path, base_path, sizeof(s_base_path));
+#ifdef CONFIG_TAB5_HDMI_OUT
+            /* the FPGA image lives on the card; the call returns at once and does nothing without the module */
+            hdmi_out_start((i2c_master_bus_handle_t)odroid_system_get_i2c_bus());
+#endif
             return ESP_OK;
         }
 

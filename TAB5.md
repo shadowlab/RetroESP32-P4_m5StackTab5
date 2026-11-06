@@ -219,6 +219,40 @@ is deleted rather than left half-written. Folders are created as needed.
 * File names are passed through as they are; names with characters outside ASCII may not come out right
   on the card (FatFs runs with its default code page).
 
+## HDMI output (Module Display 13.2)
+
+The [M5Stack Module Display 13.2](https://docs.m5stack.com/en/module/Module13.2_Display) plugs into the Tab5's
+M-Bus and gives HDMI picture and sound. The firmware mirrors what the Tab5 shows (launcher, games, PAPP apps) and,
+while the module is up, plays the game sound on HDMI instead of the Tab5 speaker. Nothing changes without the module
+(it is looked for at boot; switch: `CONFIG_TAB5_HDMI_OUT`, default on).
+
+**Setup:** copy the `SDcard/system` folder to the SD card so the file is `/system/hdmi_fpga.bin`. The module's FPGA
+has no flash: the firmware loads that image over JTAG (about 2 s) the first time after the module gets power, and
+only reads the file again after a power cycle. The module needs its own 9-24 V supply.
+
+| Part | Tab5 pins (M-Bus) | Notes |
+|---|---|---|
+| Video | SPI SCLK 5, MOSI 18, MISO 19, CS 48 | 80 MHz, falls back to lower clocks if the FPGA does not answer |
+| HDMI transmitter | I2C SDA 31 / SCL 32 (LT8618 at 0x39) | falls back to bit-banged I2C with the ACK ignored (the module's series resistors make the ACK unreliable on the Tab5) |
+| Audio | I2S1: BCK 2, DATA 47, LRCK 35 | 48 kHz stereo; games are resampled to 48 kHz |
+
+**Picture.** The module keeps its own frame buffer and scales it by an integer factor, so each frame is sent at the
+game's native size (NES 256x224 = 115 KB) and the module enlarges it on a 1280x720 signal: the largest whole factor
+that fits, centred with black borders. Game Boy / Game Gear 5x, NES / SNES / Master System / Genesis / Neo Geo and
+PAPP games 3x, the launcher 1x. For factors that do not divide 1280 (3x) the output is 1278x720. Frames are copied into
+a PSRAM slot and sent by a background task; a newer frame replaces one that has not been sent, so the emulator is never
+paced by the link (like the DSI path).
+
+**Limits.** SPI carries about 4-5 Mpixel/s: 256x224 games reach 60 fps, 320x224 Genesis / Neo Geo may drop frames.
+The output mode (default 1280x720 at 60 Hz) can be changed with `/system/hdmi_mode.txt` on the SD card, see `SDcard/system/README.md`; useful when an older monitor does not accept 720p.
+
+The launcher at 800x480 refreshes at about 10 Hz on HDMI. No HDMI audio before the module is up (the speaker plays
+until then).
+
+**Credits.** The module protocol, video timing and LT8618 tables follow M5GFX's `Panel_M5HDMI` (MIT, see
+`components/hdmi_out/LICENSE.m5gfx`). The FPGA image comes from
+[ciniml/atom_display_fpga](https://github.com/ciniml/atom_display_fpga) (GPL v3; see `SDcard/system/README.md`).
+
 ## Building
 
 ```bash

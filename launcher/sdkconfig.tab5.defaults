@@ -58,3 +58,7 @@ CONFIG_LWIP_TCP_SND_BUF_DEFAULT=65534
 CONFIG_LWIP_TCP_WND_DEFAULT=65534
 CONFIG_LWIP_TCP_RECVMBOX_SIZE=64
 CONFIG_LWIP_TCPIP_RECVMBOX_SIZE=64
+
+# The crash-guard timer callback (app_common) writes NVS from the timer task; with the default 2 KB stack that
+# overflowed (stack protection fault ~13.5 s after launch of an app, when NVS had to rewrite a flash page).
+CONFIG_FREERTOS_TIMER_TASK_STACK_DEPTH=4096

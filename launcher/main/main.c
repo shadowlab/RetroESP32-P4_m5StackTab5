@@ -41,6 +41,7 @@
   const int32_t BRIGHTNESS_LEVELS[10] = {10,20,30,40,50,60,70,80,90,100};
   int8_t USER;
   int8_t SETTING;
+  int HDMI_SEL = -1;      /* HDMI mode entry shown on the settings page (see hdmi_out_mode_label) */
   int8_t COLOR;
   int8_t COVER;
   uint32_t currentDuty;
@@ -834,13 +835,26 @@
     draw_mask(x,y-1,400,38);
     draw_text(x,y,(char *)"USB DRIVE",false, SETTING == 4 ? true : false, false);
 
-    y+=42;
+    /* from here the rows are 38 px apart so that the eighth still fits the screen */
+    y+=38;
     draw_mask(x,y-1,400,38);
     draw_text(x,y,(char *)"WI-FI TRANSFER",false, SETTING == 5 ? true : false, false);
 
-    y+=42;
+    y+=38;
     draw_mask(x,y-1,400,38);
     draw_text(x,y,(char *)"SLEEP (KEEPS CHARGING)",false, SETTING == 6 ? true : false, false);
+#if CONFIG_TAB5_HDMI_OUT
+    y+=38;
+    draw_mask(x,y-1,400,38);
+    if (HDMI_SEL < 0) HDMI_SEL = hdmi_out_mode_saved();
+    {
+      char label[48];
+      char mode[24];
+      hdmi_out_mode_label(HDMI_SEL, mode, sizeof(mode));
+      snprintf(label, sizeof(label), "HDMI %s%s", mode, HDMI_SEL == hdmi_out_mode_saved() ? "" : " (A=APPLY)");
+      draw_text(x,y,label,false, SETTING == 7 ? true : false, false);
+    }
+#endif
 #endif
 
     display_flush();
@@ -940,7 +954,11 @@
       vTaskDelay(pdMS_TO_TICKS(50));
     }
   }
+#if CONFIG_TAB5_HDMI_OUT
+  #define SETTING_LAST 7
+#else
   #define SETTING_LAST 6
+#endif
 #else
   #define SETTING_LAST 3
 #endif
@@ -5310,6 +5328,9 @@
             /* Settings adjustments: LEFT decreases */
             if (SETTING == 1 && VOLUME > 0) { VOLUME--; set_volume(); usleep(200000); }
             if (SETTING == 2 && BRIGHTNESS > 0) { BRIGHTNESS--; set_brightness(); usleep(200000); }
+#if CONFIG_BOARD_M5STACK_TAB5 && CONFIG_TAB5_HDMI_OUT
+            if (SETTING == 7) { HDMI_SEL = (HDMI_SEL + hdmi_out_mode_count() - 1) % hdmi_out_mode_count(); draw_settings(); usleep(200000); }
+#endif
           }
           usleep(100000);
         }
@@ -5324,6 +5345,9 @@
           } else if (STEP == 0) {
             if (SETTING == 1 && VOLUME < 8) { VOLUME++; set_volume(); usleep(200000); }
             if (SETTING == 2 && BRIGHTNESS < (BRIGHTNESS_COUNT-1)) { BRIGHTNESS++; set_brightness(); usleep(200000); }
+#if CONFIG_BOARD_M5STACK_TAB5 && CONFIG_TAB5_HDMI_OUT
+            if (SETTING == 7) { HDMI_SEL = (HDMI_SEL + 1) % hdmi_out_mode_count(); draw_settings(); usleep(200000); }
+#endif
           }
           usleep(100000);
         }
@@ -5381,6 +5405,17 @@
             if (SETTING == 6) {
               run_sleep_mode();   /* the screen is left as it was, nothing to redraw */
             }
+#if CONFIG_TAB5_HDMI_OUT
+            if (SETTING == 7 && HDMI_SEL >= 0 && HDMI_SEL != hdmi_out_mode_saved()) {
+              /* the mode is read when the HDMI module is brought up, so restart to apply it */
+              if (hdmi_out_mode_save(HDMI_SEL)) {
+                draw_text(40, 440, (char *)"RESTARTING", false, true, false);
+                display_flush();
+                vTaskDelay(pdMS_TO_TICKS(300));
+                esp_restart();
+              }
+            }
+#endif
 #endif
           } else if (STEP >= 3) {
             /* Enter ROM browser for emulator systems */
