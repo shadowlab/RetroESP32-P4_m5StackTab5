@@ -101,12 +101,24 @@ esp_err_t tab5_board_init(void)
         ESP_RETURN_ON_ERROR(i2c_new_master_bus(&cfg, &s_i2c), TAG, "I2C bus init failed");
         ESP_LOGI(TAG, "I2C bus ready (SDA=%d SCL=%d)", TAB5_I2C_SDA, TAB5_I2C_SCL);
     }
-    if (!s_exp0) {
-        ESP_RETURN_ON_ERROR(esp_io_expander_new_i2c_pi4ioe5v6408(
-            s_i2c, ESP_IO_EXPANDER_I2C_PI4IOE5V6408_ADDRESS_LOW, &s_exp0), TAG, "IO expander 0 init failed");
+    /* After a software reset (leaving a game) the first transaction sometimes fails ("Chip reset failed"),
+     * probably a slave still holding the bus: free the bus and try again before giving up. */
+    for (int attempt = 1; attempt <= 5; ++attempt) {
+        esp_err_t e = ESP_OK;
+        if (!s_exp0) {
+            e = esp_io_expander_new_i2c_pi4ioe5v6408(s_i2c, ESP_IO_EXPANDER_I2C_PI4IOE5V6408_ADDRESS_LOW, &s_exp0);
+            if (e != ESP_OK) s_exp0 = NULL;
+        }
+        if (e == ESP_OK) {
+            e = esp_io_expander_new_i2c_pi4ioe5v6408(s_i2c, ESP_IO_EXPANDER_I2C_PI4IOE5V6408_ADDRESS_HIGH, &s_exp1);
+            if (e != ESP_OK) s_exp1 = NULL;
+        }
+        if (e == ESP_OK) break;
+        ESP_LOGW(TAG, "IO expander init failed (attempt %d/5): %s", attempt, esp_err_to_name(e));
+        if (attempt == 5) return e;
+        i2c_master_bus_reset(s_i2c);
+        vTaskDelay(pdMS_TO_TICKS(20));
     }
-    ESP_RETURN_ON_ERROR(esp_io_expander_new_i2c_pi4ioe5v6408(
-        s_i2c, ESP_IO_EXPANDER_I2C_PI4IOE5V6408_ADDRESS_HIGH, &s_exp1), TAG, "IO expander 1 init failed");
 
     /* The expander driver resets the chip, which leaves CHG_EN floating (pulled low), so the
      * pack never charged.  Set it up the way M5's BSP does on every boot: charger on, QC off
